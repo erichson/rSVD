@@ -1,3 +1,4 @@
+#Helper function for conjugate transpose
 H <- function( X ) {
   if(is.complex(X)) {
     return( Conj(t(X)) )
@@ -6,6 +7,7 @@ H <- function( X ) {
   }
 }
 
+#Helper function for conjugate crossprod
 crossprod_help <- function( A , B ) {
   if(is.complex(A)) {
     return( crossprod( Conj(A) , B) )
@@ -14,15 +16,16 @@ crossprod_help <- function( A , B ) {
   }
 }
 
+#Helper function for conjugate tcrossprod
 tcrossprod_help <- function( A , B ) {
-  if(is.complex(A)) {
+  if(is.complex(B)) {
     return( tcrossprod( A , Conj(B) ) )
   } else {
     return( tcrossprod( A , B ) )
   }
 }
 
-rsvd <- function(A, k=NA, p=5, q=2, method='standard', sdist="normal", vt=FALSE) {
+rsvd <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) {
     # Randomized Singular Value Decomposition.
     #
     # Randomized algorithm for computing the approximate low-rank singular value
@@ -44,7 +47,7 @@ rsvd <- function(A, k=NA, p=5, q=2, method='standard', sdist="normal", vt=FALSE)
     # If k > (n/1.5), partial SVD or trancated SVD might be faster.
     #
     #
-    # Parameters
+    # Arguments
     # ----------
     # A : array_like
     #   Real/complex input matrix  `a` with dimensions `(m, n)`.
@@ -52,31 +55,41 @@ rsvd <- function(A, k=NA, p=5, q=2, method='standard', sdist="normal", vt=FALSE)
     # k : int
     #   `k` is the target rank of the low-rank decomposition, k << min(m,n).
     #
-    # p : int
-    #   `p` sets the oversampling parameter (default k=0).
+    # p : int, optional
+    #   `p` sets the oversampling parameter (default `p=5`).
     #
-    # q : int
-    #   `q` sets the number of power iterations (default=0).
+    # q : int, optional
+    #   `q` sets the number of power iterations (default `q=2`).
     #
-    # method : str `{'standard', 'fast'}`
-    #   'standard' : Standard algorithm as described in [1, 2].
+    # method : str `{'standard', 'fast'}`, optional
+    #   'standard' (default): Standard algorithm as described in [1, 2].
     #
     #   'fast' : Version II algorithm as described in [2].
     #
-    # sdist : str `{'normal', 'unif'}`
+    # sdist : str `{'normal', 'unif'}`, optional
+    #   'unif' (default): Uniform `[-1,1]`.
     #
+    #   'norm' : Normal `~N(0,1)`.
     #
-    # Returns
+    # vt : bool `{TRUE, FALSE}`, optional
+    #   'TRUE' : returns the transpose `vt` of the right singular vectors
+    #
+    #   'FALSE' (default): returns the right singular vectors `v`. This is the format
+    #    as svd {base} returns `v`.
+    #
+    # Value
     # -------
-    # U:  array_like
+    # The returned value is a list with components
+    #
+    # u:  array_like
     #   Right singular values, array of shape `(m, k)`.
     #
-    # s : array_like
+    # d : array_like
     #   Singular values, 1-d array of length `k`.
     #
-    # Vh : array_like
-    #   Left singular values, array of shape `(k, n)`.
-    #
+    # v : array_like
+    #   Left singular values, array of shape `(n, k)`. Or
+    #   if vt=TRUE, array of shape `(k, n)` is returned.
     #
     # Notes
     # -----
@@ -110,7 +123,7 @@ rsvd <- function(A, k=NA, p=5, q=2, method='standard', sdist="normal", vt=FALSE)
 
     m <- nrow(A)
     n <- ncol(A)
-    if(is.na(k)) k=n
+    if(is.null(k)) k=n
     l <- k+p
     if(l>n){
       l <- n
@@ -142,7 +155,7 @@ rsvd <- function(A, k=NA, p=5, q=2, method='standard', sdist="normal", vt=FALSE)
     if(sdist=='normal') {
       O <- matrix(rnorm(l*n), n, l)
       if(isreal==FALSE) O <- O + 1i * matrix(rnorm(l*n), n, l)
-    } else if(sfist=='unif') {
+    } else if(sdist=='unif') {
       O <- matrix(runif(l*n), n, l)
       if(isreal==FALSE) O <- O + 1i * matrix(runif(l*n), n, l)
     }
@@ -172,11 +185,12 @@ rsvd <- function(A, k=NA, p=5, q=2, method='standard', sdist="normal", vt=FALSE)
           }
 
           Y <- A %*% Z
+          remove(Z)
         }#End for
     }#End if
 
     Q <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
-    remove(Y, Z)
+    remove(Y)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Project the data matrix a into a lower dimensional subspace
