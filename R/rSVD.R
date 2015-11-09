@@ -204,29 +204,29 @@ rsvd <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE)
       #Note: B = U" * S * Vt
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       #Compute SVD
-      svd_out <- La.svd(B, nu=k, nv=k)
+      rsvdObj <- La.svd(B, nu=k, nv=k)
 
       #Recover right singular vectors
-      svd_out$u <- Q %*% svd_out$u
+      rsvdObj$u <- Q %*% rsvdObj$u
 
       #Return
       if(flipped==TRUE) {
-        u_temp <- svd_out$u
-        svd_out$u <- H(svd_out$v)
-        svd_out$d <- svd_out$d[1:k]
+        u_temp <- rsvdObj$u
+        rsvdObj$u <- H(rsvdObj$v)
+        rsvdObj$d <- rsvdObj$d[1:k]
         if(vt==FALSE) {
-          svd_out$v <- u_temp
+          rsvdObj$v <- u_temp
         } else {
-          svd_out$v <- H(u_temp)
+          rsvdObj$v <- H(u_temp)
         }
-        return(svd_out)
+        return(rsvdObj)
 
       } else {
-        svd_out$d <- svd_out$d[1:k]
+        rsvdObj$d <- rsvdObj$d[1:k]
         if(vt==FALSE) {
-          svd_out$v <- H(svd_out$v)
+          rsvdObj$v <- H(rsvdObj$v)
         }
-        return(svd_out)
+        return(rsvdObj)
       }
 
     }else if(method=='fast'){
@@ -240,31 +240,31 @@ rsvd <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE)
       Rstar <- qr.R(qr_out , complete = FALSE)
 
       #Compute right singular vectors
-      svd_out <- La.svd(Rstar, nu=k, nv=k)
+      rsvdObj <- La.svd(Rstar, nu=k, nv=k)
 
-      U <- tcrossprod_help( Q, svd_out$v )
-      V <- Qstar %*% svd_out$u
+      U <- tcrossprod_help( Q, rsvdObj$v )
+      V <- Qstar %*% rsvdObj$u
 
       #Return
       if(flipped==TRUE) {
-        svd_out$u <- V
-        svd_out$d <- svd_out$d[1:k]
+        rsvdObj$u <- V
+        rsvdObj$d <- rsvdObj$d[1:k]
         if(vt==FALSE) {
-          svd_out$v <- U
+          rsvdObj$v <- U
         } else {
-          svd_out$v <- H(U)
+          rsvdObj$v <- H(U)
         }
-        return(svd_out)
+        return(rsvdObj)
 
         } else {
-        svd_out$u <- U
-        svd_out$d <- svd_out$d[1:k]
+        rsvdObj$u <- U
+        rsvdObj$d <- rsvdObj$d[1:k]
         if(vt==FALSE) {
-          svd_out$v <- V
+          rsvdObj$v <- V
         } else {
-          svd_out$v <- H(V)
+          rsvdObj$v <- H(V)
         }
-        return(svd_out)
+        return(rsvdObj)
       }
 
     }
