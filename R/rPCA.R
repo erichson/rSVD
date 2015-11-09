@@ -117,10 +117,14 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, p=5, 
     class(rpcaObj) <- "rpca"
     return( rpcaObj )
 
-}
+}#End rPCA
+
 
 
 print.rpca <- function(rpcaObj) {
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Print rpca
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   cat("Standard deviations:\n")
   print(round(rpcaObj$sdev,3))
   cat("\nEigenvalues:\n")
@@ -132,7 +136,9 @@ print.rpca <- function(rpcaObj) {
 
 summary.rpca <- function( rpcaObj )
 {
-
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Summary rpca
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   variance = rpcaObj$sdev**2
   explained_var_ratio = variance / sum( apply( rpcaObj$x , 2, var ) )
   cum_explained_var_ratio = cumsum( explained_var_ratio )
@@ -157,6 +163,9 @@ summary.rpca <- function( rpcaObj )
 
 print.summary.rpca <- function( summaryObj )
 {
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Print summary rpca
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   cat( "Importance of components:\n" )
   print(round(summaryObj,3))
   cat("\n")
