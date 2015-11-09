@@ -1,120 +1,98 @@
-#Helper function for conjugate transpose
-H <- function( X ) {
-  if(is.complex(X)) {
-    return( Conj(t(X)) )
-  } else {
-    return( t(X) )
-  }
-}
+#' @title  Randomized Singular Value Decomposition .
+#
+#' @description Compute the approximate low-rank singular value decomposition (SVD) of a rectangular matrix.
+#
+#' @details
+#' The singular value decomposition plays a central role in data analysis and scientific computing.
+#' Randomized SVD (rSVD) is a very fast algorithm to compute the the approximate
+#' low-rank singular value decompositon (SVD) of a rectangular \eqn{(m,n)} matrix \eqn{A}
+#' using a probablistic algorithm.
+#' Given a target rank \eqn{k << n}, \code{rsvd} factors the input matrix \eqn{A} as
+#' \eqn{A = U * diag(d) * V'}. The right singluar vectors are the columns of the
+#' real or complex unitary matrix \eqn{U} . The left singular vectors are the columns
+#' of the real or complex unitary matrix \eqn{V}. The singular values \eqn{d} are
+#' non-negative and real numbers.
+#'
+#' The paramter \eqn{p} is a oversampling parameter to improve the approximation.
+#' A value between 2 and 10 is recommended and \eqn{p=5} is set as default.
+#'
+#' The paramter \eqn{q} specifies the number of normlized power iterations
+#' (subspace iterations) to reduce the approximation error. This is recommended
+#' if the the singular values decay slowly and in practice 1 or 2 iterations
+#' achive good results. However, computing power iterations is increasing the
+#' computational time. The number of power iterations is set to \eqn{q=2} by default.
+#'
+#' If \eqn{k > (min(n,m)/1.5)}, a deterministic partial or trancated \code{\link{svd}}
+#' algorithm might be faster.
+#'
+#'
+#' @param A       array_like \cr
+#'                a real/complex input matrix (or data frame), with dimensions \eqn{(m, n)}.
+#'
+#' @param k       int, optional \cr
+#'                determines the target rank of the low-rank decomposition and should satisfy \eqn{k << min(m,n)}.
+#'
+#' @param p       int, optional \cr
+#'                oversampling parameter (default \eqn{p=5}).
+#'
+#' @param q       int, optional \cr
+#'                number of power iterations (default \eqn{q=5}).
+#'
+#' @param method  str c('standard', 'fast'), optional \cr
+#'                'standard' : (default): Standard algorithm as described in [1, 2]. \cr
+#'                'fast' : Version II algorithm as described in [2].
+#'
+#' @param sdist  str c('normal', 'unif'), optional \cr
+#'               Specifies the distribution to draw the random samples from.
+#'               'unif' : (default) Uniform `[-1,1]`. \cr
+#'               'norm' : Normal `~N(0,1)`. \cr
+#'
+#' @param vt      bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
+#'                \eqn{TRUE} : returns the transposed right singular vectors \eqn{vt}. \cr
+#'                \eqn{FALSE} : (default) returns the right singular vectors as \eqn{v}, this is the format
+#'                as \code{\link{svd}} returns \eqn{v}.
+#'
+#' @param ............. .
+#'
+#'
+#'@return \code{rsvd} returns a list containing the following three components:
+#'\item{u}{  array_like \cr
+#'           Right singular values; array with dimensions \eqn{(m, k)}.
+#'}
+#'\item{d}{  array_like \cr
+#'           Singular values; 1-d array of length \eqn{(k)}.
+#'}
+#'\item{v (or vt)}{  array_like \cr
+#'           Left singular values; array with dimensions \eqn{(n, k)}. \cr
+#'           Or if \eqn{vt=TRUE}, array with dimensions \eqn{(k, n)}.
+#'}
+#'\item{.............}{.}
+#' Note that the singular vectors are not unique and only defined up to sign
+#' (a constant of modulus one in the complex case). If a left singular vector
+#' has its sign changed, changing the sign of the corresponding right vector
+#' gives an equivalent decomposition.
+#' @references
+#' \itemize{
+#'   \item  [1] N. Halko, P. Martinsson, and J. Tropp.
+#'          "Finding structure with randomness: probabilistic
+#'          algorithms for constructing approximate matrix
+#'          decompositions" (2009).
+#'          (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
+#'   \item  [2] S. Voronin and P.Martinsson.
+#'          "RSVDPACK: Subroutines for computing partial singular value
+#'          decompositions via randomized sampling on single core, multi core,
+#'          and GPU architectures" (2015).
+#'          (available at `arXiv \url{http://arxiv.org/abs/1502.05366}).
+#' }
+#'
+#' @author N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
+#' @seealso \code{\link{svd}}
+#' @examples
+#' Will be added.
 
-#Helper function for conjugate crossprod
-crossprod_help <- function( A , B ) {
-  if(is.complex(A)) {
-    return( crossprod( Conj(A) , B) )
-  } else {
-    return( crossprod( A , B ) )
-  }
-}
+rsvd <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) UseMethod("rsvd")
 
-#Helper function for conjugate tcrossprod
-tcrossprod_help <- function( A , B ) {
-  if(is.complex(B)) {
-    return( tcrossprod( A , Conj(B) ) )
-  } else {
-    return( tcrossprod( A , B ) )
-  }
-}
-
-rsvd <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) {
-    # Randomized Singular Value Decomposition.
-    #
-    # Randomized algorithm for computing the approximate low-rank singular value
-    # decomposition of a rectangular (m, n) matrix `a` with target rank `k << n`.
-    # The input matrix a is factored as `a = U * diag(s) * Vt`. The right singluar
-    # vectors are the columns of the real or complex unitary matrix `U`. The left
-    # singular vectors are the columns of the real or complex unitary matrix `V`.
-    # The singular values `s` are non-negative and real numbers.
-    #
-    # The paramter `p` is a oversampling parameter to improve the approximation.
-    # A value between 2 and 10 is recommended.
-    #
-    # The paramter `q` specifies the number of normlized power iterations
-    # (subspace iterations) to reduce the approximation error. This is recommended
-    # if the the singular values decay slowly and in practice 1 or 2 iterations
-    # achive good results. However, computing power iterations is increasing the
-    # computational time.
-    #
-    # If k > (n/1.5), partial SVD or trancated SVD might be faster.
-    #
-    #
-    # Arguments
-    # ----------
-    # A : array_like
-    #   Real/complex input matrix  `a` with dimensions `(m, n)`.
-    #
-    # k : int
-    #   `k` is the target rank of the low-rank decomposition, k << min(m,n).
-    #
-    # p : int, optional
-    #   `p` sets the oversampling parameter (default `p=5`).
-    #
-    # q : int, optional
-    #   `q` sets the number of power iterations (default `q=2`).
-    #
-    # method : str `{'standard', 'fast'}`, optional
-    #   'standard' (default): Standard algorithm as described in [1, 2].
-    #
-    #   'fast' : Version II algorithm as described in [2].
-    #
-    # sdist : str `{'normal', 'unif'}`, optional
-    #   'unif' (default): Uniform `[-1,1]`.
-    #
-    #   'norm' : Normal `~N(0,1)`.
-    #
-    # vt : bool `{TRUE, FALSE}`, optional
-    #   'TRUE' : returns the transpose `vt` of the right singular vectors
-    #
-    #   'FALSE' (default): returns the right singular vectors `v`. This is the format
-    #    as svd {base} returns `v`.
-    #
-    # Value
-    # -------
-    # The returned value is a list with components
-    #
-    # u:  array_like
-    #   Right singular values, array of shape `(m, k)`.
-    #
-    # d : array_like
-    #   Singular values, 1-d array of length `k`.
-    #
-    # v : array_like
-    #   Left singular values, array of shape `(n, k)`. Or
-    #   if vt=TRUE, array of shape `(k, n)` is returned.
-    #
-    # Notes
-    # -----
-    #
-    #
-    #
-    # References
-    # ----------
-    # N. Halko, P. Martinsson, and J. Tropp.
-    # "Finding structure with randomness: probabilistic
-    # algorithms for constructing approximate matrix
-    # decompositions" (2009).
-    # (available at `arXiv <http://arxiv.org/abs/0909.4061>`_).
-    #
-    # S. Voronin and P.Martinsson.
-    # "RSVDPACK: Subroutines for computing partial singular value
-    # decompositions via randomized sampling on single core, multi core,
-    # and GPU architectures" (2015).
-    # (available at `arXiv <http://arxiv.org/abs/1502.05366>`_).
-    #
-    #
-    # Examples
-    # --------
-    #
-    #
+rsvd.default <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) {
     #*************************************************************************
     #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
     #***                              <2015>                               ***
