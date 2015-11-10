@@ -171,6 +171,11 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=
     m <- nrow(A)
     n <- ncol(A)
 
+    #Set target rank
+    if(is.null(k)) k=n
+    if(k>n) k <- n
+    if(k<1) stop("Target rank is not valid!")
+
     A <- na.omit(A)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -205,7 +210,8 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     rpcaObj$eigvals <- sqrt( svd_out$d )
     rpcaObj$sdev <- ( svd_out$d ) / sqrt( m-1 )
-    rpcaObj$var <- sum( apply( A , 2, var ) )
+    rpcaObj$var <- sum( apply( Re(A) , 2, var ) )
+    if(is.complex(A)) rpcaObj$var <- Re(rpcaObj$var + sum( apply( Im(A) , 2, var ) ))
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Add row and col names
