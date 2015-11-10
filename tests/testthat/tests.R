@@ -1,4 +1,5 @@
 #devtools::use_testthat()
+
 set.seed(1234)
 #Create real random test matrix of dimension m x n with target rank k
   m = 50
@@ -200,3 +201,74 @@ testMat <- t(testMat)
   })
 
 
+
+
+  #*************************************************************************************
+  # Test 4: Exceptional cases
+  #*************************************************************************************
+  testMat <- matrix(runif(m*k), m, k) + 1i* matrix(runif(m*k), m, k)
+  testMat <- testMat %*% H(testMat)
+  testMat <- testMat[,1:n]
+
+  testMat <- H(testMat)
+
+  #Deterministic SVD
+  svd_out <- svd(testMat)
+
+  #Randomized SVD k=n
+  k=k
+  rsvd_out <- rsvd(testMat, method='standard', k=k, nu=k+2, nv=k+2)
+  Ak = rsvd_out$u %*% diag(rsvd_out$d) %*% H(rsvd_out$v)
+  test_that("Randomized SVD k=n", {
+    expect_equal(svd_out$d[1:k], rsvd_out$d[1:k])
+    expect_equal(testMat, Ak)
+    })
+
+  #Randomized SVD k=n
+  k=k
+  rsvd_out <- rsvd(testMat, method='fast', k=k, nu=k+2, nv=k+2)
+  Ak = rsvd_out$u %*% diag(rsvd_out$d) %*% H(rsvd_out$v)
+  test_that("Randomized SVD k=n", {
+    expect_equal(svd_out$d[1:k], rsvd_out$d[1:k])
+    expect_equal(testMat, Ak)
+  })
+
+
+
+  #*************************************************************************************
+  # Test 5: Randomized PCA
+  #*************************************************************************************
+  testMat <- matrix(runif(m*k), m, k) + 1i* matrix(runif(m*k), m, k)
+
+  #Deterministic PCA
+  pca_out <- prcomp(testMat, center = T, scale. = T)
+
+  #Randomized PCA
+  rpca_out <- rpca(testMat, k=k, svdalg='rsvd')
+  test_that("Randomized SVD k=n", {
+    expect_equal(pca_out$sdev[1:k], rpca_out$sdev[1:k])
+  })
+
+  #Randomized PCA
+  rpca_out <- rpca(testMat, k=k-5, p=5, q=0, svdalg='rsvd')
+  test_that("Randomized SVD k=n", {
+    expect_equal(pca_out$sdev[1:(k-5)], rpca_out$sdev[1:(k-5)])
+  })
+
+  #Randomized PCA
+  rpca_out <- rpca(testMat, k=k, svdalg='rsvd')
+  cum_var = cumsum(rpca_out$sdev**2 / rpca_out$var)
+  test_that("Randomized SVD k=n", {
+    expect_equal(cum_var[k], 1)
+  })
+
+  testMat <- H(testMat)
+
+  #Deterministic PCA
+  pca_out <- prcomp(testMat, center = T, scale. = T)
+
+  #Randomized PCA
+  rpca_out <- rpca(testMat, k=k, svdalg='rsvd')
+  test_that("Randomized SVD k=n", {
+    expect_equal(pca_out$sdev[1:k], rpca_out$sdev[1:k])
+  })
