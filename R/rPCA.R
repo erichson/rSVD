@@ -98,7 +98,7 @@
 #' @author N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
 #'
 #' @seealso \code{\link{ggscreeplot}}, \code{\link{ggbiplot}},
-#'          \code{\link{ggrotplot}}, \code{\link{plot}},
+#'          \code{\link{ggcorplot}}, \code{\link{plot.rpca}},
 #'          \code{\link{predict}},   \code{\link{rsvd}}
 #'
 #' @examples

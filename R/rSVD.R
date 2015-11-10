@@ -90,7 +90,7 @@
 #' }
 #'
 #' @author N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
-#' @seealso \code{\link{svd}}
+#' @seealso \code{\link{svd}}, \code{\link{rpca}}
 #' @examples
 #' Will be added.
 
