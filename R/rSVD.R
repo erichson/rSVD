@@ -32,6 +32,7 @@
 #' @param k       int, optional \cr
 #'                determines the target rank of the low-rank decomposition and should satisfy \eqn{k << min(m,n)}.
 #'
+#'
 #' @param p       int, optional \cr
 #'                oversampling parameter (default \eqn{p=5}).
 #'
@@ -90,23 +91,37 @@
 #' @examples
 #' Will be added.
 
-rsvd <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) UseMethod("rsvd")
+rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) UseMethod("rsvd")
 
-rsvd.default <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) {
+rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) {
     #*************************************************************************
     #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
     #***                              <2015>                               ***
     #***                       License: BSD 3 clause                       ***
     #*************************************************************************
 
+    #Dim of input matrix
     m <- nrow(A)
     n <- ncol(A)
+
+    #Flipp matrix, if wide
+    if(m<n){
+      A <- H(A)
+      m <- nrow(A)
+      n <- ncol(A)
+      flipped <- TRUE
+    } else flipped <- FALSE
+
+
+    #Set target rank
     if(is.null(k)) k=n
-    l <- k+p
-    if(l>n){
-      l <- n
-      k <- n
-    }
+    if(k>n) k <- n
+    if(k<1) stop("Target rank is not valid!")
+
+    #Set oversampling parameter
+    l <- round(k)+round(p)
+    if(l>n) l <- n
+    if(l<1) stop("Target rank is not valid!")
 
     #Check if array is real or complex
     if(is.complex(A)) {
@@ -115,27 +130,33 @@ rsvd.default <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", v
       isreal <- TRUE
     }
 
-    #Flipp matrix, if wide
-    if(m<n){
-      A <- H(A)
-      m <- nrow(A)
-      n <- ncol(A)
-      if(l>n){
-        l <- n
-        k <- n
-      }
-      flipped <- TRUE
-    } else flipped <- FALSE
+    #Set number of singular vectors
+    if(is.null(nu)) nu <- k
+    if(is.null(nv)) nv <- k
+    if(nu<0) nu <- 0
+    if(nv<0) nv <- 0
+    if(nu>k) nu <- k
+    if(nv>k) nv <- k
+    if(flipped==TRUE) {
+      a <- nu
+      nu <- nv
+      nv <- a
+    }
+
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Generate a random sampling matrix O
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if(sdist=='normal') {
-      O <- matrix(rnorm(l*n), n, l)
-      if(isreal==FALSE) O <- O + 1i * matrix(rnorm(l*n), n, l)
-    } else if(sdist=='unif') {
-      O <- matrix(runif(l*n), n, l)
-      if(isreal==FALSE) O <- O + 1i * matrix(runif(l*n), n, l)
+    O <- switch(sdist,
+                normal = matrix(rnorm(l*n), n, l),
+                unif = matrix(runif(l*n), n, l),
+                stop("Selected sampling distribution is not supported!"))
+
+    if(isreal==FALSE) {
+      O <- O + switch(sdist,
+                normal = 1i * matrix(rnorm(l*n), n, l),
+                unif = 1i * matrix(runif(l*n), n, l),
+                stop("Selected sampling distribution is not supported!"))
     }
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -182,10 +203,18 @@ rsvd.default <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", v
       #Note: B = U" * S * Vt
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       #Compute SVD
-      rsvdObj <- La.svd(B, nu=k, nv=k)
+      rsvdObj <- La.svd(B, nu=nu, nv=nv)
 
       #Recover right singular vectors
-      rsvdObj$u <- Q %*% rsvdObj$u
+      if(nu==0) {
+        rsvdObj$u <- matrix(0)
+      } else{
+        rsvdObj$u <- Q %*% rsvdObj$u
+      }
+
+      if(nv==0) {
+        rsvdObj$v <- matrix(0)
+      }
 
       #Return
       if(flipped==TRUE) {
@@ -194,15 +223,18 @@ rsvd.default <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", v
         rsvdObj$d <- rsvdObj$d[1:k]
         if(vt==FALSE) {
           rsvdObj$v <- u_temp
+          rsvdObj$vt <- NULL
         } else {
-          rsvdObj$v <- H(u_temp)
+          rsvdObj$vt <- H(u_temp)
         }
         return(rsvdObj)
+
 
       } else {
         rsvdObj$d <- rsvdObj$d[1:k]
         if(vt==FALSE) {
           rsvdObj$v <- H(rsvdObj$v)
+          rsvdObj$vt <- NULL
         }
         return(rsvdObj)
       }
@@ -217,11 +249,23 @@ rsvd.default <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", v
       Qstar <- qr.Q(qr_out , complete = FALSE)
       Rstar <- qr.R(qr_out , complete = FALSE)
 
-      #Compute right singular vectors
-      rsvdObj <- La.svd(Rstar, nu=k, nv=k)
+      #Compute singular value decomposition
+      rsvdObj <- La.svd(Rstar, nu=nv, nv=nu)
 
-      U <- tcrossprod_help( Q, rsvdObj$v )
-      V <- Qstar %*% rsvdObj$u
+      #Recover right and left singular vectors
+      if(nu==0) {
+        U <- matrix(0)
+      } else{
+        U <- tcrossprod_help( Q, rsvdObj$v )
+      }
+
+      if(nv==0) {
+        V <- matrix(0)
+      } else{
+        V <- Qstar %*% rsvdObj$u
+      }
+
+
 
       #Return
       if(flipped==TRUE) {
@@ -229,8 +273,9 @@ rsvd.default <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", v
         rsvdObj$d <- rsvdObj$d[1:k]
         if(vt==FALSE) {
           rsvdObj$v <- U
+          rsvdObj$vt <- NULL
         } else {
-          rsvdObj$v <- H(U)
+          rsvdObj$vt <- H(U)
         }
         return(rsvdObj)
 
@@ -239,8 +284,9 @@ rsvd.default <- function(A, k=NULL, p=5, q=2, method='standard', sdist="unif", v
         rsvdObj$d <- rsvdObj$d[1:k]
         if(vt==FALSE) {
           rsvdObj$v <- V
+          rsvdObj$vt <- NULL
         } else {
-          rsvdObj$v <- H(V)
+          rsvdObj$vt <- H(V)
         }
         return(rsvdObj)
       }
