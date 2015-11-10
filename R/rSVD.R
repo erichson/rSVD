@@ -68,10 +68,13 @@
 #'           Or if \eqn{vt=TRUE}, array with dimensions \eqn{(k, n)}.
 #'}
 #'\item{.............}{.}
-#' Note that the singular vectors are not unique and only defined up to sign
+#'
+#' @note The singular vectors are not unique and only defined up to sign
 #' (a constant of modulus one in the complex case). If a left singular vector
 #' has its sign changed, changing the sign of the corresponding right vector
 #' gives an equivalent decomposition.
+#'
+#'
 #' @references
 #' \itemize{
 #'   \item  [1] N. Halko, P. Martinsson, and J. Tropp.
