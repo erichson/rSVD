@@ -7,15 +7,15 @@
 ggscreeplot(rpcaObj, type = c("var", "ratio", "cum", "eigenvals"))
 }
 \arguments{
-\item{type}{str c('var', 'ratio', 'cum', 'eigenvals'), optional \cr}
-
-\item{x}{object containing the \code{sdev} component, such as that returned
+\item{rpcaObj}{object containing the \code{sdev} component, such as that returned
 by \code{rpca}}
+
+\item{type}{str c('var', 'ratio', 'cum', 'eigenvals'), optional \cr}
 
 \item{.................}{.}
 }
 \description{
-Creates a pretty screeplpot using \code{ggplot2}. By default the explained variance is plotted
+Creates a pretty screeplpot using \code{\link[ggplot2]{ggplot}}. By default the explained variance is plotted
 agaings the number of the principal component.
 Alternatively the eigenvalues, explained variance ratio or the cumulative
 explained variance ratio can be plotted.
@@ -23,9 +23,8 @@ explained variance ratio can be plotted.
 \examples{
 #
 
-
 }
 \seealso{
-\code{\link{rsvd}}, \code{ggplot2}
+\code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
 }
 

@@ -40,6 +40,12 @@ Determines which algorithm should be used for computing the singular value decom
 By default 'auto' is used, which decides weather to use \code{\link{rsvd}} or \code{\link{svd}},
 depending on the number of principle components. If \eqn{k < min(n,m)/1.5} randomized svd is used.}
 
+\item{p}{int, optional \cr
+oversampling parameter (default \eqn{p=5}), see \code{\link{rsvd}}.}
+
+\item{q}{int, optional \cr
+number of power iterations (default \eqn{q=5}), see \code{\link{rsvd}}.}
+
 \item{...}{arguments passed to or from other methods, see \code{\link{rsvd}}.}
 
 \item{.................}{.}
@@ -89,7 +95,7 @@ rotation matrix (but also called loadings).
 The print and summary method can be used to present the results in a nice format.
 A scree plot can be produced with the plot function or as rommended with
 \code{\link{ggscreeplot}}. A biplot can be proeduced with \code{\link{ggbiplot}},
-and a rotation plot with \code{\link{ggrotplot}}.
+and a rotation plot with \code{\link{ggcorplot}}.
 
 The predict function can be used to compute the scores of new observations. The data
 will automatically be centred (and scaled if requested).
@@ -106,7 +112,7 @@ Note also that \eqn{scale = TRUE} cannot be used if there are zero or constant (
 }
 \examples{
 
-library()
+library(rSVD)
 #
 # Load Edgar Anderson's Iris Data
 #
@@ -121,12 +127,12 @@ iris.species <- iris[ , 5]
 #
 # Perform rPCA and compute all PCs, similar to \\code{\\link{prcomp}}
 #
-iris.rpca <- rpca(log.iris, retx=T,  svdalg = 'rsvd')
+iris.rpca <- rpca(log.iris, retx=TRUE,  svdalg = 'rsvd')
 summary(iris.rpca) # Summary
 print(iris.rpca) # Prints the loadings/ rotations
 
 # You can compare the results with prcomp
-# iris.pca <- prcomp(log.iris, center = T, scale. = T)
+# iris.pca <- prcomp(log.iris, center = TRUE, scale. = TRUE)
 # summary(iris.pca) # Summary
 # print(iris.pca) # Prints the loadings/ rotations
 
@@ -134,12 +140,12 @@ print(iris.rpca) # Prints the loadings/ rotations
 # Plot functions
 #
 ggscreeplot(iris.rpca) # Screeplot
-ggscreeplot(iris.rpca, 'cum_explained_var_ratio') # Screeplot
-ggscreeplot(ir.rpca, type='raw') # Screeplot of the eigenvalues
+ggscreeplot(iris.rpca, 'cum') # Screeplot
+ggscreeplot(iris.rpca, type='eigenvals') # Screeplot of the eigenvalues
 
-ggrotplot(iris.rpca) # The correlation of the original variable with the PCs
+ggcorplot(iris.rpca, pcs=c(1,2)) # The correlation of the original variable with the PCs
 
-ggbiplot(iris.rpca, groups = ir.species, circle = F) #Biplot
+ggbiplot(iris.rpca, groups = iris.species, circle = FALSE) #Biplot
 
 #
 # Perform rPCA and compute only the first two PCs

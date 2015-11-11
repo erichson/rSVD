@@ -32,6 +32,13 @@
 #' @param k       int, optional \cr
 #'                determines the target rank of the low-rank decomposition and should satisfy \eqn{k << min(m,n)}.
 #'
+#' @param nu       int, optional \cr
+#'                 the number of left singular vectors to be computed. This must between \eqn{0}
+#'                 and \eqn{k}.
+#'
+#' @param nv       int, optional \cr
+#'                 the number of right singular vectors to be computed. This must between \eqn{0}
+#'                 and \eqn{k}.
 #'
 #' @param p       int, optional \cr
 #'                oversampling parameter (default \eqn{p=5}).
@@ -92,10 +99,38 @@
 #' @author N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
 #' @seealso \code{\link{svd}}, \code{\link{rpca}}
 #' @examples
-#' Will be added.
+#'library(rSVD)
+#'set.seed(123)
+#'
+#'#Create real random test matrix with dimension (m, n) and rank k
+#'m = 10
+#'n = 3
+#'k = 5
+#'A <- matrix(runif(m*k), m, k)
+#'A <- A %*% t(A)
+#'A <- A[,1:n]
+#'
+#'#Randomized SVD, no low-rank approximation
+#'s <- rsvd(A)
+#'Atilde = s$u %*% diag(s$d) %*% t(s$v)
+#'100 * norm( A - Atilde, 'F') / norm( Atilde,'F') #Percentage reconstruction error << 1e-8
+#'
+#'#Randomized SVD, low-rank approximation k=3
+#'s <- rsvd(A, k=3)
+#'Atilde = s$u %*% diag(s$d) %*% t(s$v)
+#'100 * norm( A - Atilde, 'F') / norm( Atilde,'F') #Percentage reconstruction error << 1e-8
+#'
+#'#Randomized SVD, low-rank approximation k=2
+#'s <- rsvd(A, k=2)
+#'Atilde = s$u %*% diag(s$d) %*% t(s$v)
+#'100 * norm( A - Atilde, 'F') / norm( Atilde,'F') #Percentage reconstruction error < 3.5%
+#'
+#'
 
+#' @export
 rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) UseMethod("rsvd")
 
+#' @export
 rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) {
     #*************************************************************************
     #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***

@@ -4,13 +4,15 @@
 \alias{plot.rpca}
 \title{Screeplot}
 \usage{
-\method{plot}{rpca}(rpcaObj, type = c("var", "ratio", "cum", "eigenvals"))
+\method{plot}{rpca}(x, type = c("var", "ratio", "cum", "eigenvals"), ...)
 }
 \arguments{
-\item{type}{str c('var', 'ratio', 'cum', 'eigenvals'), optional \cr}
-
 \item{x}{object containing the \code{sdev} component, such as that returned
 by \code{rpca}}
+
+\item{type}{str c('var', 'ratio', 'cum', 'eigenvals'), optional \cr}
+
+\item{...}{arguments passed to or from other methods, see \code{\link{plot}}.}
 
 \item{.................}{.}
 }
@@ -23,9 +25,8 @@ explained variance ratio can be plotted.
 \examples{
 #
 
-
 }
 \seealso{
-\code{\link{rsvd}}
+\code{\link{rpca}}
 }
 

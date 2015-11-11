@@ -1,3 +1,15 @@
+#devtools::use_package("ggplot2", type = "Suggests")
+#devtools::use_package("plyr", type = "Suggests")
+#devtools::use_package("scales", type = "Suggests")
+#devtools::use_package("grid", type = "Suggests")
+
+
+#library(ggplot2)
+#library(plyr)
+#library(scales)
+#library(grid)
+
+
 #
 # This is a modified version of ggbiplot.r for rPCA
 #
@@ -22,7 +34,7 @@
 
 #' Biplot for \code{rPCA} using ggplot2
 #'
-#' @param x               object containing the \code{sdev} component,
+#' @param rpcObj          object containing the \code{sdev} component,
 #' @param pcs             an array with two values indicating which two PCs should be plotted,
 #'                        by default the first two PCs are used, e.g., \eqn{c(1,2)}
 #' @param scale           covariance biplot (scale = 1), form biplot (scale = 0). When scale = 1, the inner product between the variables approximates the covariance and the distance between the points approximates the Mahalanobis distance.
@@ -36,16 +48,21 @@
 #' @param labels.size     size of the text used for the labels
 #' @param alpha           alpha transparency value for the points (0 = transparent, 1 = opaque)
 #' @param circle          draw a correlation circle (only applies when prcomp was called with scale = TRUE and when var.scale = 1)
+#' @param circle.prob     size of the circe in Normal probability
 #' @param var.axes        draw arrows for the variables
 #' @param varname.size    size of the text for variable names
 #' @param varname.adjust  adjustment factor the placement of the variable names, >= 1 means farther from the arrow
 #' @param varname.abbrev  whether or not to abbreviate the variable names
+#' @param ...     arguments passed to or from other methods, see \code{\link[ggplot2]{ggplot}}.
+#'
+#' @seealso \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'
 #' @author The original implementation of \code{ggbiplot} was written by Vincent Q. Vu (2011).
 #' @examples
-#' #
+#' #See ?rsvd
 
-ggbiplot <- function( pcobj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
+#' @export
+ggbiplot <- function( rpcObj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
                      obs.scale = 1 - scale, var.scale = scale,
                      groups = NULL, ellipse = TRUE, ellipse.prob = 0.68,
                      labels = NULL, labels.size = 3, alpha = 1,
@@ -54,18 +71,21 @@ ggbiplot <- function( pcobj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
                      varname.size = 3, varname.adjust = 1.5,
                      varname.abbrev = FALSE, ...)
 {
-  library(ggplot2)
-  library(plyr)
-  library(scales)
-  library(grid)
+
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("The package 'ggplot2' is needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+
   choices = pcs
   stopifnot(length(choices) == 2)
 
   # Get values from the rpca object
-    nobs.factor <- sqrt(nrow(pcobj$x) - 1)
-    d <- pcobj$sdev
-    u <- sweep(pcobj$x, 2, 1 / (d * nobs.factor), FUN = '*')
-    v <- pcobj$rotation
+    nobs.factor <- sqrt(nrow(rpcObj$x) - 1)
+    d <- rpcObj$sdev
+    u <- sweep(rpcObj$x, 2, 1 / (d * nobs.factor), FUN = '*')
+    v <- rpcObj$rotation
 
 
   # Scores
@@ -101,7 +121,7 @@ ggbiplot <- function( pcobj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
   # Append the proportion of explained variance to the axis labels
   u.axis.labs <- paste(u.axis.labs,
                        sprintf('(%0.1f%% explained var.)',
-                               100 * pcobj$sdev[choices]^2/sum(pcobj$sdev^2)))
+                               100 * rpcObj$sdev[choices]^2/sum(rpcObj$sdev^2)))
 
   # Score Labels
   if(!is.null(labels)) {
@@ -124,9 +144,26 @@ ggbiplot <- function( pcobj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
   df.v$angle <- with(df.v, (180/pi) * atan(yvar / xvar))
   df.v$hjust = with(df.v, (1 - varname.adjust * sign(xvar)) / 2)
 
+
+
+  #Workaround for CRAN: Nulling
+  xvar <- NULL # Setting the variables to NULL first
+  yvar <- NULL # Setting the variables to NULL first
+  muted <- NULL # Setting the variables to NULL first
+  varname <- NULL # Setting the variables to NULL first
+  angle <- NULL # Setting the variables to NULL first
+  hjust <- NULL # Setting the variables to NULL first
+  x <- NULL # Setting the variables to NULL first
+  y <- NULL # Setting the variables to NULL first
+  a <- NULL # Setting the variables to NULL first
+  b <- NULL # Setting the variables to NULL first
+
+
+
+
   # Base plot
-  g <- ggplot(data = df.u, aes(x = xvar, y = yvar)) +
-    xlab(u.axis.labs[1]) + ylab(u.axis.labs[2]) + coord_equal()
+  g <- ggplot2::ggplot(data = df.u, ggplot2::aes(x = xvar, y = yvar)) +
+    ggplot2::xlab(u.axis.labs[1]) + ggplot2::ylab(u.axis.labs[2]) + ggplot2::coord_equal()
 
   if(var.axes) {
     # Draw circle
@@ -134,31 +171,31 @@ ggbiplot <- function( pcobj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
     {
       theta <- c(seq(-pi, pi, length = 50), seq(pi, -pi, length = 50))
       circle <- data.frame(xvar = r * cos(theta), yvar = r * sin(theta))
-      g <- g + geom_path(data = circle, color = muted('white'),
+      g <- g + ggplot2::geom_path(data = circle, color = muted('white'),
                          size = 1/2, alpha = 1/3)
     }
 
     # Draw directions
     g <- g +
-      geom_segment(data = df.v,
-                   aes(x = 0, y = 0, xend = xvar, yend = yvar),
-                   arrow = arrow(length = unit(1/2, 'picas')),
-                   color = muted('red'))
+      ggplot2::geom_segment(data = df.v,
+                  ggplot2::aes(x = 0, y = 0, xend = xvar, yend = yvar),
+                   arrow = grid::arrow(length = grid::unit(1/2, 'picas')),
+                   color = scales::muted('red'))
   }
 
   # Draw either labels or points
   if(!is.null(df.u$labels)) {
     if(!is.null(df.u$groups)) {
-      g <- g + geom_text(aes(label = labels, color = groups),
+      g <- g + ggplot2::geom_text(ggplot2::aes(label = labels, color = groups),
                          size = labels.size)
     } else {
-      g <- g + geom_text(aes(label = labels), size = labels.size)
+      g <- g + ggplot2::geom_text(ggplot2::aes(label = labels), size = labels.size)
     }
   } else {
     if(!is.null(df.u$groups)) {
-      g <- g + geom_point(aes(color = groups), alpha = alpha)
+      g <- g + ggplot2::geom_point(ggplot2::aes(color = groups), alpha = alpha)
     } else {
-      g <- g + geom_point(alpha = alpha)
+      g <- g + ggplot2::geom_point(alpha = alpha)
     }
   }
 
@@ -167,7 +204,7 @@ ggbiplot <- function( pcobj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
     theta <- c(seq(-pi, pi, length = 50), seq(pi, -pi, length = 50))
     circle <- cbind(cos(theta), sin(theta))
 
-    ell <- ddply(df.u, 'groups', function(x) {
+    ell <- plyr::ddply(df.u, 'groups', function(x) {
       if(nrow(x) <= 2) {
         return(NULL)
       }
@@ -178,14 +215,14 @@ ggbiplot <- function( pcobj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
                  groups = x$groups[1])
     })
     names(ell)[1:2] <- c('xvar', 'yvar')
-    g <- g + geom_path(data = ell, aes(color = groups, group = groups))
+    g <- g + ggplot2::geom_path(data = ell, ggplot2::aes(color = groups, group = groups))
   }
 
   # Label the variable axes
   if(var.axes) {
     g <- g +
-      geom_text(data = df.v,
-                aes(label = varname, x = xvar, y = yvar,
+      ggplot2::geom_text(data = df.v,
+                      ggplot2::aes(label = varname, x = xvar, y = yvar,
                     angle = angle, hjust = hjust),
                 color = 'darkred', size = varname.size)
   }

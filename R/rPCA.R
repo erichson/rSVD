@@ -23,7 +23,7 @@
 #' The print and summary method can be used to present the results in a nice format.
 #' A scree plot can be produced with the plot function or as rommended with
 #' \code{\link{ggscreeplot}}. A biplot can be proeduced with \code{\link{ggbiplot}},
-#' and a rotation plot with \code{\link{ggrotplot}}.
+#' and a rotation plot with \code{\link{ggcorplot}}.
 #'
 #' The predict function can be used to compute the scores of new observations. The data
 #' will automatically be centred (and scaled if requested).
@@ -60,6 +60,12 @@
 #'                Determines which algorithm should be used for computing the singular value decomposition.
 #'                By default 'auto' is used, which decides weather to use \code{\link{rsvd}} or \code{\link{svd}},
 #'                depending on the number of principle components. If \eqn{k < min(n,m)/1.5} randomized svd is used.
+#'
+#' @param p       int, optional \cr
+#'                oversampling parameter (default \eqn{p=5}), see \code{\link{rsvd}}.
+#'
+#' @param q       int, optional \cr
+#'                number of power iterations (default \eqn{q=5}), see \code{\link{rsvd}}.
 #'
 #' @param ...     arguments passed to or from other methods, see \code{\link{rsvd}}.
 #'
@@ -103,7 +109,7 @@
 #'
 #' @examples
 #'
-#'library()
+#'library(rSVD)
 #'#
 #'# Load Edgar Anderson's Iris Data
 #'#
@@ -118,12 +124,12 @@
 #'#
 #'# Perform rPCA and compute all PCs, similar to \code{\link{prcomp}}
 #'#
-#'iris.rpca <- rpca(log.iris, retx=T,  svdalg = 'rsvd')
+#'iris.rpca <- rpca(log.iris, retx=TRUE,  svdalg = 'rsvd')
 #'summary(iris.rpca) # Summary
 #'print(iris.rpca) # Prints the loadings/ rotations
 #'
 #'# You can compare the results with prcomp
-#'# iris.pca <- prcomp(log.iris, center = T, scale. = T)
+#'# iris.pca <- prcomp(log.iris, center = TRUE, scale. = TRUE)
 #'# summary(iris.pca) # Summary
 #'# print(iris.pca) # Prints the loadings/ rotations
 #'
@@ -131,12 +137,12 @@
 #'# Plot functions
 #'#
 #'ggscreeplot(iris.rpca) # Screeplot
-#'ggscreeplot(iris.rpca, 'cum_explained_var_ratio') # Screeplot
-#'ggscreeplot(ir.rpca, type='raw') # Screeplot of the eigenvalues
+#'ggscreeplot(iris.rpca, 'cum') # Screeplot
+#'ggscreeplot(iris.rpca, type='eigenvals') # Screeplot of the eigenvalues
 #'
-#'ggrotplot(iris.rpca) # The correlation of the original variable with the PCs
+#'ggcorplot(iris.rpca, pcs=c(1,2)) # The correlation of the original variable with the PCs
 #'
-#'ggbiplot(iris.rpca, groups = ir.species, circle = F) #Biplot
+#'ggbiplot(iris.rpca, groups = iris.species, circle = FALSE) #Biplot
 #'
 #'#
 #'# Perform rPCA and compute only the first two PCs
@@ -152,8 +158,10 @@
 #'
 
 
-rpca <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=FALSE, svdalg='auto', p=5, q=2, ...) UseMethod("rpca")
+#' @export
+rpca <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=FALSE,  svdalg='auto', p=5, q=2, ...) UseMethod("rpca")
 
+#' @export
 rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=FALSE,  svdalg='auto', p=5, q=2, ...) {
     #*************************************************************************
     #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
@@ -235,66 +243,67 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=
 }#End rPCA
 
 
-
-print.rpca <- function(rpcaObj) {
+#' @export
+print.rpca <- function(x , ...) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Print rpca
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   cat("Standard deviations:\n")
-  print(round(rpcaObj$sdev,3))
+  print(round(x$sdev,3))
   cat("\nEigenvalues:\n")
-  print(round(rpcaObj$eigvals,3))
+  print(round(x$eigvals,3))
   cat("\nRotation:\n")
-  print(round(rpcaObj$rotation,3))
+  print(round(x$rotation,3))
 }
 
-
-summary.rpca <- function( rpcaObj, ... )
+#' @export
+summary.rpca <- function( object , ... )
 {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Summary rpca
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  variance = rpcaObj$sdev**2
-  explained_var_ratio = variance / rpcaObj$var
-  cum_explained_var_ratio = cumsum( explained_var_ratio )
+  variance = object$sdev**2
+  explained_variance_ratio = variance / object$var
+  cum_explained_variance_ratio = cumsum( explained_variance_ratio )
 
-  summaryObj <- t(data.frame( var = variance,
-                              sdev = rpcaObj$sdev,
-                              prob = explained_var_ratio,
-                              cum= cum_explained_var_ratio,
-                              eigv = rpcaObj$eigvals))
+  x <- t(data.frame( var = variance,
+                              sdev = object$sdev,
+                              prob = explained_variance_ratio,
+                              cum = cum_explained_variance_ratio,
+                              eigv = object$eigvals))
 
-  rownames( summaryObj ) <- c('Explained variance',
-                              'Standard deviations',
-                              'Proportion of Variance',
-                              'Cumulative Proportion',
-                              'Eigenvalues')
+  rownames( x ) <- c( 'Explained variance',
+                      'Standard deviations',
+                      'Proportion of variance',
+                      'Cumulative proportion',
+                      'Eigenvalues')
 
-  colnames( summaryObj ) <- paste(rep('PC', length(rpcaObj$sdev)), 1:length(rpcaObj$sdev), sep = "")
+  colnames( x ) <- paste(rep('PC', length(object$sdev)), 1:length(object$sdev), sep = "")
 
-  summaryObj <- as.matrix(summaryObj)
+  x <- as.matrix(x)
 
-  return( summaryObj )
+  return( x )
 }
 
-
-print.summary.rpca <- function( summaryObj, ... )
+#' @export
+print.summary.rpca <- function( x , ... )
 {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Print summary rpca
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   cat( "Importance of components:\n" )
-  print( summaryObj )
+  print( x )
   cat("\n")
 }
 
-
-predict.rpca <- function( rpcaObj, newdata )
+#' @export
+predict.rpca <- function( object, newdata, ...)
 {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Predict
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  newdata <- scale(newdata, center = rpcaObj$center, scale = rpcaObj$scale)
-  x <- as.matrix(newdata) %*% as.matrix(rpcaObj$rotation)
+  newdata <- scale(newdata, center = object$center, scale = object$scale)
+  x <- as.matrix(newdata) %*% as.matrix(object$rotation)
 
+  return( x )
 }

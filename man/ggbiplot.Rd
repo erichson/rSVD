@@ -4,13 +4,15 @@
 \alias{ggbiplot}
 \title{Biplot for \code{rPCA} using ggplot2}
 \usage{
-ggbiplot(pcobj, pcs = c(1, 2), scale = 1, pc.biplot = TRUE,
+ggbiplot(rpcObj, pcs = c(1, 2), scale = 1, pc.biplot = TRUE,
   obs.scale = 1 - scale, var.scale = scale, groups = NULL,
   ellipse = TRUE, ellipse.prob = 0.68, labels = NULL, labels.size = 3,
   alpha = 1, var.axes = TRUE, circle = TRUE, circle.prob = 0.69,
   varname.size = 3, varname.adjust = 1.5, varname.abbrev = FALSE, ...)
 }
 \arguments{
+\item{rpcObj}{object containing the \code{sdev} component,}
+
 \item{pcs}{an array with two values indicating which two PCs should be plotted,
 by default the first two PCs are used, e.g., \eqn{c(1,2)}}
 
@@ -38,21 +40,26 @@ by default the first two PCs are used, e.g., \eqn{c(1,2)}}
 
 \item{circle}{draw a correlation circle (only applies when prcomp was called with scale = TRUE and when var.scale = 1)}
 
+\item{circle.prob}{size of the circe in Normal probability}
+
 \item{varname.size}{size of the text for variable names}
 
 \item{varname.adjust}{adjustment factor the placement of the variable names, >= 1 means farther from the arrow}
 
 \item{varname.abbrev}{whether or not to abbreviate the variable names}
 
-\item{x}{object containing the \code{sdev} component,}
+\item{...}{arguments passed to or from other methods, see \code{\link[ggplot2]{ggplot}}.}
 }
 \description{
 Biplot for \code{rPCA} using ggplot2
 }
 \examples{
-#
+#See ?rsvd
 }
 \author{
 The original implementation of \code{ggbiplot} was written by Vincent Q. Vu (2011).
+}
+\seealso{
+\code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
 }
 

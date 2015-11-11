@@ -7,12 +7,12 @@
 ggcorplot(rpcaObj, pcs = c(1, 2))
 }
 \arguments{
+\item{rpcaObj}{object containing the \code{sdev} component, such as that returned
+by \code{rpca}}
+
 \item{pcs}{array_like \cr
 an array with two values indicating which two PCs should be plotted,
 by default the first two PCs are used, e.g., \eqn{c(1,2)}. \cr}
-
-\item{x}{object containing the \code{sdev} component, such as that returned
-by \code{rpca}}
 
 \item{.................}{.}
 }
@@ -25,6 +25,6 @@ Creates a pretty plot which is showing the correlation of
 
 }
 \seealso{
-\code{\link{rsvd}}, \code{ggplot2}
+\code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
 }
 
