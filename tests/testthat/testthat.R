@@ -275,7 +275,7 @@ testMat <- t(testMat)
   rpca_out <- rpca(testMat, k=k, svdalg='rsvd')
   cum_var = cumsum(rpca_out$sdev**2 / rpca_out$var)
   testthat::test_that("Randomized SVD k=n", {
-    etestthat::xpect_equal(cum_var[k], 1)
+    testthat::expect_equal(cum_var[k], 1)
   })
 
   testMat <- H(testMat)
