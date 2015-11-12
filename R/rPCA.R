@@ -195,6 +195,13 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=
     attributes(A)$`scaled:center`<- NULL
     attributes(A)$`scaled:scale`<- NULL
 
+    if(center == FALSE ) rpcaObj$center <- FALSE
+    if(scale == FALSE ) rpcaObj$scale <- FALSE
+
+    if(is.complex(A)) {
+      rpcaObj$center <- center
+      rpcaObj$scale <- scale
+    }
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Compute randomized svd
