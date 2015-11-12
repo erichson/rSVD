@@ -91,7 +91,7 @@ has its sign changed, changing the sign of the corresponding right vector
 gives an equivalent decomposition.
 }
 \examples{
-library(rSVD)
+library(rsvd)
 set.seed(123)
 
 #Create real random test matrix with dimension (m, n) and rank k

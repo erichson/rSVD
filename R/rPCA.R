@@ -109,7 +109,7 @@
 #'
 #' @examples
 #'
-#'library(rSVD)
+#'library(rsvd)
 #'#
 #'# Load Edgar Anderson's Iris Data
 #'#

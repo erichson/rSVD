@@ -112,7 +112,7 @@ Note also that \eqn{scale = TRUE} cannot be used if there are zero or constant (
 }
 \examples{
 
-library(rSVD)
+library(rsvd)
 #
 # Load Edgar Anderson's Iris Data
 #

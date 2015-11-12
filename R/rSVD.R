@@ -99,7 +99,7 @@
 #' @author N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
 #' @seealso \code{\link{svd}}, \code{\link{rpca}}
 #' @examples
-#'library(rSVD)
+#'library(rsvd)
 #'set.seed(123)
 #'
 #'#Create real random test matrix with dimension (m, n) and rank k

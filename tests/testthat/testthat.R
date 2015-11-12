@@ -1,7 +1,7 @@
 #devtools::use_package("testthat", type = "Suggests")
 
-#Load rSVD library
-library(rSVD)
+#Load rsvd library
+library(rsvd)
 
 #Set seed
 set.seed(1234)
