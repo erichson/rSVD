@@ -1,50 +1,51 @@
 #' @title  Randomized principal component analysis (PCA).
 #
-#' @description Performs a approximated principal components analysis using randomized SVD \code{rsvd}.
+#' @description Performs an approximated principal components analysis using randomized singular value decomposition.
 #
 #' @details
-#' Principle component analysis is a linear dimensionality reduction technique,
-#' aiming to keep only the most significant principle components to allow a
+#' Principal component analysis is a linear dimensionality reduction technique,
+#' aiming to keep only the most significant principal components to allow
 #' a better interpretation of the data and to project the data to a lower dimensional space.
 #'
-#' Traditionally, the computation is done by a (deterministic) singular value decomposition,
-#' randomized PCA is using a very fast randomized SVD algorithm \code{\link{rsvd}}
-#' to compute the approximate low-rank SVD decomposition, instead.
-#' The computational gain is in particular high, if the desired number of principle components
+#' Traditionally, the computation is done by a (deterministic) singular value decomposition.
+#' Randomized PCA is computed using a fast randomized algorithm (\code{\link{rsvd}})
+#' to compute the approximate low-rank SVD decomposition.
+#' The computational gain is high if the desired number of principal components
 #' is small, i.e. \eqn{k << n}.
 #'
 #' \code{\link{rsvd}} expects a numeric (real/complex) input matrix with dimensions \eqn{(m, n)}.
 #' Given a target rank \eqn{k}, \code{rsvd} factors the input matrix \eqn{A} as
-#' \eqn{A = W * diag(s) * W'}. The the columns of the real or complex unitary matrix \eqn{W}
-#' contain the eigenvectors (i.e. principle components). The vector \eqn{s} contains the corresponding
+#' \eqn{A = W * diag(s) * W'}. The columns of the real or complex unitary matrix \eqn{W}
+#' contain the eigenvectors (i.e. principal components). The vector \eqn{s} contains the corresponding
 #' eigenvalues. Following \code{\link{prcomp}} we denote this matrix \eqn{W} as
-#' rotation matrix (but also called loadings).
+#' rotation matrix (commonly also called loadings).
 #'
 #' The print and summary method can be used to present the results in a nice format.
-#' A scree plot can be produced with the plot function or as rommended with
-#' \code{\link{ggscreeplot}}. A biplot can be proeduced with \code{\link{ggbiplot}},
-#' and a rotation plot with \code{\link{ggcorplot}}.
+#' A scree plot can be produced with the plot function or as recommended with
+#' \code{\link{ggscreeplot}}. A biplot can be produced with \code{\link{ggbiplot}},
+#' and a correlation plot with \code{\link{ggcorplot}}.
 #'
 #' The predict function can be used to compute the scores of new observations. The data
-#' will automatically be centred (and scaled if requested).
+#' will automatically be centred (and scaled if requested). This is not fully supported for
+#' complex input matrices.
 #'
 #'
 #' @param A       array_like \cr
-#'                a real/complex input matrix (or data frame), with dimensions \eqn{(m, n)}. \cr
+#'                a numeric input matrix (or data frame), with dimensions \eqn{(m, n)}. \cr
 #'                If the data contain \eqn{NA}s na.omit is applied.
 #'
 #' @param k       int, optional \cr
 #'                determines the number of principle components to compute. It is required that \eqn{k} is smaller or equal to
-#'                \eqn{min(n)}, but it is recommended that \eqn{k << min(m,n)}.
+#'                \eqn{n}, but it is recommended that \eqn{k << min(m,n)}.
 #'
 #' @param center  bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
 #'                a logical value (\eqn{TRUE} by default) indicating whether the variables should be
-#'                shifted to be zero centered. Alternately, a vector of length equal the number of
+#'                shifted to be zero centered. Alternatively, a vector of length equal the number of
 #'                columns of \eqn{A} can be supplied. The value is passed to scale.
 #'
 #' @param scale   bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
 #'                a logical value (\eqn{TRUE} by default) indicating whether the variables should
-#'                be scaled to have unit variance.Alternately, a vector of length equal the number of
+#'                be scaled to have unit variance. Alternatively, a vector of length equal the number of
 #'                columns of \eqn{A} can be supplied. The value is passed to scale.
 #'
 #' @param retx    bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
@@ -52,20 +53,20 @@
 #'                should be returned.
 #'
 #' @param whiten  bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
-#'                When True (\eqn{FALSE} by default) the eigenvectors
+#'                When \eqn{TRUE} (by default \eqn{FALSE}) the eigenvectors
 #'                are divided by the the square root of the singular values \eqn{W = W * diag(1/sqrt(s))}.
-#'                Whitening can sometime improve the predictive accuracy.
+#'                Whitening can sometimes improve the predictive accuracy.
 #'
 #' @param svdalg  str c('auto', 'rsvd', 'svd'), optional \cr
 #'                Determines which algorithm should be used for computing the singular value decomposition.
-#'                By default 'auto' is used, which decides weather to use \code{\link{rsvd}} or \code{\link{svd}},
+#'                By default 'auto' is used, which decides whether to use \code{\link{rsvd}} or \code{\link{svd}},
 #'                depending on the number of principle components. If \eqn{k < min(n,m)/1.5} randomized svd is used.
 #'
 #' @param p       int, optional \cr
-#'                oversampling parameter (default \eqn{p=5}), see \code{\link{rsvd}}.
+#'                oversampling parameter for \eqn{rsvd}  (default \eqn{p=5}), see \code{\link{rsvd}}.
 #'
 #' @param q       int, optional \cr
-#'                number of power iterations (default \eqn{q=5}), see \code{\link{rsvd}}.
+#'                number of power iterations  for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.
 #'
 #' @param ...     arguments passed to or from other methods, see \code{\link{rsvd}}.
 #'
@@ -73,7 +74,7 @@
 #'
 #' @return \code{rpca} returns a list with class \eqn{rpca} containing the following components:
 #'    \item{rotation}{  array_like \cr
-#'                      the matrix containing the roations (eigenvectors),
+#'                      the matrix containing the rotation (eigenvectors),
 #'                      i.e., the variable loadings; array with dimensions \eqn{(n, k)}.
 #'    }
 #'    \item{eigvals}{  array_like \cr
@@ -91,12 +92,11 @@
 #'    }
 #'    \item{.................}{.}
 #'
-#' @note  The principle components are not unique and only defined up to sign
+#' @note  The principal components are not unique and only defined up to sign
 #' (a constant of modulus one in the complex case) and so may differ between different
 #'  PCA implementations.
 #'
 #' Similar to \code{\link{prcomp}} the variances are computed with the usual divisor N - 1.
-#' using approximated Singular Value
 #'
 #' Note also that \eqn{scale = TRUE} cannot be used if there are zero or constant (for \eqn{center = TRUE} ) variables.
 #'

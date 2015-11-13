@@ -15,27 +15,27 @@ a real/complex input matrix (or data frame), with dimensions \eqn{(m, n)}.}
 determines the target rank of the low-rank decomposition and should satisfy \eqn{k << min(m,n)}.}
 
 \item{nu}{int, optional \cr
-the number of left singular vectors to be computed. This must between \eqn{0}
+the number of left singular vectors to be computed. This must be between \eqn{0}
 and \eqn{k}.}
 
 \item{nv}{int, optional \cr
-the number of right singular vectors to be computed. This must between \eqn{0}
+the number of right singular vectors to be computed. This must be between \eqn{0}
 and \eqn{k}.}
 
 \item{p}{int, optional \cr
-oversampling parameter (default \eqn{p=5}).}
+oversampling parameter for (default \eqn{p=5}).}
 
 \item{q}{int, optional \cr
-number of power iterations (default \eqn{q=5}).}
+number of power iterations (default \eqn{q=2}).}
 
 \item{method}{str c('standard', 'fast'), optional \cr
 'standard' : (default): Standard algorithm as described in [1, 2]. \cr
 'fast' : Version II algorithm as described in [2].}
 
 \item{sdist}{str c('normal', 'unif'), optional \cr
-Specifies the distribution to draw the random samples from.
+Specifies the sampling distribution. \cr
 'unif' : (default) Uniform `[-1,1]`. \cr
-'norm' : Normal `~N(0,1)`. \cr}
+'normal' : Normal `~N(0,1)`. \cr}
 
 \item{vt}{bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
 \eqn{TRUE} : returns the transposed right singular vectors \eqn{vt}. \cr
@@ -62,9 +62,9 @@ as \code{\link{svd}} returns \eqn{v}.}
 Compute the approximate low-rank singular value decomposition (SVD) of a rectangular matrix.
 }
 \details{
-The singular value decomposition plays a central role in data analysis and scientific computing.
-Randomized SVD (rSVD) is a very fast algorithm to compute the the approximate
-low-rank singular value decompositon (SVD) of a rectangular \eqn{(m,n)} matrix \eqn{A}
+The singular value decomposition (SVD) plays a central role in data analysis and scientific computing.
+Randomized SVD (rSVD) is a fast algorithm to compute the the approximate
+low-rank SVD of a rectangular \eqn{(m,n)} matrix \eqn{A}
 using a probablistic algorithm.
 Given a target rank \eqn{k << n}, \code{rsvd} factors the input matrix \eqn{A} as
 \eqn{A = U * diag(d) * V'}. The right singluar vectors are the columns of the
@@ -72,16 +72,16 @@ real or complex unitary matrix \eqn{U} . The left singular vectors are the colum
 of the real or complex unitary matrix \eqn{V}. The singular values \eqn{d} are
 non-negative and real numbers.
 
-The paramter \eqn{p} is a oversampling parameter to improve the approximation.
+The parameter \eqn{p} is a oversampling parameter to improve the approximation.
 A value between 2 and 10 is recommended and \eqn{p=5} is set as default.
 
-The paramter \eqn{q} specifies the number of normlized power iterations
+The parameter \eqn{q} specifies the number of normalized power iterations
 (subspace iterations) to reduce the approximation error. This is recommended
-if the the singular values decay slowly and in practice 1 or 2 iterations
-achive good results. However, computing power iterations is increasing the
+if the the singular values decay slowly. In practice 1 or 2 iterations
+archive good results, however, computing power iterations increases the
 computational time. The number of power iterations is set to \eqn{q=2} by default.
 
-If \eqn{k > (min(n,m)/1.5)}, a deterministic partial or trancated \code{\link{svd}}
+If \eqn{k > (min(n,m)/1.5)}, a deterministic partial or truncated \code{\link{svd}}
 algorithm might be faster.
 }
 \note{
