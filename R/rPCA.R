@@ -184,7 +184,7 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=
     if(k>n) k <- n
     if(k<1) stop("Target rank is not valid!")
 
-    A <- na.omit(A)
+    A <- stats::na.omit(A)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Center/Scale data
@@ -216,17 +216,22 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=
                       stop("Selected SVD algorithm is not supported!")
     )
 
-    if(whiten==TRUE){
-      svd_out$v <- svd_out$v / sqrt(svd_out$d)
-    }
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Explained variance and explained variance ratio
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    rpcaObj$eigvals <- sqrt( svd_out$d )
-    rpcaObj$sdev <- ( svd_out$d ) / sqrt( m-1 )
-    rpcaObj$var <- sum( apply( Re(A) , 2, var ) )
-    if(is.complex(A)) rpcaObj$var <- Re(rpcaObj$var + sum( apply( Im(A) , 2, var ) ))
+    rpcaObj$eigvals <- svd_out$d**2 / (m-1)
+    rpcaObj$sdev <- svd_out$d / sqrt( m-1 )
+    rpcaObj$var <- sum( apply( Re(A) , 2, stats::var ) )
+    if(is.complex(A)) rpcaObj$var <- Re(rpcaObj$var + sum( apply( Im(A) , 2, stats::var ) ))
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Whiten
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    if(whiten==TRUE){
+      svd_out$v <- svd_out$v * matrix( rep(sqrt(rpcaObj$eigvals), each=nrow(svd_out$v)), nrow(svd_out$v), ncol(svd_out$v))
+    }
+
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Add row and col names

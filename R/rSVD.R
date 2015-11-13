@@ -186,14 +186,14 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard
     #Generate a random sampling matrix O
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     O <- switch(sdist,
-                normal = matrix(rnorm(l*n), n, l),
-                unif = matrix(runif(l*n), n, l),
+                normal = matrix(stats::rnorm(l*n), n, l),
+                unif = matrix(stats::runif(l*n), n, l),
                 stop("Selected sampling distribution is not supported!"))
 
     if(isreal==FALSE) {
       O <- O + switch(sdist,
-                normal = 1i * matrix(rnorm(l*n), n, l),
-                unif = 1i * matrix(runif(l*n), n, l),
+                normal = 1i * matrix(stats::rnorm(l*n), n, l),
+                unif = 1i * matrix(stats::runif(l*n), n, l),
                 stop("Selected sampling distribution is not supported!"))
     }
 

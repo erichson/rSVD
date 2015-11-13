@@ -105,7 +105,7 @@ ggbiplot <- function( rpcObj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
 
   # Scale the radius of the correlation circle so that it corresponds to
   # a data ellipse for the standardized PC scores
-  r <- sqrt(qchisq(circle.prob, df = 2)) * prod(colMeans(df.u^2))^(1/4)
+  r <- sqrt(stats::qchisq(circle.prob, df = 2)) * prod(colMeans(df.u^2))^(1/4)
 
   # Scale directions
   v.scale <- rowSums(v^2)
@@ -208,9 +208,9 @@ ggbiplot <- function( rpcObj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
       if(nrow(x) <= 2) {
         return(NULL)
       }
-      sigma <- var(cbind(x$xvar, x$yvar))
+      sigma <- stats::var(cbind(x$xvar, x$yvar))
       mu <- c(mean(x$xvar), mean(x$yvar))
-      ed <- sqrt(qchisq(ellipse.prob, df = 2))
+      ed <- sqrt(stats::qchisq(ellipse.prob, df = 2))
       data.frame(sweep(circle %*% chol(sigma) * ed, 2, mu, FUN = '+'),
                  groups = x$groups[1])
     })

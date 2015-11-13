@@ -46,7 +46,7 @@ plot.rpca <- function(x, type = c('var', 'ratio', 'cum', 'eigenvals'), ... ) {
 
   df <- data.frame(PC = 1:length(x$sdev), y = y)
 
-  plot.default(df$PC, df$y, xlab ='Principal components number', ylab=y.label,
+  graphics::plot.default(df$PC, df$y, xlab ='Principal components number', ylab=y.label,
                type = 'b', pch=20, col='red')
 }
 
