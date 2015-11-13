@@ -73,6 +73,7 @@ plot.rpca <- function(x, type = c('var', 'ratio', 'cum', 'eigenvals'), ... ) {
 
 #'@export
 ggscreeplot <- function(rpcaObj, type = c('var', 'ratio', 'cum', 'eigenvals')) {
+
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("The package 'ggplot2' is needed for this function to work. Please install it.",
          call. = FALSE)
@@ -133,6 +134,7 @@ ggscreeplot <- function(rpcaObj, type = c('var', 'ratio', 'cum', 'eigenvals')) {
 
 #' @export
 ggcorplot <- function( rpcaObj, pcs=c(1,2) ) {
+
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("The package 'ggplot2' is needed for this function to work. Please install it.",
          call. = FALSE)
