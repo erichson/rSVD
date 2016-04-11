@@ -211,13 +211,13 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if( q > 0 ) {
         for( i in 1:q) {
-          if( ((2*i-2) %% q) == 0 ) {
+          if( ((2*i-2) %% 1) == 0 ) {
             Y <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
           }
 
           Z = crossprod_help( A , Y )
 
-          if( ((2*i-1) %% q) == 0 ) {
+          if( ((2*i-1) %% 1) == 0 ) {
             Z <- qr.Q( qr(Z, complete = FALSE) , complete = FALSE )
           }
 
