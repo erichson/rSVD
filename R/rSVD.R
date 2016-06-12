@@ -1,4 +1,4 @@
-#' @title  Randomized Singular Value Decomposition .
+#' @title  Randomized Singular Value Decomposition (rSVD).
 #
 #' @description Compute the approximate low-rank singular value decomposition (SVD) of a rectangular matrix.
 #
@@ -50,15 +50,23 @@
 #'                'standard' : (default): Standard algorithm as described in [1, 2]. \cr
 #'                'fast' : Version II algorithm as described in [2].
 #'
-#' @param sdist  str c('normal', 'unif'), optional \cr
+#' @param sdist  str c('normal', 'unif', 'spixel'), optional \cr
 #'               Specifies the sampling distribution. \cr
 #'               'unif' : (default) Uniform `[-1,1]`. \cr
 #'               'normal' : Normal `~N(0,1)`. \cr
+#'               'col' : Random column sampling. \cr
 #'
 #' @param vt      bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
 #'                \eqn{TRUE} : returns the transposed right singular vectors \eqn{vt}. \cr
 #'                \eqn{FALSE} : (default) returns the right singular vectors as \eqn{v}, this is the format
 #'                as \code{\link{svd}} returns \eqn{v}.
+#'
+#' @param autoRank bool, optional \cr
+#'                 if \eqn{autoRank=TRUE} an auto-rank range finder is used to determine the optimal \eqn{k << min(m,n)}
+#'                 so that the tolarance paramter \eqn{tol} is satisfied. Here the parameter \eqn{k} determins the block size.
+#'
+#' @param tol      real, optional \cr
+#'                 tolerance paramter for the auto rank range finder.
 #'
 #' @param ............. .
 #'
@@ -110,10 +118,6 @@
 #'A <- A %*% t(A)
 #'A <- A[,1:n]
 #'
-#'#Randomized SVD, no low-rank approximation
-#'s <- rsvd(A)
-#'Atilde = s$u %*% diag(s$d) %*% t(s$v)
-#'100 * norm( A - Atilde, 'F') / norm( Atilde,'F') #Percentage reconstruction error << 1e-8
 #'
 #'#Randomized SVD, low-rank approximation k=3
 #'s <- rsvd(A, k=3)
@@ -125,18 +129,19 @@
 #'Atilde = s$u %*% diag(s$d) %*% t(s$v)
 #'100 * norm( A - Atilde, 'F') / norm( Atilde,'F') #Percentage reconstruction error < 3.5%
 #'
-#'
 
 #' @export
-rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) UseMethod("rsvd")
+rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, method='standard', sdist="unif", vt=FALSE , autoRank=FALSE, tol=1e-3) UseMethod("rsvd")
 
 #' @export
-rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard', sdist="unif", vt=FALSE) {
+rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, method='standard', sdist="unif", vt=FALSE ,  autoRank=FALSE, tol=1e-3) {
     #*************************************************************************
     #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
     #***                              <2015>                               ***
     #***                       License: BSD 3 clause                       ***
     #*************************************************************************
+
+    A <- as.matrix(A)
 
     #Dim of input matrix
     m <- nrow(A)
@@ -154,6 +159,7 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard
     #Set target rank
     if(is.null(k)) k=n
     if(k>n) k <- n
+    if(is.character(k)) stop("Target rank is not valid!")
     if(k<1) stop("Target rank is not valid!")
 
     #Set oversampling parameter
@@ -188,26 +194,68 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard
     O <- switch(sdist,
                 normal = matrix(stats::rnorm(l*n), n, l),
                 unif = matrix(stats::runif(l*n), n, l),
+                col = sample.int(n, size = l),
                 stop("Selected sampling distribution is not supported!"))
 
     if(isreal==FALSE) {
       O <- O + switch(sdist,
-                normal = 1i * matrix(stats::rnorm(l*n), n, l),
-                unif = 1i * matrix(stats::runif(l*n), n, l),
-                stop("Selected sampling distribution is not supported!"))
+                      normal = 1i * matrix(stats::rnorm(l*n), n, l),
+                      unif = 1i * matrix(stats::runif(l*n), n, l),
+                      col = NULL,
+                      stop("Selected sampling distribution is not supported!"))
     }
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Build sample matrix Y : Y = A * O
     #Note: Y should approximate the range of A
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Y <- A %*% O
+    if(sdist=='col'){
+      Y = A[,O]
+    }else{
+      Y <- A %*% O
+    }
     remove(O)
+
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Auto-rank range finder
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    if(autoRank==TRUE) {
+        normA <- norm(A, type='F')
+        repeat{
+          Q <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
+          err <- norm( (Q %*% H(Q) %*% A) - A, type='F') / normA
+
+          #print(paste0('autoRank = ', ncol(Q) ))
+          #print(paste0('Fro. error = ', err ))
+          if(err<tol){
+            k <- ncol(Q)
+            break
+          }
+
+          #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          #Generate a random sampling matrix O
+          #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          O <- switch(sdist,
+                      normal = matrix(stats::rnorm(l*n), n, l),
+                      unif = matrix(stats::runif(l*n), n, l),
+                      stop("Selected sampling distribution is not supported!"))
+
+          if(isreal==FALSE) {
+            O <- O + switch(sdist,
+                            normal = 1i * matrix(stats::rnorm(l*n), n, l),
+                            unif = 1i * matrix(stats::runif(l*n), n, l),
+                            stop("Selected sampling distribution is not supported!"))
+          }
+
+          Y <- cbind(Y, A %*% O )
+          remove(O)
+        } # End repeat
+    } # End autoRank
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Orthogonalize Y using economic QR decomposition: Y=QR
     #If q > 0 perfrom q subspace iterations
-    #Note: check_finite=False may give a performance gain
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if( q > 0 ) {
         for( i in 1:q) {
@@ -226,7 +274,7 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=5, q=2, method='standard
         }#End for
     }#End if
 
-    Q <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
+    Q <- qr.Q( qr(Y) , complete = FALSE )
     remove(Y)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

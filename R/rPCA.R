@@ -1,6 +1,6 @@
-#' @title  Randomized principal component analysis (PCA).
+#' @title  Randomized principal component analysis (rPCA).
 #
-#' @description Performs an approximated principal components analysis using randomized singular value decomposition.
+#' @description Principal components analysis using randomized singular value decomposition.
 #
 #' @details
 #' Principal component analysis is a linear dimensionality reduction technique,
@@ -52,10 +52,9 @@
 #'                a logical value (\eqn{FALSE} by default) indicating whether the rotated variables / scores
 #'                should be returned.
 #'
-#' @param whiten  bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
-#'                When \eqn{TRUE} (by default \eqn{FALSE}) the eigenvectors
-#'                are divided by the the square root of the singular values \eqn{W = W * diag(1/sqrt(s))}.
-#'                Whitening can sometimes improve the predictive accuracy.
+#' @param loading   bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
+#'                  When \eqn{TRUE} (by default \eqn{FALSE}) the eigenvectors
+#'                  are unit scaled by the square root of the eigenvalues \eqn{W = W * diag(sqrt(eigvals))}.
 #'
 #' @param svdalg  str c('auto', 'rsvd', 'svd'), optional \cr
 #'                Determines which algorithm should be used for computing the singular value decomposition.
@@ -74,9 +73,14 @@
 #'
 #' @return \code{rpca} returns a list with class \eqn{rpca} containing the following components:
 #'    \item{rotation}{  array_like \cr
-#'                      the matrix containing the rotation (eigenvectors),
-#'                      i.e., the variable loadings; array with dimensions \eqn{(n, k)}.
+#'                      matrix containing the rotation (eigenvectors),
+#'                      or the variable loadings if \eqn{loadings=TRUE}; array with dimensions \eqn{(n, k)}.
 #'    }
+#'    \item{loading}{  array_like \cr
+#'                      matrix containing the loadings (scaled eigenvectors),
+#'                      if \eqn{loadings=TRUE}; array with dimensions \eqn{(n, k)}.
+#'    }
+#'
 #'    \item{eigvals}{  array_like \cr
 #'                     the eigenvalues; 1-d array of length \eqn{k}.
 #'    }
@@ -124,14 +128,14 @@
 #'#
 #'# Perform rPCA and compute all PCs, similar to \code{\link{prcomp}}
 #'#
-#'iris.rpca <- rpca(log.iris, retx=TRUE,  svdalg = 'rsvd')
+#'iris.rpca <- rpca(log.iris, retx=TRUE)
 #'summary(iris.rpca) # Summary
-#'print(iris.rpca) # Prints the loadings/ rotations
+#'print(iris.rpca) # Prints the rotations
 #'
 #'# You can compare the results with prcomp
 #'# iris.pca <- prcomp(log.iris, center = TRUE, scale. = TRUE)
 #'# summary(iris.pca) # Summary
-#'# print(iris.pca) # Prints the loadings/ rotations
+#'# print(iris.pca) # Prints the rotations
 #'
 #'#
 #'# Plot functions
@@ -149,7 +153,7 @@
 #'#
 #'iris.rpca <- rpca(log.iris, k=2,  svdalg = 'rsvd')
 #'summary(iris.rpca) # Summary
-#'print(iris.rpca) # Prints the loadings/ rotations
+#'print(iris.rpca) # Prints the rotations
 #'
 #'#
 #'# Compute the scores of new observations
@@ -159,16 +163,17 @@
 
 
 #' @export
-rpca <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=FALSE,  svdalg='auto', p=5, q=2, ...) UseMethod("rpca")
+rpca <- function(A, k=NULL, center=TRUE, scale=TRUE, loading=FALSE, retx=FALSE,  svdalg='auto', p=5, q=1, ...) UseMethod("rpca")
 
 #' @export
-rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=FALSE,  svdalg='auto', p=5, q=2, ...) {
+rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, loading=FALSE, retx=FALSE,  svdalg='auto', p=5, q=1, ...) {
     #*************************************************************************
     #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
     #***                              <2015>                               ***
     #***                       License: BSD 3 clause                       ***
     #*************************************************************************
     rpcaObj = list(rotation = NULL,
+                   loading = NULL,
                    eigvals = NULL,
                    sdev = NULL,
                    var = NULL,
@@ -220,25 +225,24 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, whiten=FALSE, retx=
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Explained variance and explained variance ratio
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    rpcaObj$singvals <- svd_out$d
     rpcaObj$eigvals <- svd_out$d**2 / (m-1)
     rpcaObj$sdev <- svd_out$d / sqrt( m-1 )
     rpcaObj$var <- sum( apply( Re(A) , 2, stats::var ) )
     if(is.complex(A)) rpcaObj$var <- Re(rpcaObj$var + sum( apply( Im(A) , 2, stats::var ) ))
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Whiten
+    # loadings
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if(whiten==TRUE){
-      svd_out$v <- svd_out$v * matrix( rep(sqrt(rpcaObj$eigvals), each=nrow(svd_out$v)), nrow(svd_out$v), ncol(svd_out$v))
+    if(loading==TRUE){
+      rpcaObj$loading <- svd_out$v %*% diag(rpcaObj$eigvals**0.5)
     }
-
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Add row and col names
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     rownames(svd_out$v) <- colnames(A)
     colnames(svd_out$v) <- paste(rep('PC', length(svd_out$d)), 1:length(svd_out$d), sep = "")
-
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Compute rotated data
@@ -278,11 +282,11 @@ summary.rpca <- function( object , ... )
   explained_variance_ratio = variance / object$var
   cum_explained_variance_ratio = cumsum( explained_variance_ratio )
 
-  x <- t(data.frame( var = variance,
-                              sdev = object$sdev,
-                              prob = explained_variance_ratio,
-                              cum = cum_explained_variance_ratio,
-                              eigv = object$eigvals))
+  x <- t(data.frame( var = round(variance, 3),
+                              sdev = round(object$sdev, 3),
+                              prob = round(explained_variance_ratio, 3),
+                              cum = round(cum_explained_variance_ratio, 3),
+                              eigv = round(object$eigvals, 3)))
 
   rownames( x ) <- c( 'Explained variance',
                       'Standard deviations',
