@@ -2,10 +2,11 @@
 % Please edit documentation in R/rSVD.R
 \name{rsvd}
 \alias{rsvd}
-\title{Randomized Singular Value Decomposition .}
+\title{Randomized Singular Value Decomposition (rSVD).}
 \usage{
-rsvd(A, k = NULL, nu = NULL, nv = NULL, p = 5, q = 2,
-  method = "standard", sdist = "unif", vt = FALSE)
+rsvd(A, k = NULL, nu = NULL, nv = NULL, p = 10, q = 1,
+  method = "standard", sdist = "unif", vt = FALSE, autoRank = FALSE,
+  tol = 0.001)
 }
 \arguments{
 \item{A}{array_like \cr
@@ -23,24 +24,32 @@ the number of right singular vectors to be computed. This must be between \eqn{0
 and \eqn{k}.}
 
 \item{p}{int, optional \cr
-oversampling parameter for (default \eqn{p=5}).}
+oversampling parameter for (default \eqn{p=10}).}
 
 \item{q}{int, optional \cr
-number of power iterations (default \eqn{q=2}).}
+number of power iterations (default \eqn{q=1}).}
 
 \item{method}{str c('standard', 'fast'), optional \cr
 'standard' : (default): Standard algorithm as described in [1, 2]. \cr
 'fast' : Version II algorithm as described in [2].}
 
-\item{sdist}{str c('normal', 'unif'), optional \cr
+\item{sdist}{str c('normal', 'unif', 'spixel'), optional \cr
 Specifies the sampling distribution. \cr
 'unif' : (default) Uniform `[-1,1]`. \cr
-'normal' : Normal `~N(0,1)`. \cr}
+'normal' : Normal `~N(0,1)`. \cr
+'col' : Random column sampling. \cr}
 
 \item{vt}{bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
 \eqn{TRUE} : returns the transposed right singular vectors \eqn{vt}. \cr
 \eqn{FALSE} : (default) returns the right singular vectors as \eqn{v}, this is the format
 as \code{\link{svd}} returns \eqn{v}.}
+
+\item{autoRank}{bool, optional \cr
+if \eqn{autoRank=TRUE} an auto-rank range finder is used to determine the optimal \eqn{k << min(m,n)}
+so that the tolarance paramter \eqn{tol} is satisfied. Here the parameter \eqn{k} determins the block size.}
+
+\item{tol}{real, optional \cr
+tolerance paramter for the auto rank range finder.}
 
 \item{.............}{.}
 }
@@ -102,10 +111,6 @@ A <- matrix(runif(m*k), m, k)
 A <- A \%*\% t(A)
 A <- A[,1:n]
 
-#Randomized SVD, no low-rank approximation
-s <- rsvd(A)
-Atilde = s$u \%*\% diag(s$d) \%*\% t(s$v)
-100 * norm( A - Atilde, 'F') / norm( Atilde,'F') #Percentage reconstruction error << 1e-8
 
 #Randomized SVD, low-rank approximation k=3
 s <- rsvd(A, k=3)
@@ -116,7 +121,6 @@ Atilde = s$u \%*\% diag(s$d) \%*\% t(s$v)
 s <- rsvd(A, k=2)
 Atilde = s$u \%*\% diag(s$d) \%*\% t(s$v)
 100 * norm( A - Atilde, 'F') / norm( Atilde,'F') #Percentage reconstruction error < 3.5\%
-
 
 }
 \author{
