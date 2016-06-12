@@ -41,10 +41,10 @@
 #'                 and \eqn{k}.
 #'
 #' @param p       int, optional \cr
-#'                oversampling parameter for (default \eqn{p=5}).
+#'                oversampling parameter for (default \eqn{p=10}).
 #'
 #' @param q       int, optional \cr
-#'                number of power iterations (default \eqn{q=2}).
+#'                number of power iterations (default \eqn{q=1}).
 #'
 #' @param method  str c('standard', 'fast'), optional \cr
 #'                'standard' : (default): Standard algorithm as described in [1, 2]. \cr

@@ -62,10 +62,10 @@
 #'                depending on the number of principle components. If \eqn{k < min(n,m)/1.5} randomized svd is used.
 #'
 #' @param p       int, optional \cr
-#'                oversampling parameter for \eqn{rsvd}  (default \eqn{p=5}), see \code{\link{rsvd}}.
+#'                oversampling parameter for \eqn{rsvd}  (default \eqn{p=10}), see \code{\link{rsvd}}.
 #'
 #' @param q       int, optional \cr
-#'                number of power iterations  for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.
+#'                number of power iterations  for \eqn{rsvd} (default \eqn{q=1}), see \code{\link{rsvd}}.
 #'
 #' @param ...     arguments passed to or from other methods, see \code{\link{rsvd}}.
 #'
