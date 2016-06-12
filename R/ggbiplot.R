@@ -10,66 +10,31 @@
 #library(grid)
 
 
-#
-# This is a modified version of ggbiplot.r for rPCA
-#
-#  ggbiplot.r
-#
-#  Copyright 2011 Vincent Q. Vu.
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; either version 2
-#  of the License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-
 #' Biplot for \code{rPCA} using ggplot2
 #'
-#' @param rpcObj          object containing the \code{sdev} component,
-#' @param pcs             an array with two values indicating which two PCs should be plotted,
-#'                        by default the first two PCs are used, e.g., \eqn{c(1,2)}
-#' @param scale           covariance biplot (scale = 1), form biplot (scale = 0). When scale = 1, the inner product between the variables approximates the covariance and the distance between the points approximates the Mahalanobis distance.
-#' @param obs.scale       scale factor to apply to observations
-#' @param var.scale       scale factor to apply to variables
-#' @param pc.biplot       for compatibility with biplot.princomp()
-#' @param groups          optional factor variable indicating the groups that the observations belong to. If provided the points will be colored according to groups
-#' @param ellipse         draw a normal data ellipse for each group
-#' @param ellipse.prob    size of the ellipse in Normal probability
-#' @param labels          optional vector of labels for the observations
-#' @param labels.size     size of the text used for the labels
-#' @param alpha           alpha transparency value for the points (0 = transparent, 1 = opaque)
-#' @param circle          draw a correlation circle (only applies when prcomp was called with scale = TRUE and when var.scale = 1)
-#' @param circle.prob     size of the circe in Normal probability
-#' @param var.axes        draw arrows for the variables
-#' @param varname.size    size of the text for variable names
-#' @param varname.adjust  adjustment factor the placement of the variable names, >= 1 means farther from the arrow
-#' @param varname.abbrev  whether or not to abbreviate the variable names
-#' @param ...     arguments passed to or from other methods, see \code{\link[ggplot2]{ggplot}}.
+#' @param  rpcaObj          object containing the \code{sdev} component, such as that returned
+#'                          by \code{rpca}
+#' @param  pcs              array_like \cr
+#'                          an array with two values indicating which two PCs should be plotted,
+#'                          by default the first two PCs are used, e.g., \eqn{c(1,2)}. \cr
+#' @param  groups           optional, factor \cr
+#'                          factor indicating groups
+#' @param  ellipse          draw a 1sd data ellipse for each group
+#' @param  alpha.ellipse    alpha transparency for ellipse
+#' @param  loadings         draw arrows for the variables
+#' @parm   labels           label variables
+#' @param  varname.size     size of the text for variable names
+#' @param  ...              arguments passed to or from other methods, see \code{\link[ggplot2]{ggplot}}.
 #'
 #' @seealso \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'
-#' @author The original implementation of \code{ggbiplot} was written by Vincent Q. Vu (2011).
+#' @author N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
 #' @examples
-#' #See ?rsvd
+#' #See ?rpca
 
 #' @export
-ggbiplot <- function( rpcObj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
-                     obs.scale = 1 - scale, var.scale = scale,
-                     groups = NULL, ellipse = TRUE, ellipse.prob = 0.68,
-                     labels = NULL, labels.size = 3, alpha = 1,
-                     var.axes = TRUE,
-                     circle = TRUE, circle.prob = 0.69,
-                     varname.size = 3, varname.adjust = 1.5,
-                     varname.abbrev = FALSE, ...)
+ggbiplot <- function( rpcaObj, pcs = c(1,2), groups = NULL, ellipse = TRUE, alpha.ellipse=0.2,
+                      loadings = TRUE, labels=TRUE, ... )
 {
 
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -77,156 +42,115 @@ ggbiplot <- function( rpcObj, pcs = c(1,2), scale = 1, pc.biplot = TRUE,
          call. = FALSE)
   }
 
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Check selected pcs
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  stopifnot(length(pcs) == 2)
+  if(max(pcs) > ncol(rpcaObj$rotation)) stop("Selected PC is not valid.")
+  if(min(pcs) < 1) stop("Selected PC is not valid.")
 
-  choices = pcs
-  stopifnot(length(choices) == 2)
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # dimensions
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  n = nrow(rpcaObj$x)
+  p = nrow(rpcaObj$rotation)
 
-  # Get values from the rpca object
-    nobs.factor <- sqrt(nrow(rpcObj$x) - 1)
-    d <- rpcObj$sdev
-    u <- sweep(rpcObj$x, 2, 1 / (d * nobs.factor), FUN = '*')
-    v <- rpcObj$rotation
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Label PCs
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  variance = rpcaObj$sdev**2
+  explained_variance_ratio = round(variance / rpcaObj$var,3) * 100
+  PC1 = paste("PC", pcs[1], "(", explained_variance_ratio[pcs[1]]  , "% explained var.)", sep="")
+  PC2 = paste("PC", pcs[2], "(", explained_variance_ratio[pcs[2]]  , "% explained var.)", sep="")
 
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Scale principal component scores
+  # No scaling ?
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Z1 = rpcaObj$x[, pcs[1]] #* (rpcaObj$eigvals**0.5)[pcs[1]]
+  Z2 = rpcaObj$x[, pcs[2]] #* (rpcaObj$eigvals**0.5)[pcs[2]]
 
-  # Scores
-  choices <- pmin(choices, ncol(u))
-  df.u <- as.data.frame(sweep(u[,choices], 2, d[choices]^obs.scale, FUN='*'))
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Scale prinicipal directions i.e., loadings
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  dfrotation = rpcaObj$rotation %*%  diag(rpcaObj$eigvals**0.5)
+  dfrotation = rpcaObj$rotation %*%  diag(rpcaObj$eigvals**0.5)
 
-  # Directions
-  v <- sweep(v, 2, d^var.scale, FUN='*')
-  df.v <- as.data.frame(v[, choices])
+  # Generate circle
+  #theta <- c(seq(-pi, pi, length = 360))
+  #circle <- data.frame(x = cos(theta), y = sin(theta))
 
-  names(df.u) <- c('xvar', 'yvar')
-  names(df.v) <- names(df.u)
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Create data frame
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  dfScores <- data.frame(scores=cbind(Z1,Z2))
+  colnames(dfScores) <- c( 'a', 'b')
 
-  if(pc.biplot) {
-    df.u <- df.u * nobs.factor
-  }
+  dfrotation <- data.frame(rotation=dfrotation)
+  rownames(dfrotation) <- rownames(rpcaObj$rotation)
+  colnames(dfrotation) <- c( 'a', 'b')
+  dfrotation$"varName" <- rownames(rpcaObj$rotation)
 
-  # Scale the radius of the correlation circle so that it corresponds to
-  # a data ellipse for the standardized PC scores
-  r <- sqrt(stats::qchisq(circle.prob, df = 2)) * prod(colMeans(df.u^2))^(1/4)
-
-  # Scale directions
-  v.scale <- rowSums(v^2)
-  df.v <- r * df.v / sqrt(max(v.scale))
-
-  # Change the labels for the axes
-  if(obs.scale == 0) {
-    u.axis.labs <- paste('standardized PC', choices, sep='')
-  } else {
-    u.axis.labs <- paste('PC', choices, sep='')
-  }
-
-  # Append the proportion of explained variance to the axis labels
-  u.axis.labs <- paste(u.axis.labs,
-                       sprintf('(%0.1f%% explained var.)',
-                               100 * rpcObj$sdev[choices]^2/sum(rpcObj$sdev^2)))
-
-  # Score Labels
-  if(!is.null(labels)) {
-    df.u$labels <- labels
-  }
-
-  # Grouping variable
-  if(!is.null(groups)) {
-    df.u$groups <- groups
-  }
-
-  # Variable Names
-  if(varname.abbrev) {
-    df.v$varname <- abbreviate(rownames(v))
-  } else {
-    df.v$varname <- rownames(v)
-  }
-
-  # Variables for text label placement
-  df.v$angle <- with(df.v, (180/pi) * atan(yvar / xvar))
-  df.v$hjust = with(df.v, (1 - varname.adjust * sign(xvar)) / 2)
-
-
-
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   #Workaround for CRAN: Nulling
-  xvar <- NULL # Setting the variables to NULL first
-  yvar <- NULL # Setting the variables to NULL first
-  muted <- NULL # Setting the variables to NULL first
-  varname <- NULL # Setting the variables to NULL first
-  angle <- NULL # Setting the variables to NULL first
-  hjust <- NULL # Setting the variables to NULL first
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   x <- NULL # Setting the variables to NULL first
   y <- NULL # Setting the variables to NULL first
   a <- NULL # Setting the variables to NULL first
   b <- NULL # Setting the variables to NULL first
+  c <- NULL # Setting the variables to NULL first
 
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Create ggplot2:: ggplot
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Circle
+  #g <- ggplot2::ggplot( circle , ggplot2::aes( x , y)  )  +
+  #     ggplot2::geom_path( size=1, colour="#9400d3"  )
 
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Scores
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      if(is.null(groups)) {
+        dfScores$"Class" <- 'Observations'
+      } else{
+        dfScores$"Class" <- groups
 
-
-  # Base plot
-  g <- ggplot2::ggplot(data = df.u, ggplot2::aes(x = xvar, y = yvar)) +
-    ggplot2::xlab(u.axis.labs[1]) + ggplot2::ylab(u.axis.labs[2]) + ggplot2::coord_equal()
-
-  if(var.axes) {
-    # Draw circle
-    if(circle)
-    {
-      theta <- c(seq(-pi, pi, length = 50), seq(pi, -pi, length = 50))
-      circle <- data.frame(xvar = r * cos(theta), yvar = r * sin(theta))
-      g <- g + ggplot2::geom_path(data = circle, color = muted('white'),
-                         size = 1/2, alpha = 1/3)
-    }
-
-    # Draw directions
-    g <- g +
-      ggplot2::geom_segment(data = df.v,
-                  ggplot2::aes(x = 0, y = 0, xend = xvar, yend = yvar),
-                   arrow = grid::arrow(length = grid::unit(1/2, 'picas')),
-                   color = scales::muted('red'))
-  }
-
-  # Draw either labels or points
-  if(!is.null(df.u$labels)) {
-    if(!is.null(df.u$groups)) {
-      g <- g + ggplot2::geom_text(ggplot2::aes(label = labels, color = groups),
-                         size = labels.size)
-    } else {
-      g <- g + ggplot2::geom_text(ggplot2::aes(label = labels), size = labels.size)
-    }
-  } else {
-    if(!is.null(df.u$groups)) {
-      g <- g + ggplot2::geom_point(ggplot2::aes(color = groups), alpha = alpha)
-    } else {
-      g <- g + ggplot2::geom_point(alpha = alpha)
-    }
-  }
-
-  # Overlay a concentration ellipse if there are groups
-  if(!is.null(df.u$groups) && ellipse) {
-    theta <- c(seq(-pi, pi, length = 50), seq(pi, -pi, length = 50))
-    circle <- cbind(cos(theta), sin(theta))
-
-    ell <- plyr::ddply(df.u, 'groups', function(x) {
-      if(nrow(x) <= 2) {
-        return(NULL)
       }
-      sigma <- stats::var(cbind(x$xvar, x$yvar))
-      mu <- c(mean(x$xvar), mean(x$yvar))
-      ed <- sqrt(stats::qchisq(ellipse.prob, df = 2))
-      data.frame(sweep(circle %*% chol(sigma) * ed, 2, mu, FUN = '+'),
-                 groups = x$groups[1])
-    })
-    names(ell)[1:2] <- c('xvar', 'yvar')
-    g <- g + ggplot2::geom_path(data = ell, ggplot2::aes(color = groups, group = groups))
-  }
 
-  # Label the variable axes
-  if(var.axes) {
-    g <- g +
-      ggplot2::geom_text(data = df.v,
-                      ggplot2::aes(label = varname, x = xvar, y = yvar,
-                    angle = angle, hjust = hjust),
-                color = 'darkred', size = varname.size)
-  }
+      g <- ggplot(data=dfScores, ggplot2::aes(x = a, y = b, colour = Class )) +
+           ggplot2::geom_point(size = 2) +
+           ggplot2::theme(legend.position = "none")
 
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # stat_ellipse
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      if(is.null(groups) == 0 && ellipse==TRUE){
+      g <- g + ggplot2::stat_ellipse( geom = "polygon", alpha = alpha.ellipse,
+                               ggplot2::aes(fill = Class))
+      }
 
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Principal component directions
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      if(loadings==TRUE){
+        g <- g +
+          ggplot2::geom_segment(data = dfrotation,
+                                ggplot2::aes(x = 0, y = 0, xend = a, yend = b),
+                                arrow = grid::arrow(length = grid::unit(1, 'picas')),
+                                color = 'black',  size = 1.3)
+      }
+
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Label the variable axes
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      if(labels==TRUE) {
+        g <- g +
+          ggplot2::geom_text(data = dfrotation,
+                             ggplot2::aes(label = varName, x = a, y = b,
+                                          angle = 1, hjust = 1, vjust = 1),
+                             color = 'black', size = 5)
+      }
+  # g <- g + guides(colour=FALSE)
+  g <- g + ggplot2::labs(x = noquote(PC1), y = noquote(PC2)) + ggplot2::guides(colour=FALSE)
   return(g)
 }

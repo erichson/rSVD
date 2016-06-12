@@ -38,15 +38,15 @@ plot.rpca <- function(x, type = c('var', 'ratio', 'cum', 'eigenvals'), ... ) {
 
   y.label <- switch(type,
                     var = 'Explained variance',
-                    ratio = 'Relative explained variance',
-                    cum = 'Cummulative proportion of explained variance',
+                    ratio = 'Proportion of variance',
+                    cum = 'Cummulative proportion',
                     eigenvals = 'Eigenvalues',
                     stop("Selected plot option is not supported!")
   )
 
   df <- data.frame(PC = 1:length(x$sdev), y = y)
 
-  graphics::plot.default(df$PC, df$y, xlab ='Principal components number', ylab=y.label,
+  graphics::plot.default(df$PC, df$y, xlab ='PCs', ylab=y.label,
                type = 'b', pch=20, col='red')
 }
 
@@ -93,8 +93,8 @@ ggscreeplot <- function(rpcaObj, type = c('var', 'ratio', 'cum', 'eigenvals')) {
 
   y.label <- switch(type,
                     var = 'Explained variance',
-                    ratio = 'Relative explained variance',
-                    cum = 'Cummulative proportion of explained variance',
+                    ratio = 'Proportion of variance',
+                    cum = 'Cummulative proportion',
                     eigenvals = 'Eigenvalues',
                     stop("Selected plot option is not supported!")
                     )
@@ -106,7 +106,7 @@ ggscreeplot <- function(rpcaObj, type = c('var', 'ratio', 'cum', 'eigenvals')) {
 
 
   ggplot2::ggplot(data = df, ggplot2::aes(x = PC, y = y, color = 'red') ) +
-    ggplot2::xlab('Principal components number') + ggplot2::ylab( y.label ) +
+    ggplot2::xlab('PCs') + ggplot2::ylab( y.label ) +
     ggplot2::geom_point(size=5) + ggplot2::geom_line(size=1.2) + ggplot2::guides(colour=FALSE)
 }
 
@@ -146,7 +146,6 @@ ggcorplot <- function( rpcaObj, pcs=c(1,2) ) {
   if(max(pcs) > ncol(rpcaObj$rotation)) stop("Selected PC is not valid.")
   if(min(pcs) < 1) stop("Selected PC is not valid.")
 
-
   # Select PCs
   PC1 = paste("PC", pcs[1], sep="")
   PC2 = paste("PC", pcs[2], sep="")
@@ -166,9 +165,9 @@ ggcorplot <- function( rpcaObj, pcs=c(1,2) ) {
   b <- NULL # Setting the variables to NULL first
 
   # Create ggplot2:: ggplot
-  g <- ggplot2::ggplot( circle , ggplot2::aes( x , y)  )  + ggplot2::geom_path( size=1, colour="red"  )
-  g <- g + ggplot2::geom_text(data=df, mapping = ggplot2::aes(x = a, y = b, label = labels, colour = labels ) ) +
-    ggplot2::coord_fixed(ratio=1) + ggplot2::labs(x = noquote(PC1), y = noquote(PC2)) + ggplot2::guides(colour=FALSE)
+  g <- ggplot2::ggplot( circle , ggplot2::aes( x , y)  )  + ggplot2::geom_path( size=1, colour="#9400d3"  )
+  g <- g + ggplot2::geom_point(data=df, size = 6,  mapping = ggplot2::aes(x = a, y = b, label = labels, colour = labels ) ) +
+    ggplot2::coord_fixed(ratio=1) + ggplot2::labs(x = noquote(PC1), y = noquote(PC2)) + ggplot2::guides(colour=guide_legend(title=NULL))
 
   return( g )
 }
