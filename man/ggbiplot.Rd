@@ -4,60 +4,35 @@
 \alias{ggbiplot}
 \title{Biplot for \code{rPCA} using ggplot2}
 \usage{
-ggbiplot(rpcObj, pcs = c(1, 2), scale = 1, pc.biplot = TRUE,
-  obs.scale = 1 - scale, var.scale = scale, groups = NULL,
-  ellipse = TRUE, ellipse.prob = 0.68, labels = NULL, labels.size = 3,
-  alpha = 1, var.axes = TRUE, circle = TRUE, circle.prob = 0.69,
-  varname.size = 3, varname.adjust = 1.5, varname.abbrev = FALSE, ...)
+ggbiplot(rpcaObj, pcs = c(1, 2), groups = NULL, ellipse = TRUE,
+  alpha.ellipse = 0.2, loadings = TRUE, labels = TRUE, ...)
 }
 \arguments{
-\item{rpcObj}{object containing the \code{sdev} component,}
+\item{rpcaObj}{object containing the \code{sdev} component, such as that returned
+by \code{rpca}}
 
-\item{pcs}{an array with two values indicating which two PCs should be plotted,
-by default the first two PCs are used, e.g., \eqn{c(1,2)}}
+\item{pcs}{array_like \cr
+an array with two values indicating which two PCs should be plotted,
+by default the first two PCs are used, e.g., \eqn{c(1,2)}. \cr}
 
-\item{scale}{covariance biplot (scale = 1), form biplot (scale = 0). When scale = 1, the inner product between the variables approximates the covariance and the distance between the points approximates the Mahalanobis distance.}
+\item{groups}{optional, factor \cr
+factor indicating groups}
 
-\item{pc.biplot}{for compatibility with biplot.princomp()}
+\item{ellipse}{draw a 1sd data ellipse for each group}
 
-\item{obs.scale}{scale factor to apply to observations}
+\item{alpha.ellipse}{alpha transparency for ellipse}
 
-\item{var.scale}{scale factor to apply to variables}
-
-\item{groups}{optional factor variable indicating the groups that the observations belong to. If provided the points will be colored according to groups}
-
-\item{ellipse}{draw a normal data ellipse for each group}
-
-\item{ellipse.prob}{size of the ellipse in Normal probability}
-
-\item{labels}{optional vector of labels for the observations}
-
-\item{labels.size}{size of the text used for the labels}
-
-\item{alpha}{alpha transparency value for the points (0 = transparent, 1 = opaque)}
-
-\item{var.axes}{draw arrows for the variables}
-
-\item{circle}{draw a correlation circle (only applies when prcomp was called with scale = TRUE and when var.scale = 1)}
-
-\item{circle.prob}{size of the circe in Normal probability}
-
-\item{varname.size}{size of the text for variable names}
-
-\item{varname.adjust}{adjustment factor the placement of the variable names, >= 1 means farther from the arrow}
-
-\item{varname.abbrev}{whether or not to abbreviate the variable names}
+\item{loadings}{draw arrows for the variables}
 
 \item{...}{arguments passed to or from other methods, see \code{\link[ggplot2]{ggplot}}.}
+
+\item{varname.size}{size of the text for variable names}
 }
 \description{
 Biplot for \code{rPCA} using ggplot2
 }
 \examples{
-#See ?rsvd
-}
-\author{
-The original implementation of \code{ggbiplot} was written by Vincent Q. Vu (2011).
+#See ?rpca
 }
 \seealso{
 \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}

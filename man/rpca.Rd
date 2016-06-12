@@ -2,10 +2,10 @@
 % Please edit documentation in R/rPCA.R
 \name{rpca}
 \alias{rpca}
-\title{Randomized principal component analysis (PCA).}
+\title{Randomized principal component analysis (rPCA).}
 \usage{
-rpca(A, k = NULL, center = TRUE, scale = TRUE, whiten = FALSE,
-  retx = FALSE, svdalg = "auto", p = 5, q = 2, ...)
+rpca(A, k = NULL, center = TRUE, scale = TRUE, loading = FALSE,
+  retx = FALSE, svdalg = "auto", p = 5, q = 1, ...)
 }
 \arguments{
 \item{A}{array_like \cr
@@ -26,10 +26,9 @@ a logical value (\eqn{TRUE} by default) indicating whether the variables should
 be scaled to have unit variance. Alternatively, a vector of length equal the number of
 columns of \eqn{A} can be supplied. The value is passed to scale.}
 
-\item{whiten}{bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
+\item{loading}{bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
 When \eqn{TRUE} (by default \eqn{FALSE}) the eigenvectors
-are divided by the the square root of the singular values \eqn{W = W * diag(1/sqrt(s))}.
-Whitening can sometimes improve the predictive accuracy.}
+are unit scaled by the square root of the eigenvalues \eqn{W = W * diag(sqrt(eigvals))}.}
 
 \item{retx}{bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
 a logical value (\eqn{FALSE} by default) indicating whether the rotated variables / scores
@@ -41,10 +40,10 @@ By default 'auto' is used, which decides whether to use \code{\link{rsvd}} or \c
 depending on the number of principle components. If \eqn{k < min(n,m)/1.5} randomized svd is used.}
 
 \item{p}{int, optional \cr
-oversampling parameter for \eqn{rsvd}  (default \eqn{p=5}), see \code{\link{rsvd}}.}
+oversampling parameter for \eqn{rsvd}  (default \eqn{p=10}), see \code{\link{rsvd}}.}
 
 \item{q}{int, optional \cr
-number of power iterations  for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.}
+number of power iterations  for \eqn{rsvd} (default \eqn{q=1}), see \code{\link{rsvd}}.}
 
 \item{...}{arguments passed to or from other methods, see \code{\link{rsvd}}.}
 
@@ -53,9 +52,14 @@ number of power iterations  for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{
 \value{
 \code{rpca} returns a list with class \eqn{rpca} containing the following components:
    \item{rotation}{  array_like \cr
-                     the matrix containing the rotation (eigenvectors),
-                     i.e., the variable loadings; array with dimensions \eqn{(n, k)}.
+                     matrix containing the rotation (eigenvectors),
+                     or the variable loadings if \eqn{loadings=TRUE}; array with dimensions \eqn{(n, k)}.
    }
+   \item{loading}{  array_like \cr
+                     matrix containing the loadings (scaled eigenvectors),
+                     if \eqn{loadings=TRUE}; array with dimensions \eqn{(n, k)}.
+   }
+
    \item{eigvals}{  array_like \cr
                     the eigenvalues; 1-d array of length \eqn{k}.
    }
@@ -72,7 +76,7 @@ number of power iterations  for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{
    \item{.................}{.}
 }
 \description{
-Performs an approximated principal components analysis using randomized singular value decomposition.
+Principal components analysis using randomized singular value decomposition.
 }
 \details{
 Principal component analysis is a linear dimensionality reduction technique,
@@ -127,14 +131,14 @@ iris.species <- iris[ , 5]
 #
 # Perform rPCA and compute all PCs, similar to \\code{\\link{prcomp}}
 #
-iris.rpca <- rpca(log.iris, retx=TRUE,  svdalg = 'rsvd')
+iris.rpca <- rpca(log.iris, retx=TRUE)
 summary(iris.rpca) # Summary
-print(iris.rpca) # Prints the loadings/ rotations
+print(iris.rpca) # Prints the rotations
 
 # You can compare the results with prcomp
 # iris.pca <- prcomp(log.iris, center = TRUE, scale. = TRUE)
 # summary(iris.pca) # Summary
-# print(iris.pca) # Prints the loadings/ rotations
+# print(iris.pca) # Prints the rotations
 
 #
 # Plot functions
@@ -152,7 +156,7 @@ ggbiplot(iris.rpca, groups = iris.species, circle = FALSE) #Biplot
 #
 iris.rpca <- rpca(log.iris, k=2,  svdalg = 'rsvd')
 summary(iris.rpca) # Summary
-print(iris.rpca) # Prints the loadings/ rotations
+print(iris.rpca) # Prints the rotations
 
 #
 # Compute the scores of new observations
