@@ -10,7 +10,7 @@
 #'
 #' @keywords image
 #'
-#' @references S. Taheri (2006). “Panthera tigris altaica”, (Online image)
+#' @references S. Taheri (2006). "Panthera tigris altaica", (Online image)
 #'
 #' @source \href{https://en.wikipedia.org/wiki/File:Siberischer_tiger_de_edit02.jpg}{Wikimedia}
 #'

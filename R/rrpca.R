@@ -15,7 +15,7 @@
 #'                \eqn{n}, but it is recommended that \eqn{k << min(m,n)}.
 #'
 #' @param lamb    real, optional \cr
-#'                tuning paramter (default \eqn{gamma=m^-0.5}).
+#'                tuning paramter (default \eqn{lamb=max(m,n)^-0.5}).
 #'
 #' @param gamma   real, optional \cr
 #'                tuning paramter (default \eqn{gamma=1.25}).
@@ -24,7 +24,7 @@
 #'                tuning paramter (default \eqn{rho=1.5}).
 #'
 #' @param maxiter int, optional \cr
-#'                determines the maximal numbers of iterations.
+#'                determines the maximal numbers of iterations (default \eqn{maxiter=20})..
 #'
 #' @param tol     real, optional \cr
 #'                tolarance paramter for the desired convergence of the algorithm.
@@ -35,10 +35,10 @@
 #'                depending on the number of principle components. If \eqn{k < min(n,m)/1.5} randomized svd is used.
 #'
 #' @param p       int, optional \cr
-#'                oversampling parameter for \eqn{rsvd}  (default \eqn{p=5}), see \code{\link{rsvd}}.
+#'                oversampling parameter for \eqn{rsvd}  (default \eqn{p=0}), see \code{\link{rsvd}}.
 #'
 #' @param q       int, optional \cr
-#'                number of power iterations  for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.
+#'                number of power iterations  for \eqn{rsvd} (default \eqn{q=1}), see \code{\link{rsvd}}.
 #'
 #' @param trace   bool, optional \cr
 #'                print progress.
@@ -88,15 +88,16 @@
 #'
 
 #' @export
-rrpca <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=10, tol=1.0e-3, svdalg='auto', p=10, q=1, trace=FALSE, ...) UseMethod("rrpca")
+rrpca <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50, tol=1.0e-3, svdalg='auto', p=10, q=1, trace=FALSE, ...) UseMethod("rrpca")
 
 #' @export
-rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=10, tol=1.0e-3, svdalg='auto', p=10, q=1, trace=FALSE, ...) {
+rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50, tol=1.0e-3, svdalg='auto', p=10, q=1, trace=FALSE, ...) {
   #*************************************************************************
   #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
   #***                              <2016>                               ***
   #***                       License: BSD 3 clause                       ***
   #*************************************************************************
+  A <- as.matrix(A)
   m <- nrow(A)
   n <- ncol(A)
 
@@ -114,10 +115,11 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=10,
   if(rrpcaObj$k>n) rrpcaObj$k <- n
   if(rrpcaObj$k<1) stop("Target rank is not valid!")
 
-  A <- as.matrix(stats::na.omit(A))
+  unobserved = is.na(A)
+  A[unobserved] <- 0
 
   # Set lambda, gamma, rho
-  if(is.null(rrpcaObj$lamb)) rrpcaObj$lamb <- m^-0.5
+  if(is.null(rrpcaObj$lamb)) rrpcaObj$lamb <- max(m,n)^-0.5
   if(is.null(rrpcaObj$gamma)) rrpcaObj$gamma <- 1.25
   if(is.null(rrpcaObj$rho)) rrpcaObj$rho <- 1.5
 
@@ -136,15 +138,13 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=10,
   # Normalize A
   Y <- A / dualNorm
 
-
   # Computing further tuning parameter
   mu <- rrpcaObj$gamma / spectralNorm
   mubar <- mu * 1e7
   mu <- min( mu*rrpcaObj$rho , mubar )
   muinv <- mu**-1
 
-
-  rrpcaObj$niter <- 0
+  rrpcaObj$niter <- 1
   err <- 1
   while(err > tol && rrpcaObj$niter <= maxiter) {
 
@@ -154,13 +154,11 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=10,
       epsi = rrpcaObj$lamb*muinv
       tempS = A - rrpcaObj$L + muinv*Y
       rrpcaObj$S = matrix(0, nrow = m, ncol = n)
-      #rrpcaObj$S = ifelse( tempS > epsi, tempS - epsi, ifelse( tempS < (- epsi), tempS + epsi, 0) )
 
-      idxL <-which(tempS < -epsi)
-      idxH <-which(tempS > epsi)
+      idxL <- which(tempS < -epsi)
+      idxH <- which(tempS > epsi)
       rrpcaObj$S[idxL] <- tempS[idxL]+epsi
       rrpcaObj$S[idxH] <- tempS[idxH]-epsi
-
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       #Singular Value Decomposition
@@ -169,28 +167,26 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=10,
         if(rrpcaObj$k < (n/1.5)) {svdalg='rsvd'} else svdalg='svd'
       }
       svd_out <- switch(svdalg,
-                        svd = svd(A - rrpcaObj$S + muinv*Y, nu = rrpcaObj$k, nv = rrpcaObj$k),
-                        rsvd = rsvd(A - rrpcaObj$S + muinv*Y, k=rrpcaObj$k, p=p, q=q, ...),
+                        svd = svd(A - rrpcaObj$S + muinv*Y),
+                        rsvd = rsvd(A - rrpcaObj$S + muinv*Y, k=(rrpcaObj$k+p), p=0, q=q, ...),
                         stop("Selected SVD algorithm is not supported!")
       )
-
-
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Update L
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      rrpcaObj$L =  svd_out$u %*% diag(svd_out$d - muinv, nrow=rrpcaObj$k, ncol=rrpcaObj$k)  %*% t(svd_out$v)
-
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Predict optimal rank and update
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       kopt = sum(svd_out$d > muinv)
       if(kopt <= rrpcaObj$k){
-        rrpcaObj$k = min(kopt+1, n)
+        rrpcaObj$k = min(kopt+1, ncol(svd_out$u))
       } else {
-        rrpcaObj$k = min(kopt + round(0.05*n), n)
+        rrpcaObj$k = min(kopt + round(0.05*n), ncol(svd_out$u))
       }
 
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Truncate SVD and update L
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # rrpcaObj$L =  svd_out$u[,1:rrpcaObj$k] %*% diag(svd_out$d[1:rrpcaObj$k] - muinv, nrow=rrpcaObj$k, ncol=rrpcaObj$k)  %*% t(svd_out$v[,1:rrpcaObj$k])
+      rrpcaObj$L =  t( t(svd_out$u[,1:rrpcaObj$k]) * (svd_out$d[1:rrpcaObj$k]- muinv) ) %*% t(svd_out$v[,1:rrpcaObj$k])
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Compute error
@@ -202,11 +198,8 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=10,
       rrpcaObj$err <- c(rrpcaObj$err, err)
 
       if(trace==TRUE){
-        print(paste0('Iteration: ', rrpcaObj$niter ))
-        print(paste0('******************' ))
-        print(paste0('Fro. error = ', rrpcaObj$err ))
-        print(paste0('k = ', rrpcaObj$k ))
-      }
+        cat('\n', paste0('Iteration: ', rrpcaObj$niter ), paste0('     k = ', rrpcaObj$k ),  paste0('      Fro. error = ', rrpcaObj$err[rrpcaObj$niter] ))
+        }
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Update mu

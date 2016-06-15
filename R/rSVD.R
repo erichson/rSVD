@@ -46,10 +46,6 @@
 #' @param q       int, optional \cr
 #'                number of power iterations (default \eqn{q=1}).
 #'
-#' @param method  str c('standard', 'fast'), optional \cr
-#'                'standard' : (default): Standard algorithm as described in [1, 2]. \cr
-#'                'fast' : Version II algorithm as described in [2].
-#'
 #' @param sdist  str c('normal', 'unif', 'spixel'), optional \cr
 #'               Specifies the sampling distribution. \cr
 #'               'unif' : (default) Uniform `[-1,1]`. \cr
@@ -61,23 +57,18 @@
 #'                \eqn{FALSE} : (default) returns the right singular vectors as \eqn{v}, this is the format
 #'                as \code{\link{svd}} returns \eqn{v}.
 #'
-#' @param autoRank bool, optional \cr
-#'                 if \eqn{autoRank=TRUE} an auto-rank range finder is used to determine the optimal \eqn{k << min(m,n)}
-#'                 so that the tolarance paramter \eqn{tol} is satisfied. Here the parameter \eqn{k} determins the block size.
-#'
-#' @param tol      real, optional \cr
-#'                 tolerance paramter for the auto rank range finder.
-#'
 #' @param ............. .
 #'
 #'
 #'@return \code{rsvd} returns a list containing the following three components:
-#'\item{u}{  array_like \cr
-#'           Right singular values; array with dimensions \eqn{(m, k)}.
-#'}
 #'\item{d}{  array_like \cr
 #'           Singular values; 1-d array of length \eqn{(k)}.
 #'}
+#'
+#'\item{u}{  array_like \cr
+#'           Right singular values; array with dimensions \eqn{(m, k)}.
+#'}
+#'
 #'\item{v (or vt)}{  array_like \cr
 #'           Left singular values; array with dimensions \eqn{(n, k)}. \cr
 #'           Or if \eqn{vt=TRUE}, array with dimensions \eqn{(k, n)}.
@@ -131,10 +122,10 @@
 #'
 
 #' @export
-rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, method='standard', sdist="unif", vt=FALSE , autoRank=FALSE, tol=1e-3) UseMethod("rsvd")
+rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, sdist="unif", vt=FALSE) UseMethod("rsvd")
 
 #' @export
-rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, method='standard', sdist="unif", vt=FALSE ,  autoRank=FALSE, tol=1e-3) {
+rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, sdist="unif", vt=FALSE) {
     #*************************************************************************
     #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
     #***                              <2015>                               ***
@@ -154,7 +145,6 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, method='standar
       n <- ncol(A)
       flipped <- TRUE
     } else flipped <- FALSE
-
 
     #Set target rank
     if(is.null(k)) k=n
@@ -182,9 +172,9 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, method='standar
     if(nu>k) nu <- k
     if(nv>k) nv <- k
     if(flipped==TRUE) {
-      a <- nu
+      temp <- nu
       nu <- nv
-      nv <- a
+      nv <- temp
     }
 
 
@@ -216,43 +206,6 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, method='standar
     }
     remove(O)
 
-
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Auto-rank range finder
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if(autoRank==TRUE) {
-        normA <- norm(A, type='F')
-        repeat{
-          Q <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
-          err <- norm( (Q %*% H(Q) %*% A) - A, type='F') / normA
-
-          #print(paste0('autoRank = ', ncol(Q) ))
-          #print(paste0('Fro. error = ', err ))
-          if(err<tol){
-            k <- ncol(Q)
-            break
-          }
-
-          #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          #Generate a random sampling matrix O
-          #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          O <- switch(sdist,
-                      normal = matrix(stats::rnorm(l*n), n, l),
-                      unif = matrix(stats::runif(l*n), n, l),
-                      stop("Selected sampling distribution is not supported!"))
-
-          if(isreal==FALSE) {
-            O <- O + switch(sdist,
-                            normal = 1i * matrix(stats::rnorm(l*n), n, l),
-                            unif = 1i * matrix(stats::runif(l*n), n, l),
-                            stop("Selected sampling distribution is not supported!"))
-          }
-
-          Y <- cbind(Y, A %*% O )
-          remove(O)
-        } # End repeat
-    } # End autoRank
-
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Orthogonalize Y using economic QR decomposition: Y=QR
     #If q > 0 perfrom q subspace iterations
@@ -283,100 +236,44 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, method='standar
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     B <- crossprod_help( Q , A )
 
-    if(method=='standard') {
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      #Singular Value Decomposition
-      #Note: B = U" * S * Vt
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      #Compute SVD
-      rsvdObj <- La.svd(B, nu=nu, nv=nv)
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #Singular Value Decomposition
+    #Note: B = U" * S * Vt
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #Compute SVD
+    rsvdObj <- La.svd(B, nu=nu, nv=nv)
 
-      #Recover right singular vectors
-      if(nu==0) {
-        rsvdObj$u <- matrix(0)
-      } else{
+    #Recover right singular vectors
+    if(nu!=0) {
         rsvdObj$u <- Q %*% rsvdObj$u
-      }
+    }else{ rsvdObj$u <- matrix(0)}
 
-      if(nv==0) {
+    if(nv==0) {
         rsvdObj$v <- matrix(0)
-      }
+    }
 
-      #Return
-      if(flipped==TRUE) {
+    #Return
+    if(flipped==TRUE) {
         u_temp <- rsvdObj$u
         rsvdObj$u <- H(rsvdObj$v)
         rsvdObj$d <- rsvdObj$d[1:k]
         if(vt==FALSE) {
           rsvdObj$v <- u_temp
           rsvdObj$vt <- NULL
-        } else {
-          rsvdObj$vt <- H(u_temp)
-        }
+        } else { rsvdObj$vt <- H(u_temp) }
+        if(nu==0){ rsvdObj$v <- NULL}
+        if(nv==0){ rsvdObj$u <- NULL}
         return(rsvdObj)
 
-
-      } else {
+    } else {
         rsvdObj$d <- rsvdObj$d[1:k]
         if(vt==FALSE) {
           rsvdObj$v <- H(rsvdObj$v)
           rsvdObj$vt <- NULL
         }
+        if(nu==0){ rsvdObj$u <- NULL}
+        if(nv==0){ rsvdObj$v <- NULL}
         return(rsvdObj)
       }
+} # End rsvd
 
-    }else if(method=='fast'){
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      #Orthogonalize B.T using reduced QR decomposition: B.T = Q" * R"
-      #Note: reduced QR returns Q and R, and destroys B_gpu
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      #Compute QR
-      qr_out <- qr( H(B) , complete = FALSE)
-      Qstar <- qr.Q(qr_out , complete = FALSE)
-      Rstar <- qr.R(qr_out , complete = FALSE)
-
-      #Compute singular value decomposition
-      rsvdObj <- La.svd(Rstar, nu=nv, nv=nu)
-
-      #Recover right and left singular vectors
-      if(nu==0) {
-        U <- matrix(0)
-      } else{
-        U <- tcrossprod_help( Q, rsvdObj$v )
-      }
-
-      if(nv==0) {
-        V <- matrix(0)
-      } else{
-        V <- Qstar %*% rsvdObj$u
-      }
-
-
-
-      #Return
-      if(flipped==TRUE) {
-        rsvdObj$u <- V
-        rsvdObj$d <- rsvdObj$d[1:k]
-        if(vt==FALSE) {
-          rsvdObj$v <- U
-          rsvdObj$vt <- NULL
-        } else {
-          rsvdObj$vt <- H(U)
-        }
-        return(rsvdObj)
-
-        } else {
-        rsvdObj$u <- U
-        rsvdObj$d <- rsvdObj$d[1:k]
-        if(vt==FALSE) {
-          rsvdObj$v <- V
-          rsvdObj$vt <- NULL
-        } else {
-          rsvdObj$vt <- H(V)
-        }
-        return(rsvdObj)
-      }
-
-    }
-
-}#End rsvd

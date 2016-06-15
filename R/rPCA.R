@@ -140,9 +140,9 @@
 #'#
 #'# Plot functions
 #'#
-#'ggscreeplot(iris.rpca) # Screeplot
-#'ggscreeplot(iris.rpca, 'cum') # Screeplot
-#'ggscreeplot(iris.rpca, type='eigenvals') # Screeplot of the eigenvalues
+#'ggscreeplot(iris.rpca) # Screeplot (explained variance/eigenvalues)
+#'ggscreeplot(iris.rpca, 'ratio') # Proportion of variance
+#'ggscreeplot(iris.rpca, 'cum') # Cummulative proportion
 #'
 #'ggcorplot(iris.rpca, pcs=c(1,2)) # The correlation of the original variable with the PCs
 #'
@@ -235,7 +235,8 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, loading=FALSE, retx
     # loadings
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if(loading==TRUE){
-      rpcaObj$loading <- svd_out$v %*% diag(rpcaObj$eigvals**0.5)
+      # rpcaObj$loading <- svd_out$v %*% diag(rpcaObj$eigvals**0.5)
+      rpcaObj$loading <- t(t(svd_out$v) * rpcaObj$eigvals**0.5 )
     }
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

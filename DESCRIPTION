@@ -1,21 +1,32 @@
 Package: rsvd
 Type: Package
 Title: Randomized Singular Value Decomposition
-Version: 0.3
-Date: 2015-11-08
+Version: 0.4
+Date: 2016-06-15
 Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "nbe@st-andrews.ac.uk"))
 Author: N. Benjamin Erichson [aut, cre]
 Maintainer: N. Benjamin Erichson <nbe@st-andrews.ac.uk>
-Description: Randomized singular value decomposition (rsvd) is a very fast probabilistic
-	algorithm to compute an approximated low-rank singular value decomposition of large
-	data sets with high accuracy. SVD plays a central role in data analysis and scientific computing.
-	SVD is also widely used for computing principal component analysis (PCA), a linear dimensionality reduction technique.
-	Randomized PCA (rpca) is using the approximated singular value decomposition to compute the most significant principal components. In addition several plot functions are provided.
+Description: Randomized singular value decomposition (rsvd) is a very fast
+    probabilistic algorithm to compute the near optimal low-rank singular value
+    decomposition of massive data sets with high accuracy. SVD plays a central role
+    in data analysis and scientific computing. SVD is also widely used for computing
+    (randomized) principal component analysis (PCA), a linear dimensionality reduction technique.
+    Randomized PCA (rpca) is using the approximated singular value decomposition
+    to compute the most significant principal components. The package includes also an
+    function for computing (randomized) robust principal component analysis (RPCA).
+    In addition several plot functions are provided.
 Depends:
     R (>= 3.2.2)
 License: GPL (>= 2)
 LazyData: TRUE
-URL: https://github.com/Benli11/rPCA
-BugReports: https://github.com/Benli11/rPCA
-RoxygenNote: 5.0.0
-Suggests: ggplot2, plyr, scales, grid, testthat
+URL: https://github.com/Benli11/rSVD
+BugReports: https://github.com/Benli11/rSVD
+RoxygenNote: 5.0.1
+Suggests:
+    ggplot2,
+    plyr,
+    scales,
+    grid,
+    testthat,
+    knitr
+VignetteBuilder: knitr

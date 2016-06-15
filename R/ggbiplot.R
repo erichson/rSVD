@@ -2,13 +2,10 @@
 #devtools::use_package("plyr", type = "Suggests")
 #devtools::use_package("scales", type = "Suggests")
 #devtools::use_package("grid", type = "Suggests")
-
-
 #library(ggplot2)
 #library(plyr)
 #library(scales)
 #library(grid)
-
 
 #' Biplot for \code{rPCA} using ggplot2
 #'
@@ -22,8 +19,7 @@
 #' @param  ellipse          draw a 1sd data ellipse for each group
 #' @param  alpha.ellipse    alpha transparency for ellipse
 #' @param  loadings         draw arrows for the variables
-#' @parm   labels           label variables
-#' @param  varname.size     size of the text for variable names
+#' @param  labels           label variables
 #' @param  ...              arguments passed to or from other methods, see \code{\link[ggplot2]{ggplot}}.
 #'
 #' @seealso \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
@@ -98,8 +94,8 @@ ggbiplot <- function( rpcaObj, pcs = c(1,2), groups = NULL, ellipse = TRUE, alph
   y <- NULL # Setting the variables to NULL first
   a <- NULL # Setting the variables to NULL first
   b <- NULL # Setting the variables to NULL first
-  c <- NULL # Setting the variables to NULL first
-
+  Class <- NULL # Setting the variables to NULL first
+  varName <- NULL # Setting the variables to NULL first
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Create ggplot2:: ggplot
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,7 +113,7 @@ ggbiplot <- function( rpcaObj, pcs = c(1,2), groups = NULL, ellipse = TRUE, alph
 
       }
 
-      g <- ggplot(data=dfScores, ggplot2::aes(x = a, y = b, colour = Class )) +
+      g <- ggplot2::ggplot(data=dfScores, ggplot2::aes(x = a, y = b, colour = Class )) +
            ggplot2::geom_point(size = 2) +
            ggplot2::theme(legend.position = "none")
 

@@ -23,7 +23,7 @@ image(tiger, col = gray((0:255)/255))
 
 }
 \references{
-S. Taheri (2006). “Panthera tigris altaica”, (Online image)
+S. Taheri (2006). "Panthera tigris altaica", (Online image)
 }
 \keyword{image}
 

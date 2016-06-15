@@ -167,7 +167,7 @@ ggcorplot <- function( rpcaObj, pcs=c(1,2) ) {
   # Create ggplot2:: ggplot
   g <- ggplot2::ggplot( circle , ggplot2::aes( x , y)  )  + ggplot2::geom_path( size=1, colour="#9400d3"  )
   g <- g + ggplot2::geom_point(data=df, size = 6,  mapping = ggplot2::aes(x = a, y = b, label = labels, colour = labels ) ) +
-    ggplot2::coord_fixed(ratio=1) + ggplot2::labs(x = noquote(PC1), y = noquote(PC2)) + ggplot2::guides(colour=guide_legend(title=NULL))
+    ggplot2::coord_fixed(ratio=1) + ggplot2::labs(x = noquote(PC1), y = noquote(PC2)) + ggplot2::guides(colour=ggplot2::guide_legend(title=NULL))
 
   return( g )
 }

@@ -5,8 +5,7 @@
 \title{Randomized Singular Value Decomposition (rSVD).}
 \usage{
 rsvd(A, k = NULL, nu = NULL, nv = NULL, p = 10, q = 1,
-  method = "standard", sdist = "unif", vt = FALSE, autoRank = FALSE,
-  tol = 0.001)
+  sdist = "unif", vt = FALSE)
 }
 \arguments{
 \item{A}{array_like \cr
@@ -29,10 +28,6 @@ oversampling parameter for (default \eqn{p=10}).}
 \item{q}{int, optional \cr
 number of power iterations (default \eqn{q=1}).}
 
-\item{method}{str c('standard', 'fast'), optional \cr
-'standard' : (default): Standard algorithm as described in [1, 2]. \cr
-'fast' : Version II algorithm as described in [2].}
-
 \item{sdist}{str c('normal', 'unif', 'spixel'), optional \cr
 Specifies the sampling distribution. \cr
 'unif' : (default) Uniform `[-1,1]`. \cr
@@ -44,23 +39,18 @@ Specifies the sampling distribution. \cr
 \eqn{FALSE} : (default) returns the right singular vectors as \eqn{v}, this is the format
 as \code{\link{svd}} returns \eqn{v}.}
 
-\item{autoRank}{bool, optional \cr
-if \eqn{autoRank=TRUE} an auto-rank range finder is used to determine the optimal \eqn{k << min(m,n)}
-so that the tolarance paramter \eqn{tol} is satisfied. Here the parameter \eqn{k} determins the block size.}
-
-\item{tol}{real, optional \cr
-tolerance paramter for the auto rank range finder.}
-
 \item{.............}{.}
 }
 \value{
 \code{rsvd} returns a list containing the following three components:
-\item{u}{  array_like \cr
-          Right singular values; array with dimensions \eqn{(m, k)}.
-}
 \item{d}{  array_like \cr
           Singular values; 1-d array of length \eqn{(k)}.
 }
+
+\item{u}{  array_like \cr
+          Right singular values; array with dimensions \eqn{(m, k)}.
+}
+
 \item{v (or vt)}{  array_like \cr
           Left singular values; array with dimensions \eqn{(n, k)}. \cr
           Or if \eqn{vt=TRUE}, array with dimensions \eqn{(k, n)}.

@@ -4,7 +4,7 @@
 \alias{rrpca}
 \title{Randomized robust principal component analysis (rRPCA).}
 \usage{
-rrpca(A, k = NULL, lamb = NULL, gamma = 1.25, rho = 1.5, maxiter = 10,
+rrpca(A, k = NULL, lamb = NULL, gamma = 1.25, rho = 1.5, maxiter = 50,
   tol = 0.001, svdalg = "auto", p = 10, q = 1, trace = FALSE, ...)
 }
 \arguments{
@@ -17,7 +17,7 @@ determines the number of principle components to compute. It is required that \e
 \eqn{n}, but it is recommended that \eqn{k << min(m,n)}.}
 
 \item{lamb}{real, optional \cr
-tuning paramter (default \eqn{gamma=m^-0.5}).}
+tuning paramter (default \eqn{lamb=max(m,n)^-0.5}).}
 
 \item{gamma}{real, optional \cr
 tuning paramter (default \eqn{gamma=1.25}).}
@@ -26,7 +26,7 @@ tuning paramter (default \eqn{gamma=1.25}).}
 tuning paramter (default \eqn{rho=1.5}).}
 
 \item{maxiter}{int, optional \cr
-determines the maximal numbers of iterations.}
+determines the maximal numbers of iterations (default \eqn{maxiter=20})..}
 
 \item{tol}{real, optional \cr
 tolarance paramter for the desired convergence of the algorithm.}
@@ -37,10 +37,10 @@ By default 'auto' is used, which decides whether to use \code{\link{rsvd}} or \c
 depending on the number of principle components. If \eqn{k < min(n,m)/1.5} randomized svd is used.}
 
 \item{p}{int, optional \cr
-oversampling parameter for \eqn{rsvd}  (default \eqn{p=5}), see \code{\link{rsvd}}.}
+oversampling parameter for \eqn{rsvd}  (default \eqn{p=0}), see \code{\link{rsvd}}.}
 
 \item{q}{int, optional \cr
-number of power iterations  for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.}
+number of power iterations  for \eqn{rsvd} (default \eqn{q=1}), see \code{\link{rsvd}}.}
 
 \item{trace}{bool, optional \cr
 print progress.}

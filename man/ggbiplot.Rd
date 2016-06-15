@@ -24,15 +24,18 @@ factor indicating groups}
 
 \item{loadings}{draw arrows for the variables}
 
-\item{...}{arguments passed to or from other methods, see \code{\link[ggplot2]{ggplot}}.}
+\item{labels}{label variables}
 
-\item{varname.size}{size of the text for variable names}
+\item{...}{arguments passed to or from other methods, see \code{\link[ggplot2]{ggplot}}.}
 }
 \description{
 Biplot for \code{rPCA} using ggplot2
 }
 \examples{
 #See ?rpca
+}
+\author{
+N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
 }
 \seealso{
 \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}

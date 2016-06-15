@@ -143,9 +143,9 @@ print(iris.rpca) # Prints the rotations
 #
 # Plot functions
 #
-ggscreeplot(iris.rpca) # Screeplot
-ggscreeplot(iris.rpca, 'cum') # Screeplot
-ggscreeplot(iris.rpca, type='eigenvals') # Screeplot of the eigenvalues
+ggscreeplot(iris.rpca) # Screeplot (explained variance/eigenvalues)
+ggscreeplot(iris.rpca, 'ratio') # Proportion of variance
+ggscreeplot(iris.rpca, 'cum') # Cummulative proportion
 
 ggcorplot(iris.rpca, pcs=c(1,2)) # The correlation of the original variable with the PCs
 
