@@ -1,8 +1,13 @@
 Randomized Singular Value Decomposition using R
+
 Version: 0.4
+
 Depends: R (>= 3.2.2)
+
 License: GPL (>= 2)
+
 Date: 2016-06-15
+
 Author: N. Benjamin Erichson { nbe () st-andrews.ac.uk }
 
 Randomized singular value decomposition (rsvd) is a very fast
