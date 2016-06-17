@@ -91,26 +91,17 @@ gives an equivalent decomposition.
 }
 \examples{
 library(rsvd)
-set.seed(123)
+data(tiger)
 
-#Create real random test matrix with dimension (m, n) and rank k
-m = 10
-n = 3
-k = 5
-A <- matrix(runif(m*k), m, k)
-A <- A \%*\% t(A)
-A <- A[,1:n]
+# Randomized SVD, low-rank approximation k=100 for image compression
+s <- rsvd(tiger, k=100)
+tiger.re = s$u \%*\% diag(s$d) \%*\% t(s$v) # reconstruct image
+print(100 * norm( tiger - tiger.re, 'F') / norm( tiger,'F')) # percentage error
 
-
-#Randomized SVD, low-rank approximation k=3
-s <- rsvd(A, k=3)
-Atilde = s$u \%*\% diag(s$d) \%*\% t(s$v)
-100 * norm( A - Atilde, 'F') / norm( Atilde,'F') #Percentage reconstruction error << 1e-8
-
-#Randomized SVD, low-rank approximation k=2
-s <- rsvd(A, k=2)
-Atilde = s$u \%*\% diag(s$d) \%*\% t(s$v)
-100 * norm( A - Atilde, 'F') / norm( Atilde,'F') #Percentage reconstruction error < 3.5\%
+# Display orginal and reconstrucuted image
+par(mfrow=c(1,2))
+image(tiger, col = gray((0:255)/255))
+image(tiger.re, col = gray((0:255)/255))
 
 }
 \author{
