@@ -28,5 +28,6 @@ Suggests:
     scales,
     grid,
     testthat,
-    knitr
+    knitr,
+    rmarkdown
 VignetteBuilder: knitr

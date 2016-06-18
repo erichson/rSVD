@@ -1,4 +1,4 @@
-#' @title  Randomized Singular Value Decomposition (rSVD).
+#' @title  Randomized Singular Value Decomposition (rsvd).
 #
 #' @description Compute the approximate low-rank singular value decomposition (SVD) of a rectangular matrix.
 #
@@ -14,13 +14,13 @@
 #' non-negative and real numbers.
 #'
 #' The parameter \eqn{p} is a oversampling parameter to improve the approximation.
-#' A value between 2 and 10 is recommended and \eqn{p=5} is set as default.
+#' A value between 2 and 10 is recommended and \eqn{p=10} is set as default.
 #'
 #' The parameter \eqn{q} specifies the number of normalized power iterations
 #' (subspace iterations) to reduce the approximation error. This is recommended
 #' if the the singular values decay slowly. In practice 1 or 2 iterations
 #' archive good results, however, computing power iterations increases the
-#' computational time. The number of power iterations is set to \eqn{q=2} by default.
+#' computational time. The number of power iterations is set to \eqn{q=1} by default.
 #'
 #' If \eqn{k > (min(n,m)/1.5)}, a deterministic partial or truncated \code{\link{svd}}
 #' algorithm might be faster.

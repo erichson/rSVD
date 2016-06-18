@@ -2,7 +2,7 @@
 % Please edit documentation in R/rrpca.R
 \name{rrpca}
 \alias{rrpca}
-\title{Randomized robust principal component analysis (rRPCA).}
+\title{Randomized robust principal component analysis (rrpca).}
 \usage{
 rrpca(A, k = NULL, lamb = NULL, gamma = 1.25, rho = 1.5, maxiter = 50,
   tol = 0.001, svdalg = "auto", p = 10, q = 1, trace = FALSE, ...)
@@ -50,7 +50,7 @@ print progress.}
 \item{.................}{.}
 }
 \value{
-\code{rpca} returns a list with class \eqn{rpca} containing the following components:
+\code{rrpca} returns a list with class \eqn{rrpca} containing the following components:
    \item{L}{  array_like \cr
              Low-rank component, array of shape \eqn{(m, n)}.
    }
@@ -72,27 +72,54 @@ print progress.}
 Robust principal components analysis using randomized singular value decomposition.
 }
 \details{
-Robust principal component analysis is via PCP using the IALM (Lin et. al) algorithm.
+Robust principal component analysis (RPCA) is a method for the robust seperation of a
+a rectangular \eqn{(m,n)} matrix \eqn{A} into a low-rank component \eqn{L} and a
+sparse comonent \eqn{S} as follows: \eqn{A=L+S}.
+Here we are using the fast randomized accelerated inexact augmented Lagrange multiplier
+method (IALM) for obtaining the robust seperation.
 }
 \note{
 ...
 }
 \examples{
-
 library(rsvd)
-data(highway)
+
+# Create toy video
+# background frame
+xy <- seq(-50, 50, length.out=100)
+mgrid <- list( x=outer(xy*0,xy,FUN="+"), y=outer(xy,xy*0,FUN="+") )
+bg <- 0.1*exp(sin(-mgrid$x**2-mgrid$y**2))
+toyVideo <- matrix(rep(c(bg), 100), 100*100, 100)
+
+# add moving object
+for(i in 1:90) {
+  mobject <- matrix(0, 100, 100)
+  mobject[i:(10+i), 45:55] <- 0.2
+  toyVideo[,i] =  toyVideo[,i] + c( mobject )
+}
 
 # Foreground/Background separation
-out <- rrpca(highway, k=1, p=0, q=0, maxiter=20, svdalg='rsvd')
+out <- rrpca(toyVideo, k=1, p=5, q=1, svdalg='rsvd', trace=TRUE)
 
-# Display results for the 200th video frame
-par(mfrow=c(1,3))
-image(matrix(highway[,200], ncol=144, nrow=176), col = gray((0:255)/255))
-image(matrix(out$L[,200], ncol=144, nrow=176), col = gray((0:255)/255))
-image(matrix(out$S[,200], ncol=144, nrow=176), col = gray((0:255)/255))
-
+# Display results of the seperation for the 10th frame
+par(mfrow=c(1,4))
+image(matrix(bg, ncol=100, nrow=100)) #true background
+image(matrix(toyVideo[,10], ncol=100, nrow=100)) # frame
+image(matrix(out$L[,10], ncol=100, nrow=100)) # seperated background
+image(matrix(out$S[,10], ncol=100, nrow=100)) #seperated foreground
 }
 \author{
 N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
+}
+\references{
+\itemize{
+  \item  [1] Lin, Zhouchen, Minming Chen, and Yi Ma.
+         "The augmented lagrange multiplier method for exact
+         recovery of corrupted low-rank matrices." (2010).
+         (available at arXiv \url{http://arxiv.org/abs/1009.5055}).
+  \item  [2] Candes, Emmanuel J., et al.
+         "Robust principal component analysis?."
+         Journal of the ACM (JACM) 58.3 (2011).
+}
 }
 
