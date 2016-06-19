@@ -57,4 +57,4 @@ timing_svd <- microbenchmark(
 
 print(timing_svd, unit='s')
 ```
-![timing](https://raw.githubusercontent.com/Benli11/data/master/img/timing.png)
+![timing](https://raw.githubusercontent.com/Benli11/data/master/img/timeing.png)
