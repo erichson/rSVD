@@ -1,5 +1,5 @@
 Randomized Singular Value Decomposition using R
-
+***********************************************
 Version: 0.5
 
 Depends: R (>= 3.2.2)
@@ -19,5 +19,32 @@ Randomized PCA (rpca) is using the approximated singular value decomposition
 to compute the most significant principal components. The package includes also an
 function for computing (randomized) robust principal component analysis (RPCA).
 In addition several plot functions are provided.
+
+
+Get started
+*************
+Install the rsvd packages via CRAN
+```R
+install.packages("rsvd")
+```
+
+Run a motivating example: Image compression
+```R
+library(rsvd)
+data(tiger)
+
+# Image compression using randomized SVD
+s <- rsvd(tiger, k=150)
+tiger.re = s$u %*% diag(s$d) %*% t(s$v) # reconstruct image
+
+# Display orginal and reconstrucuted image
+par(mfrow=c(1,2))
+image(tiger, col = gray((0:255)/255))
+image(tiger.re, col = gray((0:255)/255))
+```
+Here are the results:
+![tiger](https://raw.githubusercontent.com/Benli11/data/master/img/reTiger.png)
+
+and the speedup gained over the base SVD function:
 
 
