@@ -47,4 +47,14 @@ Here are the results:
 
 and the speedup gained over the base SVD function:
 
+```R
+library(microbenchmark)
 
+timing_svd <- microbenchmark(
+  'SVD' = svd(tiger, nu=150, nv=150),
+  'rSVD' = rsvd(tiger, k=150),
+  times=50)
+
+print(timing_svd, unit='s')
+```
+![timing](https://raw.githubusercontent.com/Benli11/data/master/img/timing.png)
