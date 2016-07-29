@@ -16,9 +16,9 @@
 #'
 #' @examples
 #' library(rsvd)
-#' data(tiger)
+#' #data(tiger)
 #'
 #' #Display image
-#' image(tiger, col = gray((0:255)/255))
+#' #image(tiger, col = gray((0:255)/255))
 #'
 "tiger"

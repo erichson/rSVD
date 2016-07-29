@@ -3,13 +3,13 @@
 
 Randomized Singular Value Decomposition using R
 ***********************************************
-Version: 0.5
+Version: 0.6
 
 Depends: R (>= 3.2.2)
 
 License: GPL (>= 2)
 
-Date: 2016-06-15
+Date: 2016-07-28
 
 Author: N. Benjamin Erichson { nbe () st-andrews.ac.uk }
 

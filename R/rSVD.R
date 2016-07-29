@@ -1,10 +1,10 @@
 #' @title  Randomized Singular Value Decomposition (rsvd).
 #
-#' @description Compute the approximate low-rank singular value decomposition (SVD) of a rectangular matrix.
+#' @description Compute the near-optimal low-rank singular value decomposition (SVD) of a rectangular matrix.
 #
 #' @details
 #' The singular value decomposition (SVD) plays a central role in data analysis and scientific computing.
-#' Randomized SVD (rSVD) is a fast algorithm to compute the the approximate
+#' Randomized SVD (rSVD) is a fast algorithm to compute the approximate
 #' low-rank SVD of a rectangular \eqn{(m,n)} matrix \eqn{A}
 #' using a probablistic algorithm.
 #' Given a target rank \eqn{k << n}, \code{rsvd} factors the input matrix \eqn{A} as
@@ -14,12 +14,12 @@
 #' non-negative and real numbers.
 #'
 #' The parameter \eqn{p} is a oversampling parameter to improve the approximation.
-#' A value between 2 and 10 is recommended and \eqn{p=10} is set as default.
+#' A value between 5 and 10 is recommended and \eqn{p=10} is set by default.
 #'
 #' The parameter \eqn{q} specifies the number of normalized power iterations
 #' (subspace iterations) to reduce the approximation error. This is recommended
 #' if the the singular values decay slowly. In practice 1 or 2 iterations
-#' archive good results, however, computing power iterations increases the
+#' achieve good results, however, computing power iterations increases the
 #' computational time. The number of power iterations is set to \eqn{q=1} by default.
 #'
 #' If \eqn{k > (min(n,m)/1.5)}, a deterministic partial or truncated \code{\link{svd}}
@@ -46,11 +46,11 @@
 #' @param q       int, optional \cr
 #'                number of power iterations (default \eqn{q=1}).
 #'
-#' @param sdist  str c('normal', 'unif', 'spixel'), optional \cr
-#'               Specifies the sampling distribution. \cr
-#'               'unif' : (default) Uniform `[-1,1]`. \cr
-#'               'normal' : Normal `~N(0,1)`. \cr
-#'               'col' : Random column sampling. \cr
+#' @param sdist   str \eqn{c('normal', 'unif', 'col')}, optional \cr
+#'                Specifies the sampling distribution. \cr
+#'                \eqn{'unif'} : (default) Uniform `[-1,1]`. \cr
+#'                \eqn{'normal}' : Normal `~N(0,1)`. \cr
+#'                \eqn{'col'} : Random column sampling. \cr
 #'
 #' @param vt      bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
 #'                \eqn{TRUE} : returns the transposed right singular vectors \eqn{vt}. \cr
@@ -98,20 +98,23 @@
 #' @author N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
 #' @seealso \code{\link{svd}}, \code{\link{rpca}}
 #' @examples
-#'library(rsvd)
-#'data(tiger)
 #'
-#'# Randomized SVD, low-rank approximation k=100 for image compression
-#'s <- rsvd(tiger, k=100)
-#'tiger.re = s$u %*% diag(s$d) %*% t(s$v) # reconstruct image
-#'print(100 * norm( tiger - tiger.re, 'F') / norm( tiger,'F')) # percentage error
+#'# Create a n by n Hilbert matrix of order n,
+#'# with entries H[i,j] = 1 / (i + j + 1).
+#'hilbert <- function(n) { i <- 1:n; 1 / outer(i - 1, i, "+") }
+#'H <- hilbert(n=50)
 #'
-#'# Display orginal and reconstrucuted image
-#'par(mfrow=c(1,2))
-#'image(tiger, col = gray((0:255)/255))
-#'image(tiger.re, col = gray((0:255)/255))
-#'
+#'# Low-rank (k=10) matrix approximation using rsvd
+#'k=10
+#'s <- rsvd(H, k=k)
+#'Hre <- s$u %*% diag(s$d) %*% t(s$v) # matrix approximation
+#'print(100 * norm( H - Hre, 'F') / norm( H,'F')) # percentage error
 
+#'# Compare to truncated base svd
+#'s <- svd(H)
+#'Hre <- s$u[,1:k] %*% diag(s$d[1:k]) %*% t(s$v[,1:k]) # matrix approximation
+#'print(100 * norm( H - Hre, 'F') / norm( H,'F')) # percentage error
+#'
 
 #' @export
 rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=1, sdist="unif", vt=FALSE) UseMethod("rsvd")
