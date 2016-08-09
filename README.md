@@ -1,18 +1,8 @@
 [![Build Status](https://travis-ci.org/Benli11/rSVD.svg?branch=master)](https://travis-ci.org/Benli11/rSVD)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rsvd)](http://cran.r-project.org/package=rsvd)
 
-Randomized Singular Value Decomposition using R
-***********************************************
-Version: 0.6
-
-Depends: R (>= 3.2.2)
-
-License: GPL (>= 2)
-
-Date: 2016-07-28
-
-Author: N. Benjamin Erichson { nbe () st-andrews.ac.uk }
-
+Fast Randomized Singular Value Decomposition using R
+****************************************************
 Randomized singular value decomposition (rsvd) is a very fast
 probabilistic algorithm that can be used to compute the near optimal low-rank singular value
 decomposition of massive data sets with high accuracy. SVD plays a central role
@@ -31,7 +21,13 @@ Install the rsvd package via CRAN
 install.packages("rsvd")
 ```
 
-Run a motivating example: Image compression
+You can also install the development version from GitHub using [devtools](https://cran.r-project.org/package=devtools):
+
+```r
+devtools::install_github("benli11/rsvd")
+```
+
+SVD example: Image compression
 ```R
 library(rsvd)
 data(tiger)
@@ -61,3 +57,10 @@ timing_svd <- microbenchmark(
 print(timing_svd, unit='s')
 ```
 ![timing](https://raw.githubusercontent.com/Benli11/data/master/img/timeing.png)
+
+
+References
+*************
+* [N. Benjamin Erichson, Sergey Voronin, Steven L. Brunton, J. Nathan Kutz. “Randomized Matrix Decompositions using R.” (2016)](http://arxiv.org/abs/1608.02148)
+* [Sergey Voronin, Per-Gunnar Martinsson. “RSVDPACK: Subroutines for computing partial singular value decompositions via randomized sampling on single core, multi core, and GPU architectures.” (2015)](https://arxiv.org/abs/1502.05366)
+* [Nathan Halko, Per-Gunnar Martinsson, Joel A. Tropp. “Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions.” (2011)](https://arxiv.org/abs/0909.4061)
