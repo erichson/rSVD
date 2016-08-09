@@ -67,7 +67,9 @@ You can also install the development version from GitHub using [devtools](https:
 
 ```r
 devtools::install_github("benli11/rsvd")
+```
 
+The source packge can be obtained here: [CRAN: rsvd](https://cran.r-project.org/web/packages/rsvd/index.html).
 
 References
 *************
