@@ -7,8 +7,8 @@ Randomized singular value decomposition (rsvd) is a fast probabilistic algorithm
 be used to compute the near optimal low-rank singular value decomposition of massive data sets with high accuracy. 
 The key idea is to compute a compressed representation 
 of the data to capture the essential information. This compressed representation can then be used to obtain 
-the low-rank singular value decomposition decomposition. The computational advantage becomes pronounced with 
-an increasing matrix dimension:
+the low-rank singular value decomposition decomposition. The rsvd package provides one of the fastest routines for low-rank matrix approximations in R, as far as we know.  
+The computational advantage becomes pronounced with an increasing matrix dimension (here target-rank k=50):
 
 ![speed](https://raw.githubusercontent.com/Benli11/data/master/img/rsvd_speedups.png)
 
