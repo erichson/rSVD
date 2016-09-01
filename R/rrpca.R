@@ -203,16 +203,16 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50,
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       kopt = sum(svd_out$d > muinv)
       if(kopt <= rrpcaObj$k){
-        rrpcaObj$k = min(kopt+1, ncol(svd_out$u))
+        rrpcaObj$k = min(kopt+1, n)
       } else {
-        rrpcaObj$k = min(kopt + round(0.05*n), ncol(svd_out$u))
+        rrpcaObj$k = min(kopt + round(0.05*n), n)
       }
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Truncate SVD and update L
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # rrpcaObj$L =  svd_out$u[,1:rrpcaObj$k] %*% diag(svd_out$d[1:rrpcaObj$k] - muinv, nrow=rrpcaObj$k, ncol=rrpcaObj$k)  %*% t(svd_out$v[,1:rrpcaObj$k])
-      rrpcaObj$L =  t( t(svd_out$u[,1:rrpcaObj$k]) * (svd_out$d[1:rrpcaObj$k]- muinv) ) %*% t(svd_out$v[,1:rrpcaObj$k])
+      rrpcaObj$L =  t( t(svd_out$u[,1:kopt]) * (svd_out$d[1:kopt]- muinv) ) %*% t(svd_out$v[,1:kopt])
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Compute error
@@ -224,7 +224,7 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50,
       rrpcaObj$err <- c(rrpcaObj$err, err)
 
       if(trace==TRUE){
-        cat('\n', paste0('Iteration: ', rrpcaObj$niter ), paste0('     k = ', rrpcaObj$k ),  paste0('      Fro. error = ', rrpcaObj$err[rrpcaObj$niter] ))
+        cat('\n', paste0('Iteration: ', rrpcaObj$niter ), paste0('     k = ', kopt ),  paste0('      Fro. error = ', rrpcaObj$err[rrpcaObj$niter] ))
         }
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
