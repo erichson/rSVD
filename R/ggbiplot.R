@@ -41,7 +41,7 @@ ggbiplot <- function( rpcaObj, pcs = c(1,2), groups = NULL, ellipse = TRUE, alph
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Check if retx is provided
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if(is.null(out$x)) stop("ggbiplot requires the rotated variables, i.e., set rpca(..., retx = TRUE).")
+  if(is.null(rpcaObj$x)) stop("ggbiplot requires the rotated variables, i.e., set rpca(..., retx = TRUE).")
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Check selected pcs
