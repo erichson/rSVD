@@ -94,9 +94,6 @@ AtA.re2 = eigen.out$vectors \%*\% diag(eigen.out$values) \%*\% t(eigen.out$vecto
 print(eigen.out$values) # print eigenvalues
 all.equal(eigen.out$values[1:k], reigen.out$values)
 }
-\author{
-N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
-}
 \references{
 \itemize{
   \item  [1] N. Halko, P. Martinsson, and J. Tropp.
@@ -114,4 +111,6 @@ N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
 \seealso{
 \code{\link{rsvd}}, \code{\link{rpca}}, \code{\link{eigen}}
 }
-
+\author{
+N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
+}

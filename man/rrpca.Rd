@@ -5,7 +5,7 @@
 \title{Randomized robust principal component analysis (rrpca).}
 \usage{
 rrpca(A, k = NULL, lamb = NULL, gamma = 1.25, rho = 1.5, maxiter = 50,
-  tol = 0.001, svdalg = "auto", p = 10, q = 1, trace = FALSE, ...)
+  tol = 0.001, p = 10, q = 1, trace = FALSE, rand = TRUE)
 }
 \arguments{
 \item{A}{array_like \cr
@@ -31,11 +31,6 @@ determines the maximal numbers of iterations (default \eqn{maxiter=20})..}
 \item{tol}{real, optional \cr
 tolarance paramter for the desired convergence of the algorithm.}
 
-\item{svdalg}{str c('auto', 'rsvd', 'svd'), optional \cr
-Determines which algorithm should be used for computing the singular value decomposition.
-By default 'auto' is used, which decides whether to use \code{\link{rsvd}} or \code{\link{svd}},
-depending on the number of principle components. If \eqn{k < min(n,m)/1.5} randomized svd is used.}
-
 \item{p}{int, optional \cr
 oversampling parameter for \eqn{rsvd}  (default \eqn{p=0}), see \code{\link{rsvd}}.}
 
@@ -45,7 +40,8 @@ number of power iterations  for \eqn{rsvd} (default \eqn{q=1}), see \code{\link{
 \item{trace}{bool, optional \cr
 print progress.}
 
-\item{...}{arguments passed to or from other methods, see \code{\link{rsvd}}.}
+\item{rand}{Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
+If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
 
 \item{.................}{.}
 }
@@ -99,7 +95,7 @@ for(i in 1:90) {
 }
 
 # Foreground/Background separation
-out <- rrpca(toyVideo, k=1, p=5, q=1, svdalg='rsvd', trace=TRUE)
+out <- rrpca(toyVideo, k=1, p=5, q=1, trace=TRUE)
 
 # Display results of the seperation for the 10th frame
 par(mfrow=c(1,4))
@@ -107,9 +103,6 @@ image(matrix(bg, ncol=100, nrow=100)) #true background
 image(matrix(toyVideo[,10], ncol=100, nrow=100)) # frame
 image(matrix(out$L[,10], ncol=100, nrow=100)) # seperated background
 image(matrix(out$S[,10], ncol=100, nrow=100)) #seperated foreground
-}
-\author{
-N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
 }
 \references{
 \itemize{
@@ -122,4 +115,6 @@ N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
          Journal of the ACM (JACM) 58.3 (2011).
 }
 }
-
+\author{
+N. Benjamin Erichson, \email{erichson@uw.edu}
+}

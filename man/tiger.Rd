@@ -9,21 +9,21 @@
 \href{https://en.wikipedia.org/wiki/File:Siberischer_tiger_de_edit02.jpg}{Wikimedia}
 }
 \usage{
-data(tiger)
+data("tiger")
 }
 \description{
 1600x1200 grayscaled (8 bit [0-255]/255) image.
 }
 \examples{
+## Not run:
 library(rsvd)
-#data(tiger)
+data("tiger")
 
 #Display image
-#image(tiger, col = gray((0:255)/255))
-
+image(tiger, col = gray((0:255)/255))
+## End(Not run)
 }
 \references{
 S. Taheri (2006). "Panthera tigris altaica", (Online image)
 }
 \keyword{image}
-

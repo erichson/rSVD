@@ -2,42 +2,57 @@
 % Please edit documentation in R/ggbiplot.R
 \name{ggbiplot}
 \alias{ggbiplot}
-\title{Biplot for \code{rPCA} using ggplot2}
+\title{Biplot for \code{rpca} using ggplot2}
 \usage{
-ggbiplot(rpcaObj, pcs = c(1, 2), groups = NULL, ellipse = TRUE,
-  alpha.ellipse = 0.2, loadings = TRUE, labels = TRUE, ...)
+ggbiplot(rpcaObj, pcs = c(1, 2), loadings = TRUE, groups = NULL,
+  alpha = 0.6, ellipse = TRUE, alpha.ellipse = 0.2, var_labels = TRUE,
+  var_labels.names = NULL, ind_labels = TRUE, ind_labels.names = NULL)
 }
 \arguments{
-\item{rpcaObj}{object containing the \code{sdev} component, such as that returned
-by \code{rpca}}
+\item{rpcaObj}{Object returned by the \code{rpca()} function.}
 
-\item{pcs}{array_like \cr
-an array with two values indicating which two PCs should be plotted,
-by default the first two PCs are used, e.g., \eqn{c(1,2)}. \cr}
+\item{pcs}{Array_like. \cr
+An array with two values indicating the two PCs which should be used for plotting. 
+By default the first two PCs are used, e.g., \eqn{c(1,2)}.}
 
-\item{groups}{optional, factor \cr
-factor indicating groups}
+\item{loadings}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
+If \eqn{TRUE}, the eigenvectors
+are unit scaled by the square root of the eigenvalues \eqn{W = W * diag(sqrt(eigvals))}.}
 
-\item{ellipse}{draw a 1sd data ellipse for each group}
+\item{groups}{Factor, optional. \cr
+Factor indicating groups.}
 
-\item{alpha.ellipse}{alpha transparency for ellipse}
+\item{alpha}{Scalar, optional. \cr
+Alpha transparency for scatter plot.}
 
-\item{loadings}{draw arrows for the variables}
+\item{ellipse}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
+Draw a 1sd data ellipse for each group, if \eqn{TRUE}.}
 
-\item{labels}{label variables}
+\item{alpha.ellipse}{Scalar, optional. \cr
+Alpha transparency for ellipse.}
 
-\item{...}{arguments passed to or from other methods, see \code{\link[ggplot2]{ggplot}}.}
+\item{var_labels}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
+Plot variable names, if \eqn{TRUE}.}
+
+\item{var_labels.names}{Array_like, optional. \cr
+User specific labels for the individuals.}
+
+\item{ind_labels}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
+Plot data point names, if \eqn{TRUE}.}
+
+\item{ind_labels.names}{Array_like, optional. \cr
+User specific labels for data points.}
 }
 \description{
-Biplot for \code{rPCA} using ggplot2
+Creates a pretty biplot which is showing the individual factor map overlayed by the
+variables factor map, i.e, plotting both the principal component scores and directions.
 }
 \examples{
 #See ?rpca
 }
-\author{
-N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
-}
 \seealso{
 \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
 }
-
+\author{
+N. Benjamin Erichson, \email{erichson@uw.edu}
+}

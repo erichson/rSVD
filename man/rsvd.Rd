@@ -4,56 +4,50 @@
 \alias{rsvd}
 \title{Randomized Singular Value Decomposition (rsvd).}
 \usage{
-rsvd(A, k = NULL, nu = NULL, nv = NULL, p = 10, q = 1,
-  sdist = "unif", vt = FALSE)
+rsvd(A, k = NULL, nu = NULL, nv = NULL, p = 10, q = 2,
+  sdist = "normal")
 }
 \arguments{
-\item{A}{array_like \cr
-a real/complex input matrix (or data frame), with dimensions \eqn{(m, n)}.}
+\item{A}{Array_like. \cr
+A real/complex input matrix (or data frame), with dimensions \eqn{(m, n)}.}
 
-\item{k}{int, optional \cr
-determines the target rank of the low-rank decomposition and should satisfy \eqn{k << min(m,n)}.}
+\item{k}{Int, optional. \cr
+Determines the target rank of the low-rank decomposition. It should satisfy \eqn{k << min(m,n)}.}
 
-\item{nu}{int, optional \cr
-the number of left singular vectors to be computed. This must be between \eqn{0}
+\item{nu}{Int, optional. \cr
+The number of left singular vectors to be computed. This must be between \eqn{0}
 and \eqn{k}.}
 
-\item{nv}{int, optional \cr
-the number of right singular vectors to be computed. This must be between \eqn{0}
+\item{nv}{Int, optional. \cr
+The number of right singular vectors to be computed. This must be between \eqn{0}
 and \eqn{k}.}
 
-\item{p}{int, optional \cr
-oversampling parameter for (default \eqn{p=10}).}
+\item{p}{Int, optional. \cr
+Oversampling parameter for (default \eqn{p=10}).}
 
-\item{q}{int, optional \cr
-number of power iterations (default \eqn{q=1}).}
+\item{q}{Int, optional. \cr
+Number of power iterations (default \eqn{q=2}).}
 
-\item{sdist}{str \eqn{c('normal', 'unif', 'col')}, optional \cr
+\item{sdist}{String \eqn{c( 'unif', 'normal', 'rademacher')}, optional. \cr
 Specifies the sampling distribution. \cr
-\eqn{'unif'} : (default) Uniform `[-1,1]`. \cr
-\eqn{'normal}' : Normal `~N(0,1)`. \cr
-\eqn{'col'} : Random column sampling. \cr}
-
-\item{vt}{bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
-\eqn{TRUE} : returns the transposed right singular vectors \eqn{vt}. \cr
-\eqn{FALSE} : (default) returns the right singular vectors as \eqn{v}, this is the format
-as \code{\link{svd}} returns \eqn{v}.}
+\eqn{'unif'} :  Uniform `[-1,1]`. \cr
+\eqn{'normal}' (default) : Normal `~N(0,1)`. \cr
+\eqn{'rademacher'} : Rademacher random variates. \cr}
 
 \item{.............}{.}
 }
 \value{
 \code{rsvd} returns a list containing the following three components:
-\item{d}{  array_like \cr
+\item{d}{  Array_like. \cr
           Singular values; 1-d array of length \eqn{(k)}.
 }
 
-\item{u}{  array_like \cr
-          Right singular values; array with dimensions \eqn{(m, k)}.
+\item{u}{  Array_like. \cr
+          Left singular values; array with dimensions \eqn{(m, k)} or \eqn{(m, nu)}.
 }
 
-\item{v (or vt)}{  array_like \cr
-          Left singular values; array with dimensions \eqn{(n, k)}. \cr
-          Or if \eqn{vt=TRUE}, array with dimensions \eqn{(k, n)}.
+\item{v}{  Array_like. \cr
+          Right singular values; array with dimensions \eqn{(n, k)} or \eqn{(n, nv)}. \cr
 }
 \item{.............}{.}
 }
@@ -65,22 +59,22 @@ The singular value decomposition (SVD) plays a central role in data analysis and
 Randomized SVD (rSVD) is a fast algorithm to compute the approximate
 low-rank SVD of a rectangular \eqn{(m,n)} matrix \eqn{A}
 using a probablistic algorithm.
-Given a target rank \eqn{k << n}, \code{rsvd} factors the input matrix \eqn{A} as
+Given a target rank \eqn{k << min(m,n)}, \code{rsvd} factors the input matrix \eqn{A} as
 \eqn{A = U * diag(d) * V'}. The right singluar vectors are the columns of the
 real or complex unitary matrix \eqn{U} . The left singular vectors are the columns
 of the real or complex unitary matrix \eqn{V}. The singular values \eqn{d} are
 non-negative and real numbers.
 
-The parameter \eqn{p} is a oversampling parameter to improve the approximation.
-A value between 5 and 10 is recommended and \eqn{p=10} is set by default.
+\eqn{p} is an oversampling parameter to improve the approximation.
+A value between 5 and 10 is recommended, and \eqn{p=10} is set by default.
 
-The parameter \eqn{q} specifies the number of normalized power iterations
+The parameter \eqn{q} specifies the number of power (subspace) iterations
 (subspace iterations) to reduce the approximation error. This is recommended
 if the the singular values decay slowly. In practice 1 or 2 iterations
 achieve good results, however, computing power iterations increases the
-computational time. The number of power iterations is set to \eqn{q=1} by default.
+computational time. The number of power iterations is set to \eqn{q=2} by default.
 
-If \eqn{k > (min(n,m)/1.5)}, a deterministic partial or truncated \code{\link{svd}}
+If \eqn{k > (min(n,m)/2)}, a deterministic partial or truncated \code{\link{svd}}
 algorithm might be faster.
 }
 \note{
@@ -107,9 +101,6 @@ Hre <- s$u[,1:k] \%*\% diag(s$d[1:k]) \%*\% t(s$v[,1:k]) # matrix approximation
 print(100 * norm( H - Hre, 'F') / norm( H,'F')) # percentage error
 
 }
-\author{
-N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
-}
 \references{
 \itemize{
   \item  [1] N. Halko, P. Martinsson, and J. Tropp.
@@ -127,4 +118,6 @@ N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
 \seealso{
 \code{\link{svd}}, \code{\link{rpca}}
 }
-
+\author{
+N. Benjamin Erichson, \email{erichson@uw.edu}
+}

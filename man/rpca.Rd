@@ -4,80 +4,66 @@
 \alias{rpca}
 \title{Randomized principal component analysis (rpca).}
 \usage{
-rpca(A, k = NULL, center = TRUE, scale = TRUE, loading = FALSE,
-  retx = FALSE, svdalg = "auto", p = 10, q = 1, ...)
+rpca(A, k = NULL, center = TRUE, scale = TRUE, retx = TRUE, p = 10,
+  q = 2, rand = TRUE)
 }
 \arguments{
-\item{A}{array_like \cr
-a numeric input matrix (or data frame), with dimensions \eqn{(m, n)}. \cr
+\item{A}{Array_like. \cr
+A numeric input matrix (or data frame), with dimensions \eqn{(m, n)}. \cr
 If the data contain \eqn{NA}s na.omit is applied.}
 
-\item{k}{int, optional \cr
-determines the number of principle components to compute. It is required that \eqn{k} is smaller or equal to
+\item{k}{Int, optional. \cr
+Determines the number of principle components to compute. It is required that \eqn{k} is smaller or equal to
 \eqn{n}, but it is recommended that \eqn{k << min(m,n)}.}
 
-\item{center}{bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
-a logical value (\eqn{TRUE} by default) indicating whether the variables should be
+\item{center}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
+A logical value (\eqn{TRUE} by default) indicating whether the variables should be
 shifted to be zero centered. Alternatively, a vector of length equal the number of
 columns of \eqn{A} can be supplied. The value is passed to scale.}
 
-\item{scale}{bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
-a logical value (\eqn{TRUE} by default) indicating whether the variables should
+\item{scale}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
+A logical value (\eqn{TRUE} by default) indicating whether the variables should
 be scaled to have unit variance. Alternatively, a vector of length equal the number of
 columns of \eqn{A} can be supplied. The value is passed to scale.}
 
-\item{loading}{bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
-When \eqn{TRUE} (by default \eqn{FALSE}) the eigenvectors
-are unit scaled by the square root of the eigenvalues \eqn{W = W * diag(sqrt(eigvals))}.}
-
-\item{retx}{bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
-a logical value (\eqn{FALSE} by default) indicating whether the rotated variables / scores
+\item{retx}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional \cr
+A logical value (\eqn{TRUE} by default) indicating whether the rotated variables / scores
 should be returned.}
 
-\item{svdalg}{str c('auto', 'reigen', 'rsvd', svd'), optional \cr
-Determines which algorithm should be used for computing the singular value decomposition.
-By default 'auto' is used, which decides whether to use \code{\link{reigen}} or \code{\link{svd}},
-depending on the number of principle components. If \eqn{k < min(n,m)/1.5} randomized reigen is used.
-Instead \code{\link{rsvd}} can be used, as well.}
+\item{p}{Int, optional. \cr
+Oversampling parameter for \eqn{rsvd}  (default \eqn{p=10}), see \code{\link{rsvd}}.}
 
-\item{p}{int, optional \cr
-oversampling parameter for \eqn{reigen}  (default \eqn{p=10}), see \code{\link{reigen}}.}
+\item{q}{Int, optional. \cr
+Number of power iterations  for \eqn{rsvd} (default \eqn{q=1}), see \code{\link{rsvd}}.}
 
-\item{q}{int, optional \cr
-number of power iterations  for \eqn{reigen} (default \eqn{q=1}), see \code{\link{reigen}}.}
-
-\item{...}{arguments passed to or from other methods, see \code{\link{reigen}}.}
+\item{rand}{Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
+If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
 
 \item{.................}{.}
 }
 \value{
 \code{rpca} returns a list with class \eqn{rpca} containing the following components:
-   \item{rotation}{  array_like \cr
-                     matrix containing the rotation (eigenvectors),
-                     or the variable loadings if \eqn{loadings=TRUE}; array with dimensions \eqn{(n, k)}.
-   }
-   \item{loading}{  array_like \cr
-                     matrix containing the loadings (scaled eigenvectors),
-                     if \eqn{loadings=TRUE}; array with dimensions \eqn{(n, k)}.
+   \item{rotation}{  Array_like. \cr
+                     Matrix containing the rotation (eigenvectors); array with dimensions \eqn{(n, k)}.
    }
 
-   \item{eigvals}{  array_like \cr
-                    the eigenvalues; 1-d array of length \eqn{k}.
+   \item{eigvals}{  Array_like. \cr
+                    The eigenvalues; 1-d array of length \eqn{k}.
    }
-   \item{sdev}{     array_like \cr
-                    the standard deviations of the principal components.
+   \item{sdev}{     Array_like \cr
+                    The standard deviations of the principal components.
    }
-   \item{x}{        array_like \cr
-                    if \eqn{retx} is true a matrix containing the scores / rotated data
+   \item{x}{        Array_like \cr
+                    If \eqn{retx} is true a matrix containing the scores / rotated data
                     (centred and scaled if requested) is returned.
    }
-   \item{center, scale}{  array_like \cr
-                    the centering and scaling used, or \eqn{FALSE}.
+   \item{center, scale}{  Array_like .\cr
+                    The centering and scaling used, or \eqn{FALSE}.
    }
    \item{.................}{.}
 }
 \description{
-Principal components analysis using randomized singular value decomposition.
+Principal components analysis using the randomized singular value decomposition.
 }
 \details{
 Principal component analysis is a linear dimensionality reduction technique,
@@ -88,7 +74,7 @@ Traditionally, the computation is done by a (deterministic) singular value decom
 Randomized PCA is computed using a fast randomized algorithm (\code{\link{rsvd}})
 to compute the approximate low-rank SVD decomposition.
 The computational gain is high if the desired number of principal components
-is small, i.e. \eqn{k << n}.
+is small, i.e. \eqn{k << min(m,n)}.
 
 \code{\link{rsvd}} expects a numeric (real/complex) input matrix with dimensions \eqn{(m, n)}.
 Given a target rank \eqn{k}, \code{rsvd} factors the input matrix \eqn{A} as
@@ -98,8 +84,8 @@ eigenvalues. Following \code{\link{prcomp}} we denote this matrix \eqn{W} as
 rotation matrix (commonly also called loadings).
 
 The print and summary method can be used to present the results in a nice format.
-A scree plot can be produced with the plot function or as recommended with
-\code{\link{ggscreeplot}}. A biplot can be produced with \code{\link{ggbiplot}},
+A scree plot can be produced with
+\code{\link{ggscreeplot}}. The individuals factor map can be produced with \code{\link{ggindplot}},
 and a correlation plot with \code{\link{ggcorplot}}.
 
 The predict function can be used to compute the scores of new observations. The data
@@ -113,7 +99,7 @@ The principal components are not unique and only defined up to sign
 
 Similar to \code{\link{prcomp}} the variances are computed with the usual divisor N - 1.
 
-Note also that \eqn{scale = TRUE} cannot be used if there are zero or constant (for \eqn{center = TRUE} ) variables.
+Note, that \eqn{scale = TRUE} cannot be used, if some columns have only constant entries.
 }
 \examples{
 
@@ -130,47 +116,31 @@ log.iris <- log( iris[ , 1:4] )
 iris.species <- iris[ , 5]
 
 #
-# Perform rPCA and compute all PCs, similar to \\code{\\link{prcomp}}
+# Perform rPCA and compute only the first two PCs
 #
-iris.rpca <- rpca(log.iris, retx=TRUE)
+iris.rpca <- rpca(log.iris, k=2)
 summary(iris.rpca) # Summary
 print(iris.rpca) # Prints the rotations
+
+#
+# Use rPCA to compute all PCs, similar to \\code{\\link{prcomp}}
+#
+iris.rpca <- rpca(log.iris)
+summary(iris.rpca) # Summary
+print(iris.rpca) # Prints the rotations
+plot(iris.rpca) # Produce screeplot, variable and individuls factor maps.
+
 
 # You can compare the results with prcomp
 # iris.pca <- prcomp(log.iris, center = TRUE, scale. = TRUE)
 # summary(iris.pca) # Summary
 # print(iris.pca) # Prints the rotations
-
-#
-# Plot functions
-#
-ggscreeplot(iris.rpca) # Screeplot (explained variance/eigenvalues)
-ggscreeplot(iris.rpca, 'ratio') # Proportion of variance
-ggscreeplot(iris.rpca, 'cum') # Cummulative proportion
-
-ggcorplot(iris.rpca, pcs=c(1,2)) # The correlation of the original variable with the PCs
-
-ggbiplot(iris.rpca, groups = iris.species, circle = FALSE) #Biplot
-
-#
-# Perform rPCA and compute only the first two PCs
-#
-iris.rpca <- rpca(log.iris, k=2,  svdalg = 'rsvd')
-summary(iris.rpca) # Summary
-print(iris.rpca) # Prints the rotations
-
-#
-# Compute the scores of new observations
-#
-preds <- predict(iris.rpca, newdata=data.frame(log.iris))
-
-}
-\author{
-N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
 }
 \seealso{
-\code{\link{ggscreeplot}}, \code{\link{ggbiplot}},
+\code{\link{ggscreeplot}}, \code{\link{ggindplot}},
          \code{\link{ggcorplot}}, \code{\link{plot.rpca}},
          \code{\link{predict}},   \code{\link{rsvd}}
 }
-
+\author{
+N. Benjamin Erichson, \email{erichson@uw.edu}
+}

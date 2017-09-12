@@ -4,33 +4,27 @@
 \alias{rcur}
 \title{Randomized CUR matrix decomposition.}
 \usage{
-rcur(A, k = NULL, c = NULL, r = NULL, p = 10, q = 2,
-  index_set = FALSE, rand = "TRUE")
+rcur(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = "TRUE")
 }
 \arguments{
 \item{A}{Array_like. \cr
 A numeric input matrix (or data frame), with dimensions \eqn{(m, n)}. \cr
 If the data contain \eqn{NA}s na.omit is applied.}
 
-\item{c}{Int, optional. \cr
-Determines the number of columns to be selected. 
-It is required that \eqn{c} is smaller or equal to \eqn{n-1}.}
-
-\item{r}{Int, optional. \cr
-Determines the number of rows to be selected. 
-It is required that \eqn{r} is smaller or equal to \eqn{m-1}.}
+\item{k}{Int, optional. \cr
+Sets the target rank of the low-rank approximation, i.e., the number of columns/rows
+ to be selected. It is required that \eqn{k} is smaller or equal to \eqn{min(m,n)}.}
 
 \item{p}{Int, optional. \cr
 Oversampling parameter (default \eqn{p=10}).}
 
 \item{q}{Int, optional. \cr
-Number of power iterations (default \eqn{q=2}).}
+Number of power iterations (default \eqn{q=0}).}
 
-\item{index_set}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-If (\eqn{TRUE}), only the index_set is returned.}
-
-\item{rand}{Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
-If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
+\item{idx_only}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
+If (\eqn{TRUE}), the index set \code{C.idx} and \code{R.idx} is returned, but not 
+the matrices \code{C} and \code{R}. 
+This is more memory efficient, when dealing with large-scale data.}
 
 \item{rand}{Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
 If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
