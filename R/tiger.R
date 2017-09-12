@@ -4,7 +4,7 @@
 #'
 #' @docType data
 #'
-#' @usage data(tiger)
+#' @usage data("tiger")
 #'
 #' @format An object of class \code{"rsvd"}.
 #'
@@ -15,10 +15,11 @@
 #' @source \href{https://en.wikipedia.org/wiki/File:Siberischer_tiger_de_edit02.jpg}{Wikimedia}
 #'
 #' @examples
+#' ## Not run:
 #' library(rsvd)
-#' #data(tiger)
+#' data("tiger")
 #'
 #' #Display image
-#' #image(tiger, col = gray((0:255)/255))
-#'
+#' image(tiger, col = gray((0:255)/255))
+#' ## End(Not run)
 "tiger"
