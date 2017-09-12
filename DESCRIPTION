@@ -1,7 +1,7 @@
 Package: rsvd
 Type: Package
 Title: Randomized Singular Value Decomposition
-Version: 0.6
+Version: 0.7
 Date: 2016-07-28
 Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "nbe@st-andrews.ac.uk"))
 Author: N. Benjamin Erichson [aut, cre]
@@ -11,13 +11,7 @@ Depends: R (>= 3.2.2)
 License: GPL (>= 2)
 LazyData: TRUE
 URL: https://github.com/Benli11/rSVD
-BugReports: https://github.com/Benli11/rSVD
-RoxygenNote: 5.0.1
+BugReports: https://github.com/Benli11/rSVD/issues
 Suggests:
-    ggplot2,
-    plyr,
-    scales,
-    grid,
-    testthat,
-    knitr,
-    rmarkdown
+    ggplot2
+RoxygenNote: 6.0.1
