@@ -1,6 +1,3 @@
-#devtools::use_package("MASS")
-#library("MASS")
-
 #' @title  Randomized interpolative decomposition (ID).
 #
 #' @description Randomized interpolative matrix decomposition.
@@ -160,9 +157,9 @@ rid.default <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = 
   
   # Compute Z
   if(k == n) {
-    V = MASS::ginv(R[1:k, 1:k])
+    V = pinv(R[1:k, 1:k])
   }else{
-    V = MASS::ginv(R[1:k, 1:k]) %*% R[1:k, (k+1):n] 
+    V = pinv(R[1:k, 1:k]) %*% R[1:k, (k+1):n] 
   }
   idObj$Z = cbind(diag(k), V) 
   idObj$Z = matrix(idObj$Z[, ordered.pivtos], nrow = k, ncol = n)  
@@ -192,8 +189,6 @@ rid.default <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Return
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
-  
   class(idObj) <- "rid"
   return( idObj )
   
