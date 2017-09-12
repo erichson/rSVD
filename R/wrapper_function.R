@@ -24,3 +24,14 @@ tcrossprod_help <- function( A , B ) {
     return( tcrossprod( A , B ) )
   }
 }
+
+#Helper function for Moore–Penrose pseudoinverse
+pinv <- function(A){
+  s <- svd(A)
+  nz <- s$d > s$d[1] * .Machine$double.eps
+  if(any(nz)){
+    return(s$v[, nz] %*% (H(s$u[, nz]) / s$d[nz]))
+  } else {
+    return(A)
+  }
+}
