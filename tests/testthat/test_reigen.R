@@ -1,4 +1,4 @@
-#devtools::use_package("testthat", type = "Suggests")
+#devtools::use_package("testthat")
 
 context("Randomized Eigen")
 

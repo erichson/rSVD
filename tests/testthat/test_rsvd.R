@@ -1,4 +1,4 @@
-#devtools::use_package("testthat", type = "Suggests")
+#devtools::use_package("testthat")
 
 context("Randomized SVD")
 
@@ -186,3 +186,38 @@ testMat <- t(testMat)
     testthat::expect_equal(svd_out$d[1:k], rsvd_out$d[1:k])
   })
 
+
+#*************************************************************************************
+# Test: random test matrices
+#*************************************************************************************
+  
+testMat <- H(testMat)
+  
+#Deterministic SVD
+  svd_out <- svd(testMat)
+
+#Randomized SVD using uniform random test matrix
+  rsvd_out <- rsvd(testMat, k = k, sdist = 'unif')
+  testMat.re = rsvd_out$u %*% diag(rsvd_out$d) %*% H(rsvd_out$v)
+  testthat::test_that("Test 15: Randomized SVD using uniform random test matrix", {
+    testthat::expect_equal(svd_out$d[1:k], rsvd_out$d[1:k])
+    testthat::expect_equal(testMat, testMat.re)
+  })
+  
+  
+#Randomized SVD using normal random test matrix
+  rsvd_out <- rsvd(testMat, k = k, sdist = 'normal')
+  testMat.re = rsvd_out$u %*% diag(rsvd_out$d) %*% H(rsvd_out$v)
+  testthat::test_that("Test 16: Randomized SVD using normal random test matrix", {
+    testthat::expect_equal(svd_out$d[1:k], rsvd_out$d[1:k])
+    testthat::expect_equal(testMat, testMat.re)
+  })
+  
+  
+#Randomized SVD using rademacher random test matrix
+  rsvd_out <- rsvd(testMat, k = k, sdist = 'rademacher')
+  testMat.re = rsvd_out$u %*% diag(rsvd_out$d) %*% H(rsvd_out$v)
+  testthat::test_that("Test 18: Randomized SVD using rademacher random test matrix", {
+    testthat::expect_equal(svd_out$d[1:k], rsvd_out$d[1:k])
+    testthat::expect_equal(testMat, testMat.re)
+  })

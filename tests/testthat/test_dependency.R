@@ -1,9 +1,9 @@
-#devtools::use_package("testthat", type = "Suggests")
+#devtools::use_package("testthat")
+
+context("Dependency")
 
 #Load rsvd library
 library(rsvd)
-
-context("Dependency")
 
 #*************************************************************************************
 # Dependency

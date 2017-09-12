@@ -1,4 +1,4 @@
-#devtools::use_package("testthat", type = "Suggests")
+#devtools::use_package("testthat")
 
 context("Randomized RPCA")
 
@@ -36,7 +36,7 @@ testMat = L + S
 #*************************************************************************************
 # Test 1: deterministic SVD
 #*************************************************************************************
-taurusRRPCA <- rrpca(testMat, k=1, maxiter=100,  tol=1e-08, svdalg='svd', trace=FALSE)
+taurusRRPCA <- rrpca(testMat, k=1, maxiter=100,  tol=1e-08, trace=FALSE, rand=FALSE)
 nrmse <- sqrt(sum((L - taurusRRPCA$L)**2) / sum(L**2)) * 100 # reconstruction error
 testthat::test_that("Test 1: RPCA", {
   testthat::expect_equal(taurusRRPCA$L, L, tolerance = 1e-02)
@@ -47,7 +47,7 @@ testthat::test_that("Test 1: RPCA", {
 #*************************************************************************************
 # Test 2: randomized SVD
 #*************************************************************************************
-taurusRRPCA <- rrpca(testMat, k=1, p=p, q=q, maxiter=100,  tol=1e-08, svdalg='rsvd', trace=FALSE)
+taurusRRPCA <- rrpca(testMat, k=1, p=p, q=q, maxiter=100,  tol=1e-08, trace=FALSE)
 nrmse <- sqrt(sum((L - taurusRRPCA$L)**2) / sum(L**2)) * 100 # reconstruction error
 testthat::test_that("Test 2: Randomized RPCA", {
   testthat::expect_equal(taurusRRPCA$L, L, tolerance = 1e-02)
@@ -71,7 +71,7 @@ testMat = L + S
 #*************************************************************************************
 # Test 3: deterministtic SVD
 #*************************************************************************************
-taurusRRPCA <- rrpca(testMat, k=1, maxiter=100,  tol=1e-08, svdalg='svd', trace=FALSE)
+taurusRRPCA <- rrpca(testMat, k=1, maxiter=100,  tol=1e-08, trace=FALSE, rand=FALSE)
 nrmse <- sqrt(sum((L - taurusRRPCA$L)**2) / sum(L**2)) * 100 # reconstruction error
 testthat::test_that("Test 3: RPCA", {
   testthat::expect_equal(taurusRRPCA$L, L, tolerance = 1e-02)
@@ -82,7 +82,7 @@ testthat::test_that("Test 3: RPCA", {
 #*************************************************************************************
 # Test 4: randomized SVD
 #*************************************************************************************
-taurusRRPCA <- rrpca(testMat, k=1, p=p, q=q, maxiter=100,  tol=1e-08, svdalg='rsvd', trace=FALSE)
+taurusRRPCA <- rrpca(testMat, k=1, p=p, q=q, maxiter=100,  tol=1e-08, trace=FALSE)
 nrmse <- sqrt(sum((L - taurusRRPCA$L)**2) / sum(L**2)) * 100 # reconstruction error
 testthat::test_that("Test 4: Randomized RPCA", {
   testthat::expect_equal(taurusRRPCA$L, L, tolerance = 1e-02)
