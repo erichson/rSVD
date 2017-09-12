@@ -1,6 +1,3 @@
-#devtools::use_package("MASS")
-#library("MASS")
-
 #' @title  Randomized CUR matrix decomposition.
 #
 #' @description Randomized CUR matrix decomposition.
@@ -29,9 +26,6 @@
 #'
 #' @param q       Int, optional. \cr
 #'                Number of power iterations (default \eqn{q=0}).
-#'                                            
-#' @param rand  Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
-#'              If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.               
 #'
 #' @param idx_only  Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
 #'              If (\eqn{TRUE}), the index set \code{C.idx} and \code{R.idx} is returned, but not 
@@ -133,7 +127,6 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = 'T
     rcurObj$C <- matrix(A[, out_cid$idx], nrow = m, ncol = k)    
     colnames(rcurObj$C) <- colnames(A)[out_cid$idx]
     rownames(rcurObj$C) <- rownames(A)
-    
   } 
   
   rcurObj$C.idx <- out_cid$idx
@@ -160,14 +153,13 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = 'T
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   #Compute U
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  rcurObj$U = Z %*% MASS::ginv(matrix(A[rcurObj$R.idx, ], nrow = k, ncol = n) )    
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #rcurObj$U = Z %*% MASS::ginv(matrix(A[rcurObj$R.idx, ], nrow = k, ncol = n) )    
+  rcurObj$U = Z %*% pinv(matrix(A[rcurObj$R.idx, ], nrow = k, ncol = n))
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Return
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   class(rcurObj) <- "rcur"
   return( rcurObj )
-  
-  
 }  
