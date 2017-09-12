@@ -33,11 +33,6 @@
 #' @param tol     real, optional \cr
 #'                tolarance paramter for the desired convergence of the algorithm.
 #'
-#' @param svdalg  str c('auto', 'rsvd', 'svd'), optional \cr
-#'                Determines which algorithm should be used for computing the singular value decomposition.
-#'                By default 'auto' is used, which decides whether to use \code{\link{rsvd}} or \code{\link{svd}},
-#'                depending on the number of principle components. If \eqn{k < min(n,m)/1.5} randomized svd is used.
-#'
 #' @param p       int, optional \cr
 #'                oversampling parameter for \eqn{rsvd}  (default \eqn{p=0}), see \code{\link{rsvd}}.
 #'
@@ -46,8 +41,9 @@
 #'
 #' @param trace   bool, optional \cr
 #'                print progress.
-#'
-#' @param ...     arguments passed to or from other methods, see \code{\link{rsvd}}.
+#'                
+#' @param rand  Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
+#'              If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.
 #'
 #' @param ................. .
 #'
@@ -73,7 +69,7 @@
 #'
 #' @note  ...
 #'
-#' @author N. Benjamin Erichson, \email{nbe@st-andrews.ac.uk}
+#' @author N. Benjamin Erichson, \email{erichson@uw.edu}
 #'
 #' @references
 #' \itemize{
@@ -104,7 +100,7 @@
 #' }
 #'
 #' # Foreground/Background separation
-#' out <- rrpca(toyVideo, k=1, p=5, q=1, svdalg='rsvd', trace=TRUE)
+#' out <- rrpca(toyVideo, k=1, p=5, q=1, trace=TRUE)
 #'
 #' # Display results of the seperation for the 10th frame
 #' par(mfrow=c(1,4))
@@ -114,10 +110,10 @@
 #' image(matrix(out$S[,10], ncol=100, nrow=100)) #seperated foreground
 
 #' @export
-rrpca <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50, tol=1.0e-3, svdalg='auto', p=10, q=1, trace=FALSE, ...) UseMethod("rrpca")
+rrpca <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50, tol=1.0e-3, p=10, q=1, trace=FALSE, rand=TRUE) UseMethod("rrpca")
 
 #' @export
-rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50, tol=1.0e-3, svdalg='auto', p=10, q=1, trace=FALSE, ...) {
+rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50, tol=1.0e-3, p=10, q=1, trace=FALSE, rand=TRUE) {
   #*************************************************************************
   #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
   #***                              <2016>                               ***
@@ -149,11 +145,16 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50,
   if(is.null(rrpcaObj$gamma)) rrpcaObj$gamma <- 1.25
   if(is.null(rrpcaObj$rho)) rrpcaObj$rho <- 1.5
 
+  if(rand == TRUE) {
+    svdalg = 'rsvd'
+  }else { 
+    svdalg = 'svd' 
+  }  
+  
   # Compute matrix norms
   spectralNorm <- switch(svdalg,
                     svd = norm(A, "2"),
                     rsvd = rsvd(A, k=1, p=5, q=0, nu=0, nv=0)$d,
-                    auto = rsvd(A, k=1, p=5, q=0, nu=0, nv=0)$d,
                     stop("Selected SVD algorithm is not supported!")
   )
 
@@ -189,12 +190,9 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50,
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       #Singular Value Decomposition
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      if(svdalg=='auto'){
-        if(rrpcaObj$k < (n/1.5)) {svdalg='rsvd'} else svdalg='svd'
-      }
       svd_out <- switch(svdalg,
                         svd = svd(A - rrpcaObj$S + muinv*Y),
-                        rsvd = rsvd(A - rrpcaObj$S + muinv*Y, k=(rrpcaObj$k+p), p=0, q=q, ...),
+                        rsvd = rsvd(A - rrpcaObj$S + muinv*Y, k=(rrpcaObj$k+p), p=0, q=q),
                         stop("Selected SVD algorithm is not supported!")
       )
 
