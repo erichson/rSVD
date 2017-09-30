@@ -1,11 +1,11 @@
 #' @title  Randomized QB Decomposition (rqb).
 #
-#' @description Compute the near-optimal QB decompositon of a rectangular matrix.
+#' @description Compute the near-optimal QB decomposition of a rectangular matrix.
 #
 #' @details
-#' The randomized QB decompositon factors a rectangular \eqn{(m,n)} matrix \eqn{A} as
+#' The randomized QB decomposition factors a rectangular \eqn{(m,n)} matrix \eqn{A} as
 #' \eqn{A = Q * B}. \eqn{Q} is an \eqn{(m,k)} matrix with orthogonal columns, and \eqn{B} a \eqn{(k,n)} matrix.
-#' The target rank is assumend to be \eqn{k << min(m,n)}.   
+#' The target rank is assumed to be \eqn{k << min(m,n)}.   
 #'
 #' \eqn{p} is an oversampling parameter to improve the approximation.
 #' A value between 5 and 10 is recommended, and \eqn{p=10} is set by default.
@@ -17,39 +17,36 @@
 #' computational time. The number of power iterations is set to \eqn{q=2} by default.
 #'
 #'
-#' @param A       Array_like. \cr
-#'                A real/complex input matrix (or data frame), with dimensions \eqn{(m, n)}.
+#' @param A       array_like; \cr
+#'                real/complex \eqn{(m, n)} input matrix (or data frame).
 #'
-#' @param k       Int, optional. \cr
-#'                Determines the target rank of the low-rank decomposition. It should satisfy \eqn{k << min(m,n)}.
+#' @param k       integer, optional; \cr
+#'                target rank of the low-rank decomposition. It should satisfy \eqn{k << min(m,n)}.
 #'
-#' @param p       Int, optional. \cr
-#'                Oversampling parameter for (default \eqn{p=10}).
+#' @param p       integer, optional; \cr
+#'                oversampling parameter (default \eqn{p=10}).
 #'
-#' @param q       Int, optional. \cr
-#'                Number of power iterations (default \eqn{q=2}).
+#' @param q       integer, optional; \cr
+#'                number of power iterations (default \eqn{q=2}).
 #'
-#' @param sdist   String \eqn{c( 'unif', 'normal', 'rademacher')}, optional. \cr
-#'                Specifies the sampling distribution. \cr
+#' @param sdist   string \eqn{c( 'unif', 'normal', 'rademacher')}, optional; \cr
+#'                specifies the sampling distribution: \cr
 #'                \eqn{'unif'} :  Uniform `[-1,1]`. \cr
 #'                \eqn{'normal}' (default) : Normal `~N(0,1)`. \cr
 #'                \eqn{'rademacher'} : Rademacher random variates. \cr
 #'
-#' @param rand  Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
+#' @param rand  bool, optional; \cr
 #'              If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.
 #'
-#' @param ............. .
 #'
-#'
-#'@return \code{rqb} returns a list containing the following three components:
-#'\item{Q}{  Array_like. \cr
-#'           Orthogonal matrix; array with dimensions \eqn{(m, k)}.
+#'@return \code{rqb} returns a list containing the following components:
+#'\item{Q}{  array_like; \cr
+#'           matrix with orthogonal columns; \eqn{(m, k)} dimensional array.
 #'}
 #'
-#'\item{B}{  Array_like. \cr
-#'           Smaller matrix; array with dimensions \eqn{(k, n)}.
+#'\item{B}{  array_like; \cr
+#'           smaller matrix; \eqn{(k, n)} dimensional array.
 #'}
-#'\item{.............}{.}
 #'
 #' @references
 #' \itemize{
@@ -58,11 +55,9 @@
 #'          algorithms for constructing approximate matrix
 #'          decompositions" (2009).
 #'          (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
-#'   \item  [2] S. Voronin and P.Martinsson.
-#'          "RSVDPACK: Subroutines for computing partial singular value
-#'          decompositions via randomized sampling on single core, multi core,
-#'          and GPU architectures" (2015).
-#'          (available at `arXiv \url{http://arxiv.org/abs/1502.05366}).
+#'   \item  [2] N. B. Erichson, S. Voronin, S. Brunton, J. N. Kutz.
+#'          "Randomized matrix decompositions using R" (2016).
+#'          (available at `arXiv \url{http://arxiv.org/abs/1608.02148}).
 #' }
 #'
 #' @author N. Benjamin Erichson, \email{erichson@uw.edu}

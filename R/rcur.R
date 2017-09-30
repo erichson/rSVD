@@ -3,86 +3,115 @@
 #' @description Randomized CUR matrix decomposition.
 #
 #' @details
-#' Algorithm for computing the CUR of a rectangular \eqn{(m, n)} matrix \eqn{A}, with target rank 
-#' \eqn{k << min(m,n)}. The input matrix is factored as \eqn{A = C * U * R}, 
-#' using the \code{\link{rid}} decomposition. The factor matrix \eqn{C} is formed as a subset of 
-#' columns of \eqn{A}, also called the partial column skeleton. The factor matrix \eqn{R} is formed as
-#' a subset of rows of \eqn{A}, also called the partial row skeleton. The factor matrix \eqn{U} 
-#' is well-conditioned. 
+#' Algorithm for computing the CUR matrix decomposition of a rectangular \eqn{(m, n)} matrix \eqn{A}, 
+#' with target rank \eqn{k << min(m,n)}. The input matrix is factored as 
+#' 
+#' \deqn{A = C * U * R} 
+#' 
+#' using the \code{\link{rid}} decomposition. The factor matrix \eqn{C} is formed using actual 
+#' columns of \eqn{A}, also called the partial column skeleton. The factor matrix \eqn{R} is formed 
+#' using actual rows of \eqn{A}, also called the partial row skeleton.
 #' 
 #' If \eqn{rand='TRUE'} a probabilistic strategy is used to compute the decomposition, otherwise a
 #' deterministic algorithm is used. 
 #'
 #'
-#' @param A   Array_like. \cr
-#'            A numeric input matrix (or data frame), with dimensions \eqn{(m, n)}. \cr
+#' @param A   array_like; \cr
+#'            numeric \eqn{(m, n)} input matrix (or data frame). \cr
 #'            If the data contain \eqn{NA}s na.omit is applied.
-#' @param k   Int, optional. \cr
-#'            Sets the target rank of the low-rank approximation, i.e., the number of columns/rows
-#'             to be selected. It is required that \eqn{k} is smaller or equal to \eqn{min(m,n)}.
+#'            
+#' @param k   integer; \cr
+#'            target rank of the low-rank approximation, i.e., the number of columns/rows
+#'            to be selected. It is required that \eqn{k} is smaller or equal to \eqn{min(m,n)}.
 #'        
-#' @param p       Int, optional. \cr
-#'                Oversampling parameter (default \eqn{p=10}).
+#' @param p   integer, optional; \cr
+#'            oversampling parameter (default \eqn{p=10}).
 #'
-#' @param q       Int, optional. \cr
-#'                Number of power iterations (default \eqn{q=0}).
+#' @param q   integer, optional; \cr
+#'            number of additional power iterations (default \eqn{q=0}).
 #'
-#' @param idx_only  Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'              If (\eqn{TRUE}), the index set \code{C.idx} and \code{R.idx} is returned, but not 
+#' @param idx_only  bool, optional; \cr
+#'              if (\eqn{TRUE}), only the index set \code{C.idx} and \code{R.idx} is returned, but not 
 #'              the matrices \code{C} and \code{R}. 
 #'              This is more memory efficient, when dealing with large-scale data. 
 #'              
-#' @param rand  Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
-#'              If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.                
+#' @param rand  bool, optional; \cr
+#'              if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.                
 #'
-#' @param ................. .
 #'
-#' @return \code{id} returns a list with class \eqn{id} containing the following components:
-#'    \item{C}{ Array_like. \cr
-#'              Column subset \eqn{C = A[,C.idx]}; array with dimensions \eqn{(m, k)}.
+#' @return \code{rcur} returns a list with class \eqn{id} containing the following components:
+#'    \item{C}{ array_like; \cr
+#'              column subset \eqn{C = A[,C.idx]}; \eqn{(m, k)} dimensional array.
 #'    }
 #'
 #'    \item{R}{ Array_like. \cr
-#'               Row subset \eqn{R = A[R.idx, ]}; array with dimensions \eqn{(k, n)}.
+#'               row subset \eqn{R = A[R.idx, ]}; \eqn{(k, n)} dimensional array.
 #'    }
 #'    
-#'    \item{U}{ Array_like \cr
-#'             Well conditioned matrix; array with dimensions \eqn{(k,k)}.
+#'    \item{U}{ array_like; \cr
+#'             connector matrix; \eqn{(k,k)} dimensional array.
 #'    }
 #'    
-#'    \item{C.idx}{ Array_like \cr
-#'                The index set of the \eqn{k} selcted columns used to form \eqn{C}. 
+#'    \item{C.idx}{ array_like; \cr
+#'                index set of the \eqn{k} selected columns used to form \eqn{C}. 
 #'    }   
 #' 
-#'    \item{R.idx}{ Array_like \cr
-#'                The index set of the \eqn{k} selcted rows used to form \eqn{R}. 
+#'    \item{R.idx}{ array_like; \cr
+#'                index set of the \eqn{k} selected rows used to form \eqn{R}. 
 #'    }   
 #'       
 #'      
-#'    \item{C.scores}{ Array_like .\cr
-#'                   The scores (importancies) of the columns of the input matrix \eqn{A}.
+#'    \item{C.scores}{ array_like; \cr
+#'                   scores of the selected columns.
 #'    } 
 #' 
-#'    \item{R.scores}{ Array_like .\cr
-#'                   The scores (importancies) of the rows of the input matrix \eqn{A}.
+#'    \item{R.scores}{ array_like; \cr
+#'                   scores  of the selected rows.
 #'    }                   
 #'                                                       
-#'    }
-#'    \item{.................}{.}
 #'
-#'
+#' @references
+#' \itemize{
+#'   \item  [1] N. Halko, P. Martinsson, and J. Tropp.
+#'          "Finding structure with randomness: probabilistic
+#'          algorithms for constructing approximate matrix
+#'          decompositions" (2009).
+#'          (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
+#'   \item  [2] N. B. Erichson, S. Voronin, S. Brunton, J. N. Kutz.
+#'          "Randomized matrix decompositions using R" (2016).
+#'          (available at `arXiv \url{http://arxiv.org/abs/1608.02148}).
+#' }
 #'
 #' @author N. Benjamin Erichson, \email{erichson@uw.edu}
 #'
-#' @seealso \code{\link{rcur}},
+#' @seealso \code{\link{rid}}
 #'
 #'
+#'
+#' @examples
+#' ## Not run:
+#' # Load test image
+#' data("tiger")
+#'
+#' # Compute (column) randomized interpolative decompsition
+#' # Note that the image needs to be transposed for correct plotting
+#' out <- rcur(tiger, k = 150)
+#'
+#' # Reconstruct image
+#' tiger.re <- out$C %*% out$U %*% out$R
+#'
+#' # Compute relative error
+#' print(norm(tiger-tiger.re, 'F') / norm(tiger, 'F')) 
+#'
+#' # Plot approximated image
+#' image(tiger.re, col = gray((0:255)/255))
+#' ## End(Not run)
 
 #' @export
-rcur <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = 'TRUE') UseMethod("rcur")
+rcur <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TRUE) UseMethod("rcur")
 
 #' @export
-rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = 'TRUE') {
+rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TRUE) {
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Checks
@@ -131,31 +160,47 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = 'T
   
   rcurObj$C.idx <- out_cid$idx
   rcurObj$C.scores <- out_cid$scores
-  Z <- out_cid$Z
-  remove(out_cid)
-    
+
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   #Compute row ID of C
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  out_rid <- rid(A[, rcurObj$C.idx], k = k, p = p, q = q, mode = 'row', idx_only = TRUE, rand = FALSE)
+  #out_rid <- rid(A[, rcurObj$C.idx], k = k, p = p, q = q, mode = 'row', idx_only = TRUE, rand = FALSE)
+  out <- qr(H(A[, rcurObj$C.idx]), LAPACK=TRUE) 
+  
+  # Get index set
+  rcurObj$R.idx <- out$pivot[1:k] # Get row set
 
-  # Select column subset
+  # Get R =: S
+  S <- qr.R( out ) 
+  #Q <- qr.Q( out ) 
+  
+  # Select row subset
   if(idx_only == FALSE) {
-    rcurObj$R <- matrix(A[out_rid$idx, ], nrow = k, ncol = n) 
-    rownames(rcurObj$R) <- rownames(A)[out_rid$idx]
+    rcurObj$R <- matrix(A[rcurObj$R.idx,], nrow = k, ncol = n) 
+    rownames(rcurObj$R) <- rownames(A)[rcurObj$R.idx]
     colnames(rcurObj$R) <- colnames(A)
-    
   } 
   
-  rcurObj$R.idx <- out_rid$idx
-  rcurObj$R.scores <- out_rid$scores
-  remove(out_rid)
-  
+  rcurObj$R.scores <- abs(diag(S))[1:k]
+
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   #Compute U
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   #rcurObj$U = Z %*% MASS::ginv(matrix(A[rcurObj$R.idx, ], nrow = k, ncol = n) )    
-  rcurObj$U = Z %*% pinv(matrix(A[rcurObj$R.idx, ], nrow = k, ncol = n))
+  rcurObj$U = out_cid$Z %*% pinv(matrix(A[rcurObj$R.idx, ], nrow = k, ncol = n))
+
+  #colinv = matrix(0, 1 , n)
+  #colinv[out_cid$pivot] = 1:n
+  
+  #V = rbind(diag(k), H(out_cid$Z))[colinv,]
+  
+  # Rt*Ut = V via RRt*Ut = R*V
+  #RV = rcurObj$R %*% V
+  #rcurObj$U = H(pinv(rcurObj$R %*% H(rcurObj$R)) %*% RV)
+
+  # Rt*Ut = V
+  #rcurObj$U = H(pinv(H(rcurObj$R)) %*% V)
+
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Return
@@ -163,3 +208,6 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = 'T
   class(rcurObj) <- "rcur"
   return( rcurObj )
 }  
+
+
+

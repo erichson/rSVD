@@ -1,73 +1,52 @@
 #' @title  Randomized robust principal component analysis (rrpca).
 #
-#' @description Robust principal components analysis using randomized singular value decomposition.
+#' @description Robust principal components analysis separates a matrix into a low-rank plus sparse component.
 #
 #' @details
 #' Robust principal component analysis (RPCA) is a method for the robust seperation of a
 #' a rectangular \eqn{(m,n)} matrix \eqn{A} into a low-rank component \eqn{L} and a
-#' sparse comonent \eqn{S} as follows: \eqn{A=L+S}.
-#' Here we are using the fast randomized accelerated inexact augmented Lagrange multiplier
-#' method (IALM) for obtaining the robust seperation.
+#' sparse comonent \eqn{S}: 
+#'
+#' \deqn{ A = L + S}
+#'
+#' To decompose the matrix, we use the inexact augmented Lagrange multiplier
+#' method (IALM). The algorithm can be used in combination with either the randomized or deterministic SVD. 
 #'
 #'
-#' @param A       array_like \cr
-#'                a numeric input matrix (or data frame), with dimensions \eqn{(m, n)}. \cr
-#'                If the data contain \eqn{NA}s na.omit is applied.
+#' @param A       array_like; \cr
+#'                a real \eqn{(m, n)} input matrix (or data frame) to be decomposed. \cr
+#'                na.omit is applied, if the data contain \eqn{NA}s.
 #'
-#' @param k       int, optional \cr
-#'                determines the number of principle components to compute. It is required that \eqn{k} is smaller or equal to
-#'                \eqn{n}, but it is recommended that \eqn{k << min(m,n)}.
+#' @param lambda  scalar, optional; \cr
+#'                tuning parameter (default \eqn{lambda = max(m,n)^-0.5}).
 #'
-#' @param lamb    real, optional \cr
-#'                tuning paramter (default \eqn{lamb=max(m,n)^-0.5}).
+#' @param maxiter integer, optional; \cr
+#'                maximum number of iterations (default \eqn{maxiter = 20}).
 #'
-#' @param gamma   real, optional \cr
-#'                tuning paramter (default \eqn{gamma=1.25}).
+#' @param tol     scalar, optional; \cr
+#'                precision parameter (default \eqn{tol = 1.0e-5}).
 #'
-#' @param rho     real, optional \cr
-#'                tuning paramter (default \eqn{rho=1.5}).
+#' @param p       integer, optional; \cr
+#'                oversampling parameter for \eqn{rsvd} (default \eqn{p=10}), see \code{\link{rsvd}}.
 #'
-#' @param maxiter int, optional \cr
-#'                determines the maximal numbers of iterations (default \eqn{maxiter=20})..
+#' @param q       integer, optional; \cr
+#'                number of additional power iterations for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.
 #'
-#' @param tol     real, optional \cr
-#'                tolarance paramter for the desired convergence of the algorithm.
-#'
-#' @param p       int, optional \cr
-#'                oversampling parameter for \eqn{rsvd}  (default \eqn{p=0}), see \code{\link{rsvd}}.
-#'
-#' @param q       int, optional \cr
-#'                number of power iterations  for \eqn{rsvd} (default \eqn{q=1}), see \code{\link{rsvd}}.
-#'
-#' @param trace   bool, optional \cr
+#' @param trace   bool, optional; \cr
 #'                print progress.
 #'                
-#' @param rand  Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
-#'              If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.
+#' @param rand    bool, optional; \cr
+#'                if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.
 #'
-#' @param ................. .
 #'
-#' @return \code{rrpca} returns a list with class \eqn{rrpca} containing the following components:
-#'    \item{L}{  array_like \cr
-#'              Low-rank component, array of shape \eqn{(m, n)}.
+#' @return \code{rrpca} returns a list containing the following components:
+#'    \item{L}{  array_like; \cr
+#'              low-rank component; \eqn{(m, n)} dimensional array.
 #'    }
 #'    \item{S}{  array_like \cr
-#'               Sparse component, array of shape \eqn{(m, n)}.
+#'               sparse component; \eqn{(m, n)} dimensional array.
 #'    }
 #'
-#'    \item{k}{  int \cr
-#'               target-rank used for the final iteration.
-#'    }
-#'
-#'    \item{err}{  vector \cr
-#'               Frobenious error archieved by each iteration.
-#'    }
-#'
-#'    \item{.................}{.}
-#'
-#'
-#'
-#' @note  ...
 #'
 #' @author N. Benjamin Erichson, \email{erichson@uw.edu}
 #'
@@ -77,9 +56,10 @@
 #'          "The augmented lagrange multiplier method for exact
 #'          recovery of corrupted low-rank matrices." (2010).
 #'          (available at arXiv \url{http://arxiv.org/abs/1009.5055}).
-#'   \item  [2] Candes, Emmanuel J., et al.
-#'          "Robust principal component analysis?."
-#'          Journal of the ACM (JACM) 58.3 (2011).
+#'
+#'   \item  [2] N. B. Erichson, S. Voronin, S. Brunton, J. N. Kutz.
+#'          "Randomized matrix decompositions using R" (2016).
+#'          (available at `arXiv \url{http://arxiv.org/abs/1608.02148}).
 #' }
 #'
 #' @examples
@@ -100,7 +80,7 @@
 #' }
 #'
 #' # Foreground/Background separation
-#' out <- rrpca(toyVideo, k=1, p=5, q=1, trace=TRUE)
+#' out <- rrpca(toyVideo, trace=TRUE)
 #'
 #' # Display results of the seperation for the 10th frame
 #' par(mfrow=c(1,4))
@@ -110,10 +90,10 @@
 #' image(matrix(out$S[,10], ncol=100, nrow=100)) #seperated foreground
 
 #' @export
-rrpca <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50, tol=1.0e-3, p=10, q=1, trace=FALSE, rand=TRUE) UseMethod("rrpca")
+rrpca <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, trace=FALSE, rand=TRUE) UseMethod("rrpca")
 
 #' @export
-rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50, tol=1.0e-3, p=10, q=1, trace=FALSE, rand=TRUE) {
+rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, trace=FALSE, rand=TRUE) {
   #*************************************************************************
   #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
   #***                              <2016>                               ***
@@ -123,27 +103,22 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50,
   m <- nrow(A)
   n <- ncol(A)
 
-  rrpcaObj = list(L = matrix(0, nrow = m, ncol = n),
-                  S = matrix(0, nrow = m, ncol = n),
-                  k = k,
-                  lamb = lamb,
-                  gamma = gamma,
-                  rho = rho,
+  rrpcaObj = list(L = NULL,
+                  S = NULL,
                   err = NULL)
 
 
-  #Set target rank
-  if(is.null(rrpcaObj$k)) rrpcaObj$k <- 2
-  if(rrpcaObj$k>n) rrpcaObj$k <- n
-  if(rrpcaObj$k<1) stop("Target rank is not valid!")
+  # Set target rank
+  k <- 1
+  if(k > min(m,n)) rrpcaObj$k <- min(m,n)
 
-  unobserved = is.na(A)
-  A[unobserved] <- 0
-
+  # Deal with missing values
+  is.na(A) <- 0
+  
   # Set lambda, gamma, rho
-  if(is.null(rrpcaObj$lamb)) rrpcaObj$lamb <- max(m,n)^-0.5
-  if(is.null(rrpcaObj$gamma)) rrpcaObj$gamma <- 1.25
-  if(is.null(rrpcaObj$rho)) rrpcaObj$rho <- 1.5
+  if(is.null(lambda)) lambda <- max(m,n)**-0.5
+  gamma <- 1.25
+  rho <- 1.5
 
   if(rand == TRUE) {
     svdalg = 'rsvd'
@@ -154,87 +129,101 @@ rrpca.default <- function(A, k=NULL, lamb=NULL, gamma=1.25, rho=1.5, maxiter=50,
   # Compute matrix norms
   spectralNorm <- switch(svdalg,
                     svd = norm(A, "2"),
-                    rsvd = rsvd(A, k=1, p=5, q=0, nu=0, nv=0)$d,
+                    rsvd = rsvd(A, k=1, p=10, q=1, nu=0, nv=0)$d,
                     stop("Selected SVD algorithm is not supported!")
   )
 
-  infNorm <- norm( A , "I") / rrpcaObj$lamb
+  infNorm <- norm( A , "I") / lambda
   dualNorm <- max( spectralNorm , infNorm)
   froNorm <- norm( A , "F")
 
-  # Normalize A
-  Y <- A / dualNorm
+  # Initalize Lagrange multiplier
+  Z <- A / dualNorm
 
-  # Computing further tuning parameter
-  mu <- rrpcaObj$gamma / spectralNorm
+  # Initialize tuning parameter
+  mu <- gamma / spectralNorm
   mubar <- mu * 1e7
-  mu <- min( mu*rrpcaObj$rho , mubar )
-  muinv <- mu**-1
+  mu <- min( mu * rho , mubar )
+  muinv <- 1 / mu
 
-  rrpcaObj$niter <- 1
+  # Init low-rank and sparse matrix
+  L = matrix(0, nrow = m, ncol = n)
+  S = matrix(0, nrow = m, ncol = n)  
+  
+  niter <- 1
   err <- 1
-  while(err > tol && rrpcaObj$niter <= maxiter) {
+  while(err > tol && niter <= maxiter) {
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Update S using soft-threshold
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      epsi = rrpcaObj$lamb*muinv
-      tempS = A - rrpcaObj$L + muinv*Y
-      rrpcaObj$S = matrix(0, nrow = m, ncol = n)
+      epsi = lambda / mu
+      temp_S = A - L + Z / mu
+      
+      S = matrix(0, nrow = m, ncol = n)
 
-      idxL <- which(tempS < -epsi)
-      idxH <- which(tempS > epsi)
-      rrpcaObj$S[idxL] <- tempS[idxL]+epsi
-      rrpcaObj$S[idxH] <- tempS[idxH]-epsi
+      idxL <- which(temp_S < -epsi)
+      idxH <- which(temp_S > epsi)
+      S[idxL] <- temp_S[idxL] + epsi
+      S[idxH] <- temp_S[idxH] - epsi
 
+      
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       #Singular Value Decomposition
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      svd_out <- switch(svdalg,
-                        svd = svd(A - rrpcaObj$S + muinv*Y),
-                        rsvd = rsvd(A - rrpcaObj$S + muinv*Y, k=(rrpcaObj$k+p), p=0, q=q),
-                        stop("Selected SVD algorithm is not supported!")
-      )
+      R <- A - S + Z / mu
 
+      if(svdalg == 'svd') svd_out <- svd(R)
+      if(svdalg == 'rsvd') {
+        if(k > min(m,n)/5 ) auto_svd = 'svd' else auto_svd = 'rsvd' 
+      
+        svd_out <- switch(auto_svd,
+                          svd = svd(R),
+                          rsvd = rsvd(R, k=k+10, p=p, q=q)) 
+      }  
+      
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Predict optimal rank and update
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      kopt = sum(svd_out$d > muinv)
-      if(kopt <= rrpcaObj$k){
-        rrpcaObj$k = min(kopt+1, n)
+      svp = sum(svd_out$d > 1/mu)
+      
+      if(svp <= k){
+        k = min(svp + 1, n)
       } else {
-        rrpcaObj$k = min(kopt + round(0.05*n), n)
+        k = min(svp + round(0.05 * n), n)
       }
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Truncate SVD and update L
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # rrpcaObj$L =  svd_out$u[,1:rrpcaObj$k] %*% diag(svd_out$d[1:rrpcaObj$k] - muinv, nrow=rrpcaObj$k, ncol=rrpcaObj$k)  %*% t(svd_out$v[,1:rrpcaObj$k])
-      rrpcaObj$L =  t( t(svd_out$u[,1:kopt]) * (svd_out$d[1:kopt]- muinv) ) %*% t(svd_out$v[,1:kopt])
+      L =  t(t(svd_out$u[,1:svp]) * (svd_out$d[1:svp] - 1/mu)) %*% t(svd_out$v[,1:svp])
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Compute error
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      Z = A - rrpcaObj$L - rrpcaObj$S
-      Y = Y + mu * Z
+      Astar = A - L - S
+      Z = Z + Astar * mu
 
-      err = norm( Z , 'F') / froNorm
+      err = norm( Astar , 'F') / froNorm
       rrpcaObj$err <- c(rrpcaObj$err, err)
 
       if(trace==TRUE){
-        cat('\n', paste0('Iteration: ', rrpcaObj$niter ), paste0('     k = ', kopt ),  paste0('      Fro. error = ', rrpcaObj$err[rrpcaObj$niter] ))
+        cat('\n', paste0('Iteration: ', niter ), paste0(' predicted rank = ', svp ), paste0(' target rank k = ', k ),  paste0(' Fro. error = ', rrpcaObj$err[niter] ))
         }
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Update mu
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      mu = min(mu*rrpcaObj$rho, mubar);
+      mu = min(mu * rho, mubar);
       muinv = 1 / mu
 
-      rrpcaObj$niter = rrpcaObj$niter + 1
+      niter =  niter + 1
 
   }# End while loop
-
+  rrpcaObj$L <- L
+  rrpcaObj$S <- S
+  
   class(rrpcaObj) <- "rrpca"
   return( rrpcaObj )
 
