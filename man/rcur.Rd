@@ -4,49 +4,111 @@
 \alias{rcur}
 \title{Randomized CUR matrix decomposition.}
 \usage{
-rcur(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = "TRUE")
+rcur(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TRUE)
 }
 \arguments{
-\item{A}{Array_like. \cr
-A numeric input matrix (or data frame), with dimensions \eqn{(m, n)}. \cr
+\item{A}{array_like; \cr
+numeric \eqn{(m, n)} input matrix (or data frame). \cr
 If the data contain \eqn{NA}s na.omit is applied.}
 
-\item{k}{Int, optional. \cr
-Sets the target rank of the low-rank approximation, i.e., the number of columns/rows
- to be selected. It is required that \eqn{k} is smaller or equal to \eqn{min(m,n)}.}
+\item{k}{integer; \cr
+target rank of the low-rank approximation, i.e., the number of columns/rows
+to be selected. It is required that \eqn{k} is smaller or equal to \eqn{min(m,n)}.}
 
-\item{p}{Int, optional. \cr
-Oversampling parameter (default \eqn{p=10}).}
+\item{p}{integer, optional; \cr
+oversampling parameter (default \eqn{p=10}).}
 
-\item{q}{Int, optional. \cr
-Number of power iterations (default \eqn{q=0}).}
+\item{q}{integer, optional; \cr
+number of additional power iterations (default \eqn{q=0}).}
 
-\item{idx_only}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-If (\eqn{TRUE}), the index set \code{C.idx} and \code{R.idx} is returned, but not 
+\item{idx_only}{bool, optional; \cr
+if (\eqn{TRUE}), only the index set \code{C.idx} and \code{R.idx} is returned, but not 
 the matrices \code{C} and \code{R}. 
 This is more memory efficient, when dealing with large-scale data.}
 
-\item{rand}{Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
-If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
+\item{rand}{bool, optional; \cr
+if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
+}
+\value{
+\code{rcur} returns a list with class \eqn{id} containing the following components:
+   \item{C}{ array_like; \cr
+             column subset \eqn{C = A[,C.idx]}; \eqn{(m, k)} dimensional array.
+   }
 
-\item{.................}{.}
+   \item{R}{ Array_like. \cr
+              row subset \eqn{R = A[R.idx, ]}; \eqn{(k, n)} dimensional array.
+   }
+   
+   \item{U}{ array_like; \cr
+            connector matrix; \eqn{(k,k)} dimensional array.
+   }
+   
+   \item{C.idx}{ array_like; \cr
+               index set of the \eqn{k} selected columns used to form \eqn{C}. 
+   }   
+
+   \item{R.idx}{ array_like; \cr
+               index set of the \eqn{k} selected rows used to form \eqn{R}. 
+   }   
+      
+     
+   \item{C.scores}{ array_like; \cr
+                  scores of the selected columns.
+   } 
+
+   \item{R.scores}{ array_like; \cr
+                  scores  of the selected rows.
+   }
 }
 \description{
 Randomized CUR matrix decomposition.
 }
 \details{
-Algorithm for computing the CUR of a rectangular \eqn{(m, n)} matrix \eqn{A}, with target rank 
-\eqn{k << min(m,n)}. The input matrix is factored as \eqn{A = C * U * R}, 
-using the \code{\link{rid}} decomposition. The factor matrix \eqn{C} is formed as a subset of 
-columns of \eqn{A}, also called the partial column skeleton. The factor matrix \eqn{R} is formed as
-a subset of rows of \eqn{A}, also called the partial row skeleton. The factor matrix \eqn{U} 
-is well-conditioned. 
+Algorithm for computing the CUR matrix decomposition of a rectangular \eqn{(m, n)} matrix \eqn{A}, 
+with target rank \eqn{k << min(m,n)}. The input matrix is factored as 
+
+\deqn{A = C * U * R} 
+
+using the \code{\link{rid}} decomposition. The factor matrix \eqn{C} is formed using actual 
+columns of \eqn{A}, also called the partial column skeleton. The factor matrix \eqn{R} is formed 
+using actual rows of \eqn{A}, also called the partial row skeleton.
 
 If \eqn{rand='TRUE'} a probabilistic strategy is used to compute the decomposition, otherwise a
 deterministic algorithm is used.
 }
+\examples{
+## Not run:
+# Load test image
+data("tiger")
+
+# Compute (column) randomized interpolative decompsition
+# Note that the image needs to be transposed for correct plotting
+out <- rcur(tiger, k = 150)
+
+# Reconstruct image
+tiger.re <- out$C \%*\% out$U \%*\% out$R
+
+# Compute relative error
+print(norm(tiger-tiger.re, 'F') / norm(tiger, 'F')) 
+
+# Plot approximated image
+image(tiger.re, col = gray((0:255)/255))
+## End(Not run)
+}
+\references{
+\itemize{
+  \item  [1] N. Halko, P. Martinsson, and J. Tropp.
+         "Finding structure with randomness: probabilistic
+         algorithms for constructing approximate matrix
+         decompositions" (2009).
+         (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
+  \item  [2] N. B. Erichson, S. Voronin, S. Brunton, J. N. Kutz.
+         "Randomized matrix decompositions using R" (2016).
+         (available at `arXiv \url{http://arxiv.org/abs/1608.02148}).
+}
+}
 \seealso{
-\code{\link{rcur}},
+\code{\link{rid}}
 }
 \author{
 N. Benjamin Erichson, \email{erichson@uw.edu}

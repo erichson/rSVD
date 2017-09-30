@@ -4,78 +4,56 @@
 \alias{rrpca}
 \title{Randomized robust principal component analysis (rrpca).}
 \usage{
-rrpca(A, k = NULL, lamb = NULL, gamma = 1.25, rho = 1.5, maxiter = 50,
-  tol = 0.001, p = 10, q = 1, trace = FALSE, rand = TRUE)
+rrpca(A, lambda = NULL, maxiter = 50, tol = 1e-05, p = 10, q = 2,
+  trace = FALSE, rand = TRUE)
 }
 \arguments{
-\item{A}{array_like \cr
-a numeric input matrix (or data frame), with dimensions \eqn{(m, n)}. \cr
-If the data contain \eqn{NA}s na.omit is applied.}
+\item{A}{array_like; \cr
+a real \eqn{(m, n)} input matrix (or data frame) to be decomposed. \cr
+na.omit is applied, if the data contain \eqn{NA}s.}
 
-\item{k}{int, optional \cr
-determines the number of principle components to compute. It is required that \eqn{k} is smaller or equal to
-\eqn{n}, but it is recommended that \eqn{k << min(m,n)}.}
+\item{lambda}{scalar, optional; \cr
+tuning parameter (default \eqn{lambda = max(m,n)^-0.5}).}
 
-\item{lamb}{real, optional \cr
-tuning paramter (default \eqn{lamb=max(m,n)^-0.5}).}
+\item{maxiter}{integer, optional; \cr
+maximum number of iterations (default \eqn{maxiter = 20}).}
 
-\item{gamma}{real, optional \cr
-tuning paramter (default \eqn{gamma=1.25}).}
+\item{tol}{scalar, optional; \cr
+precision parameter (default \eqn{tol = 1.0e-5}).}
 
-\item{rho}{real, optional \cr
-tuning paramter (default \eqn{rho=1.5}).}
+\item{p}{integer, optional; \cr
+oversampling parameter for \eqn{rsvd} (default \eqn{p=10}), see \code{\link{rsvd}}.}
 
-\item{maxiter}{int, optional \cr
-determines the maximal numbers of iterations (default \eqn{maxiter=20})..}
+\item{q}{integer, optional; \cr
+number of additional power iterations for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.}
 
-\item{tol}{real, optional \cr
-tolarance paramter for the desired convergence of the algorithm.}
-
-\item{p}{int, optional \cr
-oversampling parameter for \eqn{rsvd}  (default \eqn{p=0}), see \code{\link{rsvd}}.}
-
-\item{q}{int, optional \cr
-number of power iterations  for \eqn{rsvd} (default \eqn{q=1}), see \code{\link{rsvd}}.}
-
-\item{trace}{bool, optional \cr
+\item{trace}{bool, optional; \cr
 print progress.}
 
-\item{rand}{Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
-If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
-
-\item{.................}{.}
+\item{rand}{bool, optional; \cr
+if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.}
 }
 \value{
-\code{rrpca} returns a list with class \eqn{rrpca} containing the following components:
-   \item{L}{  array_like \cr
-             Low-rank component, array of shape \eqn{(m, n)}.
+\code{rrpca} returns a list containing the following components:
+   \item{L}{  array_like; \cr
+             low-rank component; \eqn{(m, n)} dimensional array.
    }
    \item{S}{  array_like \cr
-              Sparse component, array of shape \eqn{(m, n)}.
+              sparse component; \eqn{(m, n)} dimensional array.
    }
-
-   \item{k}{  int \cr
-              target-rank used for the final iteration.
-   }
-
-   \item{err}{  vector \cr
-              Frobenious error archieved by each iteration.
-   }
-
-   \item{.................}{.}
 }
 \description{
-Robust principal components analysis using randomized singular value decomposition.
+Robust principal components analysis separates a matrix into a low-rank plus sparse component.
 }
 \details{
 Robust principal component analysis (RPCA) is a method for the robust seperation of a
 a rectangular \eqn{(m,n)} matrix \eqn{A} into a low-rank component \eqn{L} and a
-sparse comonent \eqn{S} as follows: \eqn{A=L+S}.
-Here we are using the fast randomized accelerated inexact augmented Lagrange multiplier
-method (IALM) for obtaining the robust seperation.
-}
-\note{
-...
+sparse comonent \eqn{S}: 
+
+\deqn{ A = L + S}
+
+To decompose the matrix, we use the inexact augmented Lagrange multiplier
+method (IALM). The algorithm can be used in combination with either the randomized or deterministic SVD.
 }
 \examples{
 library(rsvd)
@@ -95,7 +73,7 @@ for(i in 1:90) {
 }
 
 # Foreground/Background separation
-out <- rrpca(toyVideo, k=1, p=5, q=1, trace=TRUE)
+out <- rrpca(toyVideo, trace=TRUE)
 
 # Display results of the seperation for the 10th frame
 par(mfrow=c(1,4))
@@ -110,9 +88,10 @@ image(matrix(out$S[,10], ncol=100, nrow=100)) #seperated foreground
          "The augmented lagrange multiplier method for exact
          recovery of corrupted low-rank matrices." (2010).
          (available at arXiv \url{http://arxiv.org/abs/1009.5055}).
-  \item  [2] Candes, Emmanuel J., et al.
-         "Robust principal component analysis?."
-         Journal of the ACM (JACM) 58.3 (2011).
+
+  \item  [2] N. B. Erichson, S. Voronin, S. Brunton, J. N. Kutz.
+         "Randomized matrix decompositions using R" (2016).
+         (available at `arXiv \url{http://arxiv.org/abs/1608.02148}).
 }
 }
 \author{

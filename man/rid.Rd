@@ -5,83 +5,122 @@
 \title{Randomized interpolative decomposition (ID).}
 \usage{
 rid(A, k = NULL, mode = "column", p = 10, q = 0, idx_only = FALSE,
-  rand = "TRUE")
+  rand = TRUE)
 }
 \arguments{
-\item{A}{Array_like. \cr
-A numeric input matrix (or data frame), with dimensions \eqn{(m, n)}. \cr
+\item{A}{array_like; \cr
+numeric \eqn{(m, n)} input matrix (or data frame). \cr
 If the data contain \eqn{NA}s na.omit is applied.}
 
-\item{k}{Int, optional. \cr
-Determines the number of rows/columns to be selected. 
+\item{k}{integer, optional; \cr
+number of rows/columns to be selected. 
 It is required that \eqn{k} is smaller or equal to \eqn{min(m,n)}.}
 
-\item{mode}{String c('column', 'row'). \cr
-Determines whether a subset of columns or rows is selected.}
+\item{mode}{string c('column', 'row'), optional; \cr
+columns or rows ID.}
 
-\item{p}{Int, optional. \cr
-Oversampling parameter (default \eqn{p=10}).}
+\item{p}{integer, optional; \cr
+oversampling parameter (default \eqn{p=10}).}
 
-\item{q}{Int, optional. \cr
-Number of power iterations (default \eqn{q=0}).}
+\item{q}{integer, optional. \cr
+number of additional power iterations (default \eqn{q=0}).}
 
-\item{idx_only}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-If (\eqn{TRUE}), the index set \code{idx} is returned, but not the matrix \code{C} or \code{R}. 
+\item{idx_only}{bool, optional; \cr
+if (\eqn{TRUE}), the index set \code{idx} is returned, but not the matrix \code{C} or \code{R}. 
 This is more memory efficient, when dealing with large-scale data.}
 
-\item{rand}{Bool (\eqn{TRUE}, \eqn{FALSE}). \cr
-If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
-
-\item{.................}{.}
+\item{rand}{bool, optional; \cr
+if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
 }
 \value{
-\code{id} returns a list with class \eqn{id} containing the following components:
-   \item{C}{ Array_like. \cr
-             Column subset \eqn{C = A[,idx]}, if \code{mode='column'}; array with dimensions \eqn{(m, k)}.
+\code{rid} returns a list containing the following components:
+   \item{C}{ array_like; \cr
+             column subset \eqn{C = A[,idx]}, if \code{mode='column'}; array with dimensions \eqn{(m, k)}.
    }
 
-   \item{R}{ Array_like. \cr
-              Row subset \eqn{R = A[idx, ]}, if \code{mode='row'}; array with dimensions \eqn{(k, n)}.
+   \item{R}{ array_like; \cr
+             row subset \eqn{R = A[idx, ]}, if \code{mode='row'}; array with dimensions \eqn{(k, n)}.
    }
    
-   \item{Z}{ Array_like \cr
-            Well conditioned matrix; Dependng on the slected mode, this is an 
+   \item{Z}{ array_like; \cr
+            well conditioned matrix; Depending on the selected mode, this is an 
             array with dimensions \eqn{(k,n)} or \eqn{(m,k)}.
    }
    
-   \item{idx}{ Array_like \cr
-               The index set of the \eqn{k} selcted columns or rows used to form \eqn{C} or \eqn{R}. 
+   \item{idx}{ array_like; \cr
+              index set of the \eqn{k} selected columns or rows used to form \eqn{C} or \eqn{R}. 
    }   
   
-   \item{pivot}{ Array_like \cr
-               Information on the pivoting strategy used during the decomposition. 
+   \item{pivot}{ array_like; \cr
+               information on the pivoting strategy used during the decomposition. 
    }  
      
-   \item{scores}{ Array_like .\cr
-                  The scores (importancies) of the columns or rows of the input matrix \eqn{A}.
+   \item{scores}{ array_like; \cr
+                 scores of the columns or rows of the input matrix \eqn{A}.
    } 
                   
-   \item{scores.idx}{ Array_like .\cr
-                  The scores (importancies) of the \eqn{k} selected columns or rows in \eqn{C} or \eqn{R}.                    
+   \item{scores.idx}{ array_like; \cr
+                 scores of the \eqn{k} selected columns or rows in \eqn{C} or \eqn{R}.                    
    }
-   \item{.................}{.}
 }
 \description{
-Randomized interpolative matrix decomposition.
+Randomized interpolative decomposition.
 }
 \details{
 Algorithm for computing the ID of a rectangular \eqn{(m, n)} matrix \eqn{A}, with target rank 
-\eqn{k << min(m,n)}. The input matrix is factored as \eqn{A = C * Z}, 
+\eqn{k << min(m,n)}. The input matrix is factored as 
+
+\deqn{A = C * Z} 
+
 using the column pivoted QR decomposition. The factor matrix \eqn{C} is formed as a subset of 
 columns of \eqn{A}, also called the partial column skeleton. 
-If \code{mode='row'}, then the input matrix is factored as \eqn{A = Z * R}, using the 
-row pivoted QR decomposition. The factor matrix \eqn{R} is now formed as
+If \code{mode='row'}, then the input matrix is factored as 
+
+\deqn{A = Z * R} 
+
+using the row pivoted QR decomposition. The factor matrix \eqn{R} is now formed as
 a subset of rows of \eqn{A}, also called the partial row skeleton. 
 The factor matrix \eqn{Z} contains a \eqn{(k, k)} identity matrix as a submatrix, 
 and is well-conditioned. 
 
 If \eqn{rand='TRUE'} a probabilistic strategy is used to compute the decomposition, otherwise a
 deterministic algorithm is used.
+}
+\examples{
+## Not run:
+# Load test image
+data("tiger")
+
+# Compute (column) randomized interpolative decompsition
+# Note that the image needs to be transposed for correct plotting
+out <- rid(t(tiger), k = 150)
+
+# Show selected columns 
+tiger.partial <- matrix(0, 1200, 1600)
+tiger.partial[,out$idx] <- t(tiger)[,out$idx]
+image(t(tiger.partial), col = gray((0:255)/255), useRaster = TRUE)
+
+# Reconstruct image
+tiger.re <- t(out$C \%*\% out$Z)
+
+# Compute relative error
+print(norm(tiger-tiger.re, 'F') / norm(tiger, 'F')) 
+
+# Plot approximated image
+image(tiger.re, col = gray((0:255)/255))
+## End(Not run)
+}
+\references{
+\itemize{
+  \item  [1] N. Halko, P. Martinsson, and J. Tropp.
+         "Finding structure with randomness: probabilistic
+         algorithms for constructing approximate matrix
+         decompositions" (2009).
+         (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
+  \item  [2] N. B. Erichson, S. Voronin, S. Brunton, J. N. Kutz.
+         "Randomized matrix decompositions using R" (2016).
+         (available at `arXiv \url{http://arxiv.org/abs/1608.02148}).
+}
 }
 \seealso{
 \code{\link{rcur}},

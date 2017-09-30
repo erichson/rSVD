@@ -8,74 +8,47 @@ rsvd(A, k = NULL, nu = NULL, nv = NULL, p = 10, q = 2,
   sdist = "normal")
 }
 \arguments{
-\item{A}{Array_like. \cr
-A real/complex input matrix (or data frame), with dimensions \eqn{(m, n)}.}
+\item{A}{array_like; \cr
+a real/complex \eqn{(m, n)} input matrix (or data frame) to be decomposed.}
 
-\item{k}{Int, optional. \cr
-Determines the target rank of the low-rank decomposition. It should satisfy \eqn{k << min(m,n)}.}
+\item{k}{integer; \cr
+specifies the target rank of the low-rank decomposition. \eqn{k} should satisfy \eqn{k << min(m,n)}.}
 
-\item{nu}{Int, optional. \cr
-The number of left singular vectors to be computed. This must be between \eqn{0}
-and \eqn{k}.}
+\item{nu}{integer, optional; \cr
+number of left singular vectors to be returned. \eqn{nu} must be between \eqn{0} and \eqn{k}.}
 
-\item{nv}{Int, optional. \cr
-The number of right singular vectors to be computed. This must be between \eqn{0}
-and \eqn{k}.}
+\item{nv}{integer, optional; \cr
+number of right singular vectors to be returned. \eqn{nv} must be between \eqn{0} and \eqn{k}.}
 
-\item{p}{Int, optional. \cr
-Oversampling parameter for (default \eqn{p=10}).}
+\item{p}{integer, optional; \cr
+oversampling parameter (by default \eqn{p=10}).}
 
-\item{q}{Int, optional. \cr
-Number of power iterations (default \eqn{q=2}).}
+\item{q}{integer, optional; \cr
+number of additional power iterations (by default \eqn{q=2}).}
 
-\item{sdist}{String \eqn{c( 'unif', 'normal', 'rademacher')}, optional. \cr
-Specifies the sampling distribution. \cr
-\eqn{'unif'} :  Uniform `[-1,1]`. \cr
-\eqn{'normal}' (default) : Normal `~N(0,1)`. \cr
-\eqn{'rademacher'} : Rademacher random variates. \cr}
-
-\item{.............}{.}
+\item{sdist}{string \eqn{c( 'unif', 'normal', 'rademacher')}, optional; \cr
+specifies the sampling distribution of the random test matrix: \cr
+        \eqn{'unif'} :  Uniform `[-1,1]`. \cr
+        \eqn{'normal}' (default) : Normal `~N(0,1)`. \cr
+        \eqn{'rademacher'} : Rademacher random variates. \cr}
 }
 \value{
 \code{rsvd} returns a list containing the following three components:
-\item{d}{  Array_like. \cr
-          Singular values; 1-d array of length \eqn{(k)}.
+\item{d}{  array_like; \cr
+          singular values; vector of length \eqn{(k)}.
 }
 
-\item{u}{  Array_like. \cr
-          Left singular values; array with dimensions \eqn{(m, k)} or \eqn{(m, nu)}.
+\item{u}{  array_like; \cr
+          left singular vectors; \eqn{(m, k)} or \eqn{(m, nu)} dimensional array.
 }
 
-\item{v}{  Array_like. \cr
-          Right singular values; array with dimensions \eqn{(n, k)} or \eqn{(n, nv)}. \cr
+\item{v}{  array_like; \cr
+          right singular vectors; \eqn{(n, k)} or \eqn{(n, nv)} dimensional array. \cr
 }
-\item{.............}{.}
 }
 \description{
-Compute the near-optimal low-rank singular value decomposition (SVD) of a rectangular matrix.
-}
-\details{
-The singular value decomposition (SVD) plays a central role in data analysis and scientific computing.
-Randomized SVD (rSVD) is a fast algorithm to compute the approximate
-low-rank SVD of a rectangular \eqn{(m,n)} matrix \eqn{A}
-using a probablistic algorithm.
-Given a target rank \eqn{k << min(m,n)}, \code{rsvd} factors the input matrix \eqn{A} as
-\eqn{A = U * diag(d) * V'}. The right singluar vectors are the columns of the
-real or complex unitary matrix \eqn{U} . The left singular vectors are the columns
-of the real or complex unitary matrix \eqn{V}. The singular values \eqn{d} are
-non-negative and real numbers.
-
-\eqn{p} is an oversampling parameter to improve the approximation.
-A value between 5 and 10 is recommended, and \eqn{p=10} is set by default.
-
-The parameter \eqn{q} specifies the number of power (subspace) iterations
-(subspace iterations) to reduce the approximation error. This is recommended
-if the the singular values decay slowly. In practice 1 or 2 iterations
-achieve good results, however, computing power iterations increases the
-computational time. The number of power iterations is set to \eqn{q=2} by default.
-
-If \eqn{k > (min(n,m)/2)}, a deterministic partial or truncated \code{\link{svd}}
-algorithm might be faster.
+The randomized SVD computes the near-optimal low-rank approximation of a rectangular matrix
+using a fast probablistic algorithm.
 }
 \note{
 The singular vectors are not unique and only defined up to sign
@@ -85,7 +58,7 @@ gives an equivalent decomposition.
 }
 \examples{
 
-# Create a n by n Hilbert matrix of order n,
+# Create a n x n Hilbert matrix of order n,
 # with entries H[i,j] = 1 / (i + j + 1).
 hilbert <- function(n) { i <- 1:n; 1 / outer(i - 1, i, "+") }
 H <- hilbert(n=50)
@@ -108,11 +81,9 @@ print(100 * norm( H - Hre, 'F') / norm( H,'F')) # percentage error
          algorithms for constructing approximate matrix
          decompositions" (2009).
          (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
-  \item  [2] S. Voronin and P.Martinsson.
-         "RSVDPACK: Subroutines for computing partial singular value
-         decompositions via randomized sampling on single core, multi core,
-         and GPU architectures" (2015).
-         (available at `arXiv \url{http://arxiv.org/abs/1502.05366}).
+  \item  [2] N. B. Erichson, S. Voronin, S. Brunton, J. N. Kutz.
+         "Randomized matrix decompositions using R" (2016).
+         (available at `arXiv \url{http://arxiv.org/abs/1608.02148}).
 }
 }
 \seealso{
