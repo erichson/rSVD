@@ -110,8 +110,8 @@ ggbiplot <- function( rpcaObj, pcs = c(1,2), loadings=TRUE, groups = NULL, alpha
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
   # Create data frame for variables
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
-  if(loadings==FALSE) rotation = rpcaObj$rotation  
-  if(loadings==TRUE)  rotation = t(t(rpcaObj$rotation) * rpcaObj$eigvals**0.5)
+  if(loadings==FALSE) rotation = rpcaObj$rotation[,pcs]  
+  if(loadings==TRUE)  rotation = t(t(rpcaObj$rotation[,pcs]) * rpcaObj$eigvals[pcs]**0.5)
   
   dfvariables <- data.frame(rotation=rotation, row.names = 1:p)
   colnames(dfvariables) <- c( 'a', 'b')

@@ -22,6 +22,12 @@
 #' @param var_labels.names  Array_like, optional. \cr
 #'                User specific labels for the variables                  
 #' 
+#' @param  alpha  Scalar, optional. \cr
+#'                Alpha transparency of the arrows. 
+#' 
+#' @param  top.n  Scalar, optional. \cr
+#'                Number of (most influencial) variables to label with small circles.  
+#' 
 #' @param ................. .
 #'
 #' @seealso \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
@@ -33,7 +39,7 @@
 
 
 #' @export
-ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var_labels.names=NULL) {
+ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var_labels.names=NULL, alpha=1, top.n=NULL) {
   
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("The package 'ggplot2' is needed for this function to work. Please install it.",
@@ -67,19 +73,21 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
   # Create data frame
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
-  if(loadings==FALSE) rotation = rpcaObj$rotation  
-  if(loadings==TRUE)  rotation = t(t(rpcaObj$rotation) * rpcaObj$eigvals**0.5)
+  if(loadings==FALSE) rotation = rpcaObj$rotation[,pcs]  
+  if(loadings==TRUE)  rotation = t(t(rpcaObj$rotation[,pcs]) * rpcaObj$eigvals[pcs]**0.5)
   
   df <- data.frame(rotation=rotation, row.names = 1:p)
   colnames(df) <- c( 'a', 'b')
-  
-  if(is.null(rownames(rpcaObj$rotation))) {
+
+    if(is.null(rownames(rpcaObj$rotation))) {
     df$"varName" <- as.character(1:p)
   } else {
     df$"varName" <- rownames(rpcaObj$rotation)
   }
   
   if(!is.null(var_labels.names)) df$"varName" <- var_labels.names
+  df$abs <- sqrt(df$a**2 + df$b**2)
+  print(df$abs)
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Label PCs
@@ -106,8 +114,11 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
     ggplot2::geom_path( size=0.5, colour="black" )  
 
   
-  if(p<50) {
-  g <- g + ggplot2::geom_point(data=df, size = 4, mapping = ggplot2::aes(x = a, y = b, colour = varName ) ) +
+  if(is.null(top.n)) top.n <- nrow(df)
+  if(top.n>nrow(df)) top.n <- nrow(df)
+  if(top.n < 50) {
+  g <- g + ggplot2::geom_point(data = df[order(df$abs, decreasing=TRUE)[1:top.n], ], 
+                               size = 4, mapping = ggplot2::aes(x = a, y = b, colour = varName ) ) +
     ggplot2::theme(legend.position = "none")
   }
   
@@ -115,7 +126,7 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   g <- g + ggplot2::geom_segment(data = df,
                                  ggplot2::aes(x = 0, y = 0, xend = a, yend = b ),
                                  arrow = grid::arrow(length = grid::unit(0.5, 'picas')),
-                                 color = 'black' ,  size = 0.5)
+                                 color = 'black' ,  size = 0.5, alpha = alpha)
   
   g <- g + ggplot2::coord_fixed(ratio=1) 
   g <- g + ggplot2::ggtitle('Variables factor map (PCA)')
@@ -127,9 +138,9 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   
   # Label the variable axes
   if(var_labels == TRUE) {
-    df$a <- df$a  *1.1
-    df$b <- df$b  * 1.1
-    g <- g + ggplot2::geom_text(data = df, ggplot2::aes(label = varName, x = a, y = b,
+    #df$a <- df$a  *1.1
+    #df$b <- df$b  * 1.1
+    g <- g + ggplot2::geom_text(data = df[order(df$abs, decreasing=TRUE)[1:top.n], ], ggplot2::aes(label = varName, x = a, y = b,
                                                         angle = 0, hjust = 0, vjust = 0),
                                 color = 'black', size = 4)
     
