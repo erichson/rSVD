@@ -5,7 +5,7 @@
 \title{Variables factor map for \code{rpca} using ggplot2}
 \usage{
 ggcorplot(rpcaObj, pcs = c(1, 2), loadings = TRUE, var_labels = FALSE,
-  var_labels.names = NULL)
+  var_labels.names = NULL, alpha = 1, top.n = NULL)
 }
 \arguments{
 \item{rpcaObj}{Object returned by the \code{rpca()} function.}
@@ -23,6 +23,12 @@ Plot variable names, if \eqn{TRUE}.}
 
 \item{var_labels.names}{Array_like, optional. \cr
 User specific labels for the variables}
+
+\item{alpha}{Scalar, optional. \cr
+Alpha transparency of the arrows.}
+
+\item{top.n}{Scalar, optional. \cr
+Number of (most influencial) variables to label with small circles.}
 
 \item{.................}{.}
 }
