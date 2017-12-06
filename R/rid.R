@@ -98,7 +98,7 @@
 #'
 #'
 #' @examples
-#' \dontrun{
+#' ## Not run:
 #' # Load test image
 #' data("tiger")
 #'
@@ -119,7 +119,7 @@
 #'
 #' # Plot approximated image
 #' image(tiger.re, col = gray((0:255)/255))
-#' }
+#' ## End(Not run)
 
 #' @export
 rid <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = FALSE, rand = TRUE) UseMethod("rid")

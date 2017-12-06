@@ -87,7 +87,7 @@ If \eqn{rand='TRUE'} a probabilistic strategy is used to compute the decompositi
 deterministic algorithm is used.
 }
 \examples{
-\dontrun{
+## Not run:
 # Load test image
 data("tiger")
 
@@ -108,7 +108,7 @@ print(norm(tiger-tiger.re, 'F') / norm(tiger, 'F'))
 
 # Plot approximated image
 image(tiger.re, col = gray((0:255)/255))
-}
+## End(Not run)
 }
 \references{
 \itemize{
