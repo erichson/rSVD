@@ -15,11 +15,11 @@
 #' @source \href{https://en.wikipedia.org/wiki/File:Siberischer_tiger_de_edit02.jpg}{Wikimedia}
 #'
 #' @examples
-#' ## Not run:
+#' \dontrun{
 #' library(rsvd)
 #' data("tiger")
 #'
 #' #Display image
 #' image(tiger, col = gray((0:255)/255))
-#' ## End(Not run)
+#' }
 "tiger"

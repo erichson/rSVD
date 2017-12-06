@@ -15,13 +15,13 @@ data("tiger")
 1600x1200 grayscaled (8 bit [0-255]/255) image.
 }
 \examples{
-## Not run:
+\dontrun{
 library(rsvd)
 data("tiger")
 
 #Display image
 image(tiger, col = gray((0:255)/255))
-## End(Not run)
+}
 }
 \references{
 S. Taheri (2006). "Panthera tigris altaica", (Online image)
