@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/Benli11/rSVD.svg?branch=master)](https://travis-ci.org/erichson/rSVD)
+<img src="https://raw.githubusercontent.com/erichson/spca/master/rsvd.png" width="550">
+
+[![Build Status](https://travis-ci.org/erichson/rSVD.svg?branch=master)](https://travis-ci.org/erichson/rSVD)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rsvd)](http://cran.r-project.org/package=rsvd)
 
 Fast Randomized Singular Value Decomposition using R
