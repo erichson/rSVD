@@ -2,13 +2,13 @@
 % Please edit documentation in R/ggcorplot.R
 \name{ggcorplot}
 \alias{ggcorplot}
-\title{Variables factor map for \code{rpca} using ggplot2}
+\title{Variables factor map for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.}
 \usage{
 ggcorplot(rpcaObj, pcs = c(1, 2), loadings = TRUE, var_labels = FALSE,
   var_labels.names = NULL, alpha = 1, top.n = NULL)
 }
 \arguments{
-\item{rpcaObj}{Object returned by the \code{rpca()} function.}
+\item{rpcaObj}{Object returned by the \code{\link[rsvd]{rpca}} function.}
 
 \item{pcs}{Array_like. \cr
 An array with two values indicating the two PCs which should be used for plotting. 
@@ -41,7 +41,7 @@ Creates a pretty plot which is showing the correlation of
 
 }
 \seealso{
-\code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
+\code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 }
 \author{
 N. Benjamin Erichson, \email{erichson@uw.edu}

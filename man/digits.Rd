@@ -4,26 +4,26 @@
 \name{digits}
 \alias{digits}
 \title{Digits}
-\format{An object of class \code{"rsvd"}.}
+\format{An object of class \code{\link[rsvd]{rsvd}}.}
 \source{
 \href{http://yann.lecun.com/exdb/mnist/}{mnist}
 }
 \usage{
-data("digits")
+data('digits')
 }
 \description{
 Subsampled MNIST database of handwritten digits. This smaller dataset has 3000 samples for each
 of the digits corresponding to the class labels 0,1,2,3. Each 28x28 image patch is stored as a flattened row vector.
 }
 \examples{
-## Not run:
-library(rsvd)
-data(digits)
+\dontrun{
+library('rsvd')
+data('digits')
 
 #Display first digit
 digit <- matrix(digits[1,], nrow = 28, ncol = 28)
 image(digit[,28:1], col = gray(255:0 / 255))
-## End(Not run)   
+}   
 
 }
 \references{

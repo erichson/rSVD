@@ -1,12 +1,12 @@
-#devtools::use_package("ggplot2", type = "Suggests")
-#library("ggplot2")
+#devtools::use_package('ggplot2', type = 'Suggests')
+#library('ggplot2')
 
-#' Biplot for \code{rpca} using ggplot2
+#' Biplot for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.
 #'
 #' @description Creates a pretty biplot which is showing the individual factor map overlayed by the
 #' variables factor map, i.e, plotting both the principal component scores and directions.
 #'    
-#' @param  rpcaObj        Object returned by the \code{rpca()} function.
+#' @param  rpcaObj        Object returned by the \code{\link[rsvd]{rpca}} function.
 #'                          
 #' @param  pcs            Array_like. \cr
 #'                        An array with two values indicating the two PCs which should be used for plotting. 
@@ -40,7 +40,7 @@
 #' @param ind_labels.names     Array_like, optional. \cr
 #'                        User specific labels for data points. 
 #' 
-#' @seealso \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
+#' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'
 #' @author N. Benjamin Erichson, \email{erichson@uw.edu}
 #' 
@@ -55,7 +55,7 @@ ggbiplot <- function( rpcaObj, pcs = c(1,2), loadings=TRUE, groups = NULL, alpha
                       )
 {
   
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  if (!requireNamespace('ggplot2', quietly = TRUE)) {
     stop("The package 'ggplot2' is needed for this function to work. Please install it.",
          call. = FALSE)
   }

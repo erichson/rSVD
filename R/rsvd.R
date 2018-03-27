@@ -88,6 +88,7 @@
 #' @seealso \code{\link{svd}}, \code{\link{rpca}}
 #' 
 #' @examples
+#'library('rsvd')
 #'
 #'# Create a n x n Hilbert matrix of order n,
 #'# with entries H[i,j] = 1 / (i + j + 1).

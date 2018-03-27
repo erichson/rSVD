@@ -2,14 +2,14 @@
 % Please edit documentation in R/ggbiplot.R
 \name{ggbiplot}
 \alias{ggbiplot}
-\title{Biplot for \code{rpca} using ggplot2}
+\title{Biplot for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.}
 \usage{
 ggbiplot(rpcaObj, pcs = c(1, 2), loadings = TRUE, groups = NULL,
   alpha = 0.6, ellipse = TRUE, alpha.ellipse = 0.2, var_labels = TRUE,
   var_labels.names = NULL, ind_labels = TRUE, ind_labels.names = NULL)
 }
 \arguments{
-\item{rpcaObj}{Object returned by the \code{rpca()} function.}
+\item{rpcaObj}{Object returned by the \code{\link[rsvd]{rpca}} function.}
 
 \item{pcs}{Array_like. \cr
 An array with two values indicating the two PCs which should be used for plotting. 
@@ -51,7 +51,7 @@ variables factor map, i.e, plotting both the principal component scores and dire
 #See ?rpca
 }
 \seealso{
-\code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
+\code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 }
 \author{
 N. Benjamin Erichson, \email{erichson@uw.edu}

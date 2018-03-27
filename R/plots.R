@@ -1,12 +1,12 @@
-#devtools::use_package("ggplot2", type = "Suggests")
-#library("ggplot2")
+#devtools::use_package('ggplot2')
+#library('ggplot2')
 
 #' @title Screeplot
 #
 #' @description Creates a screeplot, variables and individual factor maps to
-#'              summarize the results of the \code{rpca()} function.
+#'              summarize the results of the \code{\link[rsvd]{rpca}} function.
 #'
-#' @param x   Object returned by the \code{rpca()} function.
+#' @param x   Object returned by the \code{\link[rsvd]{rpca}} function.
 #'
 #' @param ...     Additional arguments passed to the individual plot functions (see below).
 #'
@@ -19,7 +19,7 @@
 #'@export
 plot.rpca <- function(x, ... ) {
   
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  if (!requireNamespace('ggplot2', quietly = TRUE)) {
     stop("The package 'ggplot2' is needed for this function to work. Please install it.",
          call. = FALSE)
   } 

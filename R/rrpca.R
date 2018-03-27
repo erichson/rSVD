@@ -7,7 +7,7 @@
 #' a rectangular \eqn{(m,n)} matrix \eqn{A} into a low-rank component \eqn{L} and a
 #' sparse comonent \eqn{S}: 
 #'
-#' \deqn{ A = L + S}
+#' \deqn{A = L + S}
 #'
 #' To decompose the matrix, we use the inexact augmented Lagrange multiplier
 #' method (IALM). The algorithm can be used in combination with either the randomized or deterministic SVD. 
@@ -21,7 +21,7 @@
 #'                tuning parameter (default \eqn{lambda = max(m,n)^-0.5}).
 #'
 #' @param maxiter integer, optional; \cr
-#'                maximum number of iterations (default \eqn{maxiter = 20}).
+#'                maximum number of iterations (default \eqn{maxiter = 50}).
 #'
 #' @param tol     scalar, optional; \cr
 #'                precision parameter (default \eqn{tol = 1.0e-5}).
@@ -63,7 +63,7 @@
 #' }
 #'
 #' @examples
-#' library(rsvd)
+#' library('rsvd')
 #'
 #' # Create toy video
 #' # background frame

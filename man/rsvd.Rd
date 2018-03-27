@@ -57,6 +57,7 @@ has its sign changed, changing the sign of the corresponding right vector
 gives an equivalent decomposition.
 }
 \examples{
+library('rsvd')
 
 # Create a n x n Hilbert matrix of order n,
 # with entries H[i,j] = 1 / (i + j + 1).

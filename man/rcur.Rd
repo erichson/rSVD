@@ -73,13 +73,13 @@ using the \code{\link{rid}} decomposition. The factor matrix \eqn{C} is formed u
 columns of \eqn{A}, also called the partial column skeleton. The factor matrix \eqn{R} is formed 
 using actual rows of \eqn{A}, also called the partial row skeleton.
 
-If \eqn{rand='TRUE'} a probabilistic strategy is used to compute the decomposition, otherwise a
+If \eqn{rand=TRUE} a probabilistic strategy is used to compute the decomposition, otherwise a
 deterministic algorithm is used.
 }
 \examples{
 \dontrun{
 # Load test image
-data("tiger")
+data('tiger')
 
 # Compute (column) randomized interpolative decompsition
 # Note that the image needs to be transposed for correct plotting

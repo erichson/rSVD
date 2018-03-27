@@ -62,7 +62,6 @@
 #'    }
 #'    \item{x}{        array_like; \cr
 #'                     the scores / rotated data; \eqn{(m, k)} dimensional array.
-
 #'    }
 #'    \item{center, scale}{  array_like; \cr
 #'                     the centering and scaling used.
@@ -83,11 +82,11 @@
 #'
 #' @examples
 #'
-#'library(rsvd)
+#'library('rsvd')
 #'#
 #'# Load Edgar Anderson's Iris Data
 #'#
-#'data(iris)
+#'data('iris')
 #'
 #'#
 #'# log transform

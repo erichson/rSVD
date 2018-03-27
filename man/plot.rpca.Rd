@@ -7,7 +7,7 @@
 \method{plot}{rpca}(x, ...)
 }
 \arguments{
-\item{x}{Object returned by the \code{rpca()} function.}
+\item{x}{Object returned by the \code{\link[rsvd]{rpca}} function.}
 
 \item{...}{Additional arguments passed to the individual plot functions (see below).}
 
@@ -15,7 +15,7 @@
 }
 \description{
 Creates a screeplot, variables and individual factor maps to
-             summarize the results of the \code{rpca()} function.
+             summarize the results of the \code{\link[rsvd]{rpca}} function.
 }
 \examples{
 #

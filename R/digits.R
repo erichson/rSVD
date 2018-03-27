@@ -5,9 +5,9 @@
 #'
 #' @docType data
 #'
-#' @usage data("digits")
+#' @usage data('digits')
 #'
-#' @format An object of class \code{"rsvd"}.
+#' @format An object of class \code{\link[rsvd]{rsvd}}.
 #'
 #' @keywords pattern recognition
 #'
@@ -18,13 +18,13 @@
 #' @source \href{http://yann.lecun.com/exdb/mnist/}{mnist}
 #'
 #' @examples
-#' ## Not run:
-#' library(rsvd)
-#' data(digits)
+#' \dontrun{
+#' library('rsvd')
+#' data('digits')
 #'
 #' #Display first digit
 #' digit <- matrix(digits[1,], nrow = 28, ncol = 28)
 #' image(digit[,28:1], col = gray(255:0 / 255))
-#' ## End(Not run)   
+#' }   
 #'
 "digits"

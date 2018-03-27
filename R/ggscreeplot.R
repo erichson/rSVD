@@ -1,5 +1,6 @@
-#devtools::use_package("ggplot2")
-#library(ggplot2)
+#devtools::use_package('ggplot2')
+#library('ggplot2')
+
 #' @title Pretty Screeplot
 #
 #' @description Creates a pretty screeplpot using \code{\link[ggplot2]{ggplot}}. By default the explained variance is plotted
@@ -7,13 +8,13 @@
 #' Alternatively the explained variance ratio, the cumulative
 #' explained variance ratio, or the eigenvalues can be plotted.
 #'
-#' @param rpcaObj  Object returned by the \code{rpca()} function.
+#' @param rpcaObj  Object returned by the \code{\link[rsvd]{rpca}} function.
 #'
 #' @param type   String c('var', 'ratio', 'cum', 'eigenvals'), optional. \cr
 #'
 #' @param ................. .
 #'
-#' @seealso \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
+#' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'
 #' @author N. Benjamin Erichson, \email{erichson@uw.edu}
 #'

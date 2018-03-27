@@ -2,14 +2,14 @@
 % Please edit documentation in R/ggindplot.R
 \name{ggindplot}
 \alias{ggindplot}
-\title{Individual factor map for \code{rpca} using ggplot2}
+\title{Individual factor map for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.}
 \usage{
 ggindplot(rpcaObj, pcs = c(1, 2), groups = NULL, alpha = 0.6,
   ellipse = TRUE, alpha.ellipse = 0.2, ind_labels = TRUE,
   ind_labels.names = NULL)
 }
 \arguments{
-\item{rpcaObj}{Object returned by the \code{rpca()} function.}
+\item{rpcaObj}{Object returned by the \code{\link[rsvd]{rpca}} function.}
 
 \item{pcs}{Array_like. \cr
 An array with two values indicating the two PCs which should be used for plotting. 
@@ -41,7 +41,7 @@ Creates a pretty plot which is showing the individual factor map, i.e,
 #See ?rpca
 }
 \seealso{
-\code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
+\code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 }
 \author{
 N. Benjamin Erichson, \email{erichson@uw.edu}

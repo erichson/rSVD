@@ -7,7 +7,7 @@
 ggscreeplot(rpcaObj, type = c("var", "ratio", "cum", "eigenvals"))
 }
 \arguments{
-\item{rpcaObj}{Object returned by the \code{rpca()} function.}
+\item{rpcaObj}{Object returned by the \code{\link[rsvd]{rpca}} function.}
 
 \item{type}{String c('var', 'ratio', 'cum', 'eigenvals'), optional. \cr}
 
@@ -24,7 +24,7 @@ explained variance ratio, or the eigenvalues can be plotted.
 
 }
 \seealso{
-\code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
+\code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 }
 \author{
 N. Benjamin Erichson, \email{erichson@uw.edu}

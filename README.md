@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Benli11/rSVD.svg?branch=master)](https://travis-ci.org/Benli11/rSVD)
+[![Build Status](https://travis-ci.org/Benli11/rSVD.svg?branch=master)](https://travis-ci.org/erichson/rSVD)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rsvd)](http://cran.r-project.org/package=rsvd)
 
 Fast Randomized Singular Value Decomposition using R
@@ -66,7 +66,7 @@ install.packages("rsvd")
 You can also install the development version from GitHub using [devtools](https://cran.r-project.org/package=devtools):
 
 ```r
-devtools::install_github("benli11/rsvd")
+devtools::install_github("erichson/rsvd")
 ```
 
 The source packge can be obtained here: [CRAN: rsvd](https://cran.r-project.org/web/packages/rsvd/index.html).

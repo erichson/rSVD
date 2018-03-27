@@ -4,9 +4,9 @@
 #'
 #' @docType data
 #'
-#' @usage data("tiger")
+#' @usage data('tiger')
 #'
-#' @format An object of class \code{"rsvd"}.
+#' @format An object of class \code{\link[rsvd]{rsvd}}.
 #'
 #' @keywords image
 #'
@@ -16,8 +16,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' library(rsvd)
-#' data("tiger")
+#' library('rsvd')
+#' data('tiger')
 #'
 #' #Display image
 #' image(tiger, col = gray((0:255)/255))

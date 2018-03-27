@@ -1,12 +1,12 @@
-#devtools::use_package("ggplot2")
-#library(ggplot2)
+#devtools::use_package('ggplot2')
+#library('ggplot2')
 
-#' @title  Variables factor map for \code{rpca} using ggplot2
+#' @title  Variables factor map for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.
 #
 #' @description Creates a pretty plot which is showing the correlation of
 #'    the original variable with the principal component (PCs).
 #'
-#' @param rpcaObj  Object returned by the \code{rpca()} function.
+#' @param rpcaObj  Object returned by the \code{\link[rsvd]{rpca}} function.
 #'
 #' @param pcs   Array_like. \cr
 #'              An array with two values indicating the two PCs which should be used for plotting. 
@@ -30,7 +30,7 @@
 #' 
 #' @param ................. .
 #'
-#' @seealso \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
+#' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'
 #' @author N. Benjamin Erichson, \email{erichson@uw.edu}
 #'
@@ -41,7 +41,7 @@
 #' @export
 ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var_labels.names=NULL, alpha=1, top.n=NULL) {
   
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  if (!requireNamespace('ggplot2', quietly = TRUE)) {
     stop("The package 'ggplot2' is needed for this function to work. Please install it.",
          call. = FALSE)
   }
@@ -93,8 +93,8 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   variance = rpcaObj$sdev**2
   explained_variance_ratio = round(variance / rpcaObj$var, 3) * 100
-  PC1 = paste("Principal component ", pcs[1], "(", explained_variance_ratio[pcs[1]]  , "% explained var.)", sep="")
-  PC2 = paste("Principal component ", pcs[2], "(", explained_variance_ratio[pcs[2]]  , "% explained var.)", sep="")
+  PC1 = paste("PC ", pcs[1], "(", explained_variance_ratio[pcs[1]]  , "% explained var.)", sep="")
+  PC2 = paste("PC ", pcs[2], "(", explained_variance_ratio[pcs[2]]  , "% explained var.)", sep="")
   
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  

@@ -25,7 +25,7 @@ tcrossprod_help <- function( A , B ) {
   }
 }
 
-#Helper function for Moore–Penrose pseudoinverse
+#Helper function for Moore Penrose pseudoinverse
 pinv <- function(A){
   s <- svd(A)
   nz <- s$d > s$d[1] * .Machine$double.eps

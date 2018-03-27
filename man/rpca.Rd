@@ -84,11 +84,11 @@ Similar to \code{\link{prcomp}} the variances are computed with the usual diviso
 }
 \examples{
 
-library(rsvd)
+library('rsvd')
 #
 # Load Edgar Anderson's Iris Data
 #
-data(iris)
+data('iris')
 
 #
 # log transform

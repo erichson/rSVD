@@ -1,12 +1,12 @@
-#devtools::use_package("ggplot2", type = "Suggests")
-#library(ggplot2)
+#devtools::use_package('ggplot2')
+#library('ggplot2')
 
-#' Individual factor map for \code{rpca} using ggplot2
+#' Individual factor map for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.
 #'
 #' @description Creates a pretty plot which is showing the individual factor map, i.e,
 #'    plotting the principal component scores.
 #'    
-#' @param  rpcaObj        Object returned by the \code{rpca()} function.
+#' @param  rpcaObj        Object returned by the \code{\link[rsvd]{rpca}} function.
 #'                          
 #' @param  pcs            Array_like. \cr
 #'                        An array with two values indicating the two PCs which should be used for plotting. 
@@ -30,7 +30,7 @@
 #' @param ind_labels.names     Array_like, optional. \cr
 #'                        User specific labels for the individual points.     
 #' 
-#' @seealso \code{\link{rpca}}, \code{\link[ggplot2]{ggplot}}
+#' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'
 #' @author N. Benjamin Erichson, \email{erichson@uw.edu}
 #' 
