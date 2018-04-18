@@ -197,7 +197,7 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
       # Truncate SVD and update L
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # rrpcaObj$L =  svd_out$u[,1:rrpcaObj$k] %*% diag(svd_out$d[1:rrpcaObj$k] - muinv, nrow=rrpcaObj$k, ncol=rrpcaObj$k)  %*% t(svd_out$v[,1:rrpcaObj$k])
-      L =  t(t(svd_out$u[,1:svp]) * (svd_out$d[1:svp] - 1/mu)) %*% t(svd_out$v[,1:svp])
+      L =  t(t(svd_out$u[,1:svp, drop=FALSE]) * (svd_out$d[1:svp] - 1/mu)) %*% t(svd_out$v[,1:svp, drop=FALSE])
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Compute error

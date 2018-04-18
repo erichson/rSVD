@@ -214,7 +214,7 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=
   if(retx==TRUE) {
     #rpcaObj$x <- A %*% rpcaObj$rotation # slow
     #rpcaObj$x <- H(H(out$u[,1:k]) * out$d[1:k])
-    rpcaObj$x <- sweep(out$u[,1:k], MARGIN = 2, STATS = out$d[1:k], FUN = "*", check.margin = TRUE)
+    rpcaObj$x <- sweep(out$u[, 1:k, drop=FALSE], MARGIN = 2, STATS = out$d[1:k], FUN = "*", check.margin = TRUE)
     rownames(rpcaObj$x) <- rownames(A)
   }
   
