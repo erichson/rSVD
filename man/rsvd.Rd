@@ -50,6 +50,30 @@ specifies the sampling distribution of the random test matrix: \cr
 The randomized SVD computes the near-optimal low-rank approximation of a rectangular matrix
 using a fast probablistic algorithm.
 }
+\details{
+The singular value decomposition (SVD) plays an important role in data analysis, and scientific computing.
+Given a rectangular \eqn{(m,n)} matrix \eqn{A}, and a target rank \eqn{k << min(m,n)}, 
+the SVD factors the input matrix \eqn{A} as
+
+\deqn{ A  =  U_{k} diag(d_{k}) V_{k}^\top }{ A = U diag(d) t(V)}
+
+The \eqn{k} left singular vectors are the columns of the
+real or complex unitary matrix \eqn{U}. The \eqn{k} right singular vectors are the columns
+of the real or complex unitary matrix \eqn{V}. The \eqn{k} dominant singular values are the 
+entries of \eqn{d}, and non-negative and real numbers.
+
+\eqn{p} is an oversampling parameter to improve the approximation.
+A value of at least 10 is recommended, and \eqn{p=10} is set by default.
+
+The parameter \eqn{q} specifies the number of power (subspace) iterations
+to reduce the approximation error. The power scheme is recommended,
+if the singular values decay slowly. In practice, 2 or 3 iterations
+achieve good results, however, computing power iterations increases the
+computational costs. The power scheme is set to \eqn{q=2} by default.
+
+If \eqn{k > (min(n,m)/4)}, a deterministic partial or truncated \code{\link{svd}}
+algorithm might be faster.
+}
 \note{
 The singular vectors are not unique and only defined up to sign
 (a constant of modulus one in the complex case). If a left singular vector

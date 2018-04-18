@@ -16,7 +16,7 @@ na.omit is applied, if the data contain \eqn{NA}s.}
 tuning parameter (default \eqn{lambda = max(m,n)^-0.5}).}
 
 \item{maxiter}{integer, optional; \cr
-maximum number of iterations (default \eqn{maxiter = 20}).}
+maximum number of iterations (default \eqn{maxiter = 50}).}
 
 \item{tol}{scalar, optional; \cr
 precision parameter (default \eqn{tol = 1.0e-5}).}
