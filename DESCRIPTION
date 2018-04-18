@@ -17,6 +17,7 @@ Description: Low-rank matrix decompositions are fundamental tools and widely use
   randomized robust principal component analysis (rrpca), randomized interpolative 
   decomposition (rid), and the randomized CUR decomposition (rcur). In addition several plot 
   functions are provided. The methods are discussed in detail by Erichson et al. (2016) <arXiv:1608.02148>. 
+Depends: R (>= 3.2.2)
 License: GPL (>= 3)
 LazyData: TRUE
 URL: https://github.com/erichson/rSVD
