@@ -1,4 +1,5 @@
 #Helper function for conjugate transpose
+#' @importFrom Matrix t
 H <- function( X ) {
   if(is.complex(X)) {
     return( Conj(t(X)) )
@@ -8,6 +9,7 @@ H <- function( X ) {
 }
 
 #Helper function for conjugate crossprod
+#' @importFrom Matrix crossprod
 crossprod_help <- function( A , B ) {
   if(is.complex(A)) {
     return( crossprod( Conj(A) , B) )
@@ -17,6 +19,7 @@ crossprod_help <- function( A , B ) {
 }
 
 #Helper function for conjugate tcrossprod
+#' @importFrom Matrix tcrossprod
 tcrossprod_help <- function( A , B ) {
   if(is.complex(B)) {
     return( tcrossprod( A , Conj(B) ) )
