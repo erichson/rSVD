@@ -221,3 +221,19 @@ testMat <- H(testMat)
     testthat::expect_equal(svd_out$d[1:k], rsvd_out$d[1:k])
     testthat::expect_equal(testMat, testMat.re)
   })
+
+#*************************************************************************************
+# Test: alternative matrix representations
+#*************************************************************************************
+
+library(Matrix)
+sparseMat <- rsparsematrix(100, 200, 0.1)
+
+set.seed(1234)
+sparse_rsvd <- rsvd(sparseMat, k=k)
+set.seed(1234)
+ref_rsvd <- rsvd(as.matrix(sparseMat), k=k)
+
+testthat::test_that("Test 19: Randomized SVD with sparse matrix input", {
+    testthat::expect_equal(sparse_rsvd, ref_rsvd)
+})
