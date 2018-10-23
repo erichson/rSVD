@@ -118,8 +118,6 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal")
     #***                       License: BSD 3 clause                       ***
     #*************************************************************************
 
-    A <- as.matrix(A)
-
     #Dim of input matrix
     m <- nrow(A)
     n <- ncol(A)
