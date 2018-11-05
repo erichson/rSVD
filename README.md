@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/erichson/rSVD.svg?branch=master)](https://travis-ci.org/erichson/rSVD)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rsvd)](http://cran.r-project.org/package=rsvd)
 
-Fast Randomized Singular Value Decomposition using R
+# Fast Randomized Singular Value Decomposition using R
 ****************************************************
 Randomized singular value decomposition (rsvd) is a fast probabilistic algorithm that can 
 be used to compute the near optimal low-rank singular value decomposition of massive data sets with high accuracy. 
@@ -23,7 +23,7 @@ function to compute (randomized) robust principal component analysis (RPCA).
 In addition several plot functions are provided. See for further details: [“Randomized Matrix Decompositions using R”](http://arxiv.org/abs/1608.02148).
 
 
-SVD example: Image compression
+# SVD example: Image compression
 *******************************
 
 ```R
@@ -57,7 +57,7 @@ print(timing_svd, unit='s')
 ![timing](https://raw.githubusercontent.com/Benli11/data/master/img/timeing.png)
 
 
-Installation
+# Installation
 ************
 
 Install the rsvd package via CRAN
@@ -73,8 +73,14 @@ devtools::install_github("erichson/rsvd")
 
 The source packge can be obtained here: [CRAN: rsvd](https://cran.r-project.org/web/packages/rsvd/index.html).
 
-References
+# New in Version 1.0.0
+********************
+* Support for non-default matrix types to deal with large-scale matrices that are held on file, added by Aaron Lun.
+* Fixed a bug which occured runninig rpca with k=1 and retx=TRUE, discovered by Will.
+*  
+
+# References
 *************
-* [N. Benjamin Erichson, et al. “Randomized Matrix Decompositions using R.” (2016)](http://arxiv.org/abs/1608.02148)
-* [Sergey Voronin, Per-Gunnar Martinsson. “RSVDPACK: Subroutines for computing partial singular value decompositions via randomized sampling on single core, multi core, and GPU architectures.” (2015)](https://arxiv.org/abs/1502.05366)
-* [Nathan Halko, et al. “Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions.” (2011)](https://arxiv.org/abs/0909.4061)
+* [N. Benjamin Erichson, et al. Randomized Matrix Decompositions using R. (2016)](http://arxiv.org/abs/1608.02148)
+* [Sergey Voronin, Per-Gunnar Martinsson. RSVDPACK: Subroutines for computing partial singular value decompositions via randomized sampling on single core, multi core, and GPU architectures. (2015)](https://arxiv.org/abs/1502.05366)
+* [Nathan Halko, et al. Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions. (2011)](https://arxiv.org/abs/0909.4061)

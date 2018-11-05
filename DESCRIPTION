@@ -1,11 +1,11 @@
 Package: rsvd
 Type: Package
 Title: Randomized Singular Value Decomposition
-Version: 0.9.1
-Date: 2018-04-18
-Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "erichson@uw.edu"))
+Version: 1.0.0
+Date: 2018-11-05
+Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "erichson@berkeley.edu"))
 Author: N. Benjamin Erichson [aut, cre]
-Maintainer: N. Benjamin Erichson <erichson@uw.edu>
+Maintainer: N. Benjamin Erichson <erichson@berkeley.edu>
 Description: Low-rank matrix decompositions are fundamental tools and widely used for data
   analysis, dimension reduction, and data compression. Classically, highly accurate 
   deterministic matrix algorithms are used for this task. However, the emergence of 
@@ -25,6 +25,7 @@ LazyData: TRUE
 URL: https://github.com/erichson/rSVD
 BugReports: https://github.com/erichson/rSVD/issues
 Suggests:
-    ggplot2
+    ggplot2,
+    testthat
 RoxygenNote: 6.0.1
 NeedsCompilation: no

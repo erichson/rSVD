@@ -1,4 +1,5 @@
 #devtools::use_package("testthat")
+#library('testthat')
 
 context("Randomized QB decomposition")
 
