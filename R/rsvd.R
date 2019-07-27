@@ -219,8 +219,10 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal")
     if(nu != 0) rsvdObj$u <- Q %*% rsvdObj$u # Recover left singular vectors
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Flipp SVD back
+    # Flip SVD back
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    if(nu == 0){ rsvdObj$u <- NULL}
+    if(nv == 0){ rsvdObj$v <- NULL}
     if(flipped == TRUE) {
         u_temp <- rsvdObj$u
         rsvdObj$u <- rsvdObj$v
@@ -230,8 +232,6 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal")
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Return
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if(nu == 0){ rsvdObj$u <- NULL}
-    if(nv == 0){ rsvdObj$v <- NULL}
     class(rsvdObj) <- "rsvd"
     return(rsvdObj) 
     
