@@ -20,7 +20,7 @@ The SVD is also widely used for computing
 Randomized PCA (rpca) uses the approximated singular value decomposition
 to compute the most significant principal components. This package also includes a
 function to compute (randomized) robust principal component analysis (RPCA).
-In addition several plot functions are provided. See for further details: [“Randomized Matrix Decompositions using R”](http://arxiv.org/abs/1608.02148).
+In addition several plot functions are provided. See for further details: [Â“Randomized Matrix Decompositions using RÂ”](http://arxiv.org/abs/1608.02148).
 
 
 ## SVD example: Image compression
@@ -79,6 +79,26 @@ The source packge can be obtained here: [CRAN: rsvd](https://cran.r-project.org/
 
 ## References
 
-* [N. Benjamin Erichson, et al. Randomized Matrix Decompositions using R. (2016)](http://arxiv.org/abs/1608.02148)
+* [Erichson NB, Voronin S, Brunton SL, Kutz JN (2019). Randomized Matrix Decompositions Using R. Journal of Statistical Software, 89(11), 1â€“48. doi: 10.18637/jss.v089.i11.](https://www.jstatsoft.org/article/view/v089i11)
 * [Sergey Voronin, Per-Gunnar Martinsson. RSVDPACK: Subroutines for computing partial singular value decompositions via randomized sampling on single core, multi core, and GPU architectures. (2015)](https://arxiv.org/abs/1502.05366)
 * [Nathan Halko, et al. Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions. (2011)](https://arxiv.org/abs/0909.4061)
+
+## Cite as
+
+```
+
+@Article{,
+    title = {Randomized Matrix Decompositions Using {R}},
+    author = {N. Benjamin Erichson and Sergey Voronin and Steven L.
+      Brunton and J. Nathan Kutz},
+    journal = {Journal of Statistical Software},
+    year = {2019},
+    volume = {89},
+    number = {11},
+    pages = {1--48},
+    doi = {10.18637/jss.v089.i11},
+}
+
+```
+
+
