@@ -74,7 +74,20 @@
 #' Similar to \code{\link{prcomp}} the variances are computed with the usual divisor N - 1.
 #'
 #'
-#' @author N. Benjamin Erichson, \email{erichson@uw.edu}
+#' \itemize{
+#'  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
+#'        Randomized Matrix Decompositions Using {R}. 
+#'        Journal of Statistical Software, 89(11), 1-48.
+#'        \url{http://doi.org/10.18637/jss.v089.i11}.
+#' 
+#'   \item  [2] N. Halko, P. Martinsson, and J. Tropp.
+#'          "Finding structure with randomness: probabilistic
+#'          algorithms for constructing approximate matrix
+#'          decompositions" (2009).
+#'          (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
+#' }
+#'
+#' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
 #'
 #' @seealso \code{\link{ggscreeplot}}, \code{\link{ggindplot}},
 #'          \code{\link{ggcorplot}}, \code{\link{plot.rpca}},

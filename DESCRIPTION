@@ -1,8 +1,8 @@
 Package: rsvd
 Type: Package
 Title: Randomized Singular Value Decomposition
-Version: 1.0.0
-Date: 2018-11-05
+Version: 1.0.1
+Date: 2019-06-01
 Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "erichson@berkeley.edu"))
 Author: N. Benjamin Erichson [aut, cre]
 Maintainer: N. Benjamin Erichson <erichson@berkeley.edu>
@@ -27,5 +27,6 @@ BugReports: https://github.com/erichson/rSVD/issues
 Suggests:
     ggplot2,
     testthat
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 NeedsCompilation: no
+Encoding: UTF-8

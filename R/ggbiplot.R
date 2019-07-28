@@ -42,7 +42,7 @@
 #' 
 #' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'
-#' @author N. Benjamin Erichson, \email{erichson@uw.edu}
+#' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
 #' 
 #' @examples
 #' #See ?rpca

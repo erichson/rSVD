@@ -73,17 +73,19 @@
 #'
 #' @references
 #' \itemize{
-#'   \item  [1] N. Halko, P. Martinsson, and J. Tropp.
+#'  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
+#'        Randomized Matrix Decompositions Using {R}. 
+#'        Journal of Statistical Software, 89(11), 1-48.
+#'        \url{http://doi.org/10.18637/jss.v089.i11}.
+#' 
+#'   \item  [2] N. Halko, P. Martinsson, and J. Tropp.
 #'          "Finding structure with randomness: probabilistic
 #'          algorithms for constructing approximate matrix
 #'          decompositions" (2009).
 #'          (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
-#'   \item  [2] N. B. Erichson, S. Voronin, S. Brunton, J. N. Kutz.
-#'          "Randomized matrix decompositions using R" (2016).
-#'          (available at `arXiv \url{http://arxiv.org/abs/1608.02148}).
 #' }
 #'
-#' @author N. Benjamin Erichson, \email{erichson@uw.edu}
+#' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
 #' 
 #' @seealso \code{\link{svd}}, \code{\link{rpca}}
 #' 

@@ -27,5 +27,5 @@ explained variance ratio, or the eigenvalues can be plotted.
 \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 }
 \author{
-N. Benjamin Erichson, \email{erichson@uw.edu}
+N. Benjamin Erichson, \email{erichson@berkeley.edu}
 }

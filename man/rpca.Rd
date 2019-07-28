@@ -4,8 +4,8 @@
 \alias{rpca}
 \title{Randomized principal component analysis (rpca).}
 \usage{
-rpca(A, k = NULL, center = TRUE, scale = TRUE, retx = TRUE, p = 10,
-  q = 2, rand = TRUE)
+rpca(A, k = NULL, center = TRUE, scale = TRUE, retx = TRUE,
+  p = 10, q = 2, rand = TRUE)
 }
 \arguments{
 \item{A}{array_like; \cr
@@ -81,6 +81,20 @@ The principal components are not unique and only defined up to sign
  PCA implementations.
 
 Similar to \code{\link{prcomp}} the variances are computed with the usual divisor N - 1.
+
+
+\itemize{
+ \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
+       Randomized Matrix Decompositions Using {R}. 
+       Journal of Statistical Software, 89(11), 1-48.
+       \url{http://doi.org/10.18637/jss.v089.i11}.
+
+  \item  [2] N. Halko, P. Martinsson, and J. Tropp.
+         "Finding structure with randomness: probabilistic
+         algorithms for constructing approximate matrix
+         decompositions" (2009).
+         (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
+}
 }
 \examples{
 
@@ -118,5 +132,5 @@ plot(iris.rpca) # Produce screeplot, variable and individuls factor maps.
          \code{\link{predict}},   \code{\link{rsvd}}
 }
 \author{
-N. Benjamin Erichson, \email{erichson@uw.edu}
+N. Benjamin Erichson, \email{erichson@berkeley.edu}
 }
