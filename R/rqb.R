@@ -40,6 +40,7 @@
 #'
 #'
 #'@return \code{rqb} returns a list containing the following components:
+#' \describe{
 #'\item{Q}{  array_like; \cr
 #'           matrix with orthogonal columns; \eqn{(m, k)} dimensional array.
 #'}
@@ -47,7 +48,10 @@
 #'\item{B}{  array_like; \cr
 #'           smaller matrix; \eqn{(k, n)} dimensional array.
 #'}
+#'}
 #'
+#'
+#' @references
 #' \itemize{
 #'  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
 #'        Randomized Matrix Decompositions Using {R}. 
@@ -59,7 +63,7 @@
 #'          algorithms for constructing approximate matrix
 #'          decompositions" (2009).
 #'          (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
-#' }
+#'}
 #'
 #' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
 #' 

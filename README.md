@@ -71,6 +71,11 @@ devtools::install_github("erichson/rsvd")
 
 The source packge can be obtained here: [CRAN: rsvd](https://cran.r-project.org/web/packages/rsvd/index.html).
 
+## New in Version 1.0.2
+
+* Several small issues are fixed.
+* Thanks to Aaron Lun, who has fixed a bug in the rsvd function that occured when nu=0 or nv=0.
+
 ## New in Version 1.0.0
 
 * Support for non-default matrix types to deal with large-scale matrices that are held on file, added by Aaron Lun.
@@ -86,7 +91,6 @@ The source packge can be obtained here: [CRAN: rsvd](https://cran.r-project.org/
 ## Cite as
 
 ```
-
 @Article{,
     title = {Randomized Matrix Decompositions Using {R}},
     author = {N. Benjamin Erichson and Sergey Voronin and Steven L.
@@ -98,7 +102,6 @@ The source packge can be obtained here: [CRAN: rsvd](https://cran.r-project.org/
     pages = {1--48},
     doi = {10.18637/jss.v089.i11},
 }
-
 ```
 
 

@@ -39,6 +39,7 @@ if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.}
 }
 \value{
 \code{rpca} returns a list with class \eqn{rpca} containing the following components:
+\describe{
    \item{rotation}{  array_like; \cr
                      the rotation (eigenvectors); \eqn{(n, k)} dimensional array.
    }
@@ -55,6 +56,7 @@ if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.}
    \item{center, scale}{  array_like; \cr
                     the centering and scaling used.
    }
+}
 }
 \description{
 Fast computation of the principal components analysis using the randomized singular value decomposition.
@@ -81,20 +83,6 @@ The principal components are not unique and only defined up to sign
  PCA implementations.
 
 Similar to \code{\link{prcomp}} the variances are computed with the usual divisor N - 1.
-
-
-\itemize{
- \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
-       Randomized Matrix Decompositions Using {R}. 
-       Journal of Statistical Software, 89(11), 1-48.
-       \url{http://doi.org/10.18637/jss.v089.i11}.
-
-  \item  [2] N. Halko, P. Martinsson, and J. Tropp.
-         "Finding structure with randomness: probabilistic
-         algorithms for constructing approximate matrix
-         decompositions" (2009).
-         (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
-}
 }
 \examples{
 
@@ -125,6 +113,20 @@ summary(iris.rpca) # Summary
 print(iris.rpca) # Prints the rotations
 plot(iris.rpca) # Produce screeplot, variable and individuls factor maps.
 
+}
+\references{
+\itemize{
+ \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
+       Randomized Matrix Decompositions Using {R}. 
+       Journal of Statistical Software, 89(11), 1-48.
+       \url{http://doi.org/10.18637/jss.v089.i11}.
+
+  \item  [2] N. Halko, P. Martinsson, and J. Tropp.
+         "Finding structure with randomness: probabilistic
+         algorithms for constructing approximate matrix
+         decompositions" (2009).
+         (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
+}
 }
 \seealso{
 \code{\link{ggscreeplot}}, \code{\link{ggindplot}},

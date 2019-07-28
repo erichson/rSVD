@@ -50,6 +50,7 @@
 #'
 #'
 #' @return \code{rpca} returns a list with class \eqn{rpca} containing the following components:
+#' \describe{
 #'    \item{rotation}{  array_like; \cr
 #'                      the rotation (eigenvectors); \eqn{(n, k)} dimensional array.
 #'    }
@@ -66,6 +67,8 @@
 #'    \item{center, scale}{  array_like; \cr
 #'                     the centering and scaling used.
 #'    }
+#'}
+#'
 #'
 #' @note  The principal components are not unique and only defined up to sign
 #' (a constant of modulus one in the complex case) and so may differ between different
@@ -74,6 +77,7 @@
 #' Similar to \code{\link{prcomp}} the variances are computed with the usual divisor N - 1.
 #'
 #'
+#' @references
 #' \itemize{
 #'  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
 #'        Randomized Matrix Decompositions Using {R}. 
@@ -85,7 +89,8 @@
 #'          algorithms for constructing approximate matrix
 #'          decompositions" (2009).
 #'          (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
-#' }
+#'}
+#'
 #'
 #' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
 #'

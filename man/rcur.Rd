@@ -31,6 +31,7 @@ if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
 }
 \value{
 \code{rcur} returns a list with class \eqn{id} containing the following components:
+\describe{
    \item{C}{ array_like; \cr
              column subset \eqn{C = A[,C.idx]}; \eqn{(m, k)} dimensional array.
    }
@@ -58,7 +59,8 @@ if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
 
    \item{R.scores}{ array_like; \cr
                   scores  of the selected rows.
-   }
+   }                   
+}
 }
 \description{
 Randomized CUR matrix decomposition.

@@ -34,6 +34,7 @@ if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
 }
 \value{
 \code{rid} returns a list containing the following components:
+\describe{
    \item{C}{ array_like; \cr
              column subset \eqn{C = A[,idx]}, if \code{mode='column'}; array with dimensions \eqn{(m, k)}.
    }
@@ -62,6 +63,7 @@ if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
    \item{scores.idx}{ array_like; \cr
                  scores of the \eqn{k} selected columns or rows in \eqn{C} or \eqn{R}.                    
    }
+}
 }
 \description{
 Randomized interpolative decomposition.

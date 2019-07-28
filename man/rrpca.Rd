@@ -35,12 +35,14 @@ if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.}
 }
 \value{
 \code{rrpca} returns a list containing the following components:
+\describe{
    \item{L}{  array_like; \cr
              low-rank component; \eqn{(m, n)} dimensional array.
    }
    \item{S}{  array_like \cr
               sparse component; \eqn{(m, n)} dimensional array.
    }
+}
 }
 \description{
 Robust principal components analysis separates a matrix into a low-rank plus sparse component.
@@ -82,11 +84,7 @@ image(matrix(toyVideo[,10], ncol=100, nrow=100)) # frame
 image(matrix(out$L[,10], ncol=100, nrow=100)) # seperated background
 image(matrix(out$S[,10], ncol=100, nrow=100)) #seperated foreground
 }
-\author{
-N. Benjamin Erichson, \email{erichson@berkeley.edu}
-
-
-
+\references{
 \itemize{
  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
        Randomized Matrix Decompositions Using {R}. 
@@ -98,4 +96,7 @@ N. Benjamin Erichson, \email{erichson@berkeley.edu}
          recovery of corrupted low-rank matrices." (2010).
          (available at arXiv \url{http://arxiv.org/abs/1009.5055}).
 }
+}
+\author{
+N. Benjamin Erichson, \email{erichson@berkeley.edu}
 }

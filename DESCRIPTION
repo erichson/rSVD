@@ -1,7 +1,7 @@
 Package: rsvd
 Type: Package
 Title: Randomized Singular Value Decomposition
-Version: 1.0.1
+Version: 1.0.2
 Date: 2019-06-01
 Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "erichson@berkeley.edu"))
 Author: N. Benjamin Erichson [aut, cre]

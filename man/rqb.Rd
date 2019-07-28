@@ -30,6 +30,7 @@ If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
 }
 \value{
 \code{rqb} returns a list containing the following components:
+\describe{
 \item{Q}{  array_like; \cr
           matrix with orthogonal columns; \eqn{(m, k)} dimensional array.
 }
@@ -37,18 +38,6 @@ If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
 \item{B}{  array_like; \cr
           smaller matrix; \eqn{(k, n)} dimensional array.
 }
-
-\itemize{
- \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
-       Randomized Matrix Decompositions Using {R}. 
-       Journal of Statistical Software, 89(11), 1-48.
-       \url{http://doi.org/10.18637/jss.v089.i11}.
-
-  \item  [2] N. Halko, P. Martinsson, and J. Tropp.
-         "Finding structure with randomness: probabilistic
-         algorithms for constructing approximate matrix
-         decompositions" (2009).
-         (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
 }
 }
 \description{
@@ -67,6 +56,20 @@ to reduce the approximation error. This is recommended
 if the the singular values decay slowly. In practice 1 or 2 iterations
 achieve good results, however, computing power iterations increases the
 computational time. The number of power iterations is set to \eqn{q=2} by default.
+}
+\references{
+\itemize{
+ \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
+       Randomized Matrix Decompositions Using {R}. 
+       Journal of Statistical Software, 89(11), 1-48.
+       \url{http://doi.org/10.18637/jss.v089.i11}.
+
+  \item  [2] N. Halko, P. Martinsson, and J. Tropp.
+         "Finding structure with randomness: probabilistic
+         algorithms for constructing approximate matrix
+         decompositions" (2009).
+         (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
+}
 }
 \seealso{
 \code{\link{svd}}

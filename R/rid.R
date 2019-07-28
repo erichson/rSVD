@@ -50,6 +50,7 @@
 #'
 #'
 #' @return \code{rid} returns a list containing the following components:
+#' \describe{
 #'    \item{C}{ array_like; \cr
 #'              column subset \eqn{C = A[,idx]}, if \code{mode='column'}; array with dimensions \eqn{(m, k)}.
 #'    }
@@ -78,7 +79,7 @@
 #'    \item{scores.idx}{ array_like; \cr
 #'                  scores of the \eqn{k} selected columns or rows in \eqn{C} or \eqn{R}.                    
 #'    }
-#'
+#'}
 #'
 #' @references
 #' \itemize{
@@ -90,7 +91,8 @@
 #'   \item  [2] N. B. Erichson, S. Voronin, S. Brunton, J. N. Kutz.
 #'          "Randomized matrix decompositions using R" (2016).
 #'          (available at `arXiv \url{http://arxiv.org/abs/1608.02148}).
-#' }
+#'}
+#'
 #'
 #' @author N. Benjamin Erichson, \email{erichson@uw.edu}
 #'

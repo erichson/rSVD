@@ -40,6 +40,7 @@
 #'
 #'
 #' @return \code{rcur} returns a list with class \eqn{id} containing the following components:
+#'\describe{
 #'    \item{C}{ array_like; \cr
 #'              column subset \eqn{C = A[,C.idx]}; \eqn{(m, k)} dimensional array.
 #'    }
@@ -68,7 +69,7 @@
 #'    \item{R.scores}{ array_like; \cr
 #'                   scores  of the selected rows.
 #'    }                   
-#'                                                       
+#'}                                                       
 #'
 #' @references
 #' \itemize{
@@ -82,7 +83,8 @@
 #'          algorithms for constructing approximate matrix
 #'          decompositions" (2009).
 #'          (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
-#' }
+#'}
+#'
 #'
 #' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
 #'

@@ -40,18 +40,19 @@
 #'
 #'
 #' @return \code{rrpca} returns a list containing the following components:
+#' \describe{
 #'    \item{L}{  array_like; \cr
 #'              low-rank component; \eqn{(m, n)} dimensional array.
 #'    }
 #'    \item{S}{  array_like \cr
 #'               sparse component; \eqn{(m, n)} dimensional array.
 #'    }
-#'
+#'}
 #'
 #' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
 #'
 #'
-#'
+#' @references
 #' \itemize{
 #'  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
 #'        Randomized Matrix Decompositions Using {R}. 
@@ -63,7 +64,6 @@
 #'          recovery of corrupted low-rank matrices." (2010).
 #'          (available at arXiv \url{http://arxiv.org/abs/1009.5055}).
 #' }
-#'
 #'
 #' @examples
 #' library('rsvd')
