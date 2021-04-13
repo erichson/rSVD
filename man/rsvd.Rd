@@ -4,8 +4,7 @@
 \alias{rsvd}
 \title{Randomized Singular Value Decomposition (rsvd).}
 \usage{
-rsvd(A, k = NULL, nu = NULL, nv = NULL, p = 10, q = 2,
-  sdist = "normal")
+rsvd(A, k = NULL, nu = NULL, nv = NULL, p = 10, q = 2, sdist = "normal")
 }
 \arguments{
 \item{A}{array_like; \cr

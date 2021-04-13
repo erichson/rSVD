@@ -4,9 +4,15 @@
 \alias{ggcorplot}
 \title{Variables factor map for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.}
 \usage{
-ggcorplot(rpcaObj, pcs = c(1, 2), loadings = TRUE,
-  var_labels = FALSE, var_labels.names = NULL, alpha = 1,
-  top.n = NULL)
+ggcorplot(
+  rpcaObj,
+  pcs = c(1, 2),
+  loadings = TRUE,
+  var_labels = FALSE,
+  var_labels.names = NULL,
+  alpha = 1,
+  top.n = NULL
+)
 }
 \arguments{
 \item{rpcaObj}{Object returned by the \code{\link[rsvd]{rpca}} function.}
@@ -30,8 +36,6 @@ Alpha transparency of the arrows.}
 
 \item{top.n}{Scalar, optional. \cr
 Number of (most influencial) variables to label with small circles.}
-
-\item{.................}{.}
 }
 \description{
 Creates a pretty plot which is showing the correlation of

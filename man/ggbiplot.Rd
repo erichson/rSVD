@@ -4,10 +4,19 @@
 \alias{ggbiplot}
 \title{Biplot for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.}
 \usage{
-ggbiplot(rpcaObj, pcs = c(1, 2), loadings = TRUE, groups = NULL,
-  alpha = 0.6, ellipse = TRUE, alpha.ellipse = 0.2,
-  var_labels = TRUE, var_labels.names = NULL, ind_labels = TRUE,
-  ind_labels.names = NULL)
+ggbiplot(
+  rpcaObj,
+  pcs = c(1, 2),
+  loadings = TRUE,
+  groups = NULL,
+  alpha = 0.6,
+  ellipse = TRUE,
+  alpha.ellipse = 0.2,
+  var_labels = TRUE,
+  var_labels.names = NULL,
+  ind_labels = TRUE,
+  ind_labels.names = NULL
+)
 }
 \arguments{
 \item{rpcaObj}{Object returned by the \code{\link[rsvd]{rpca}} function.}

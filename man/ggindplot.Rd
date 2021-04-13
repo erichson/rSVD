@@ -4,9 +4,16 @@
 \alias{ggindplot}
 \title{Individual factor map for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.}
 \usage{
-ggindplot(rpcaObj, pcs = c(1, 2), groups = NULL, alpha = 0.6,
-  ellipse = TRUE, alpha.ellipse = 0.2, ind_labels = TRUE,
-  ind_labels.names = NULL)
+ggindplot(
+  rpcaObj,
+  pcs = c(1, 2),
+  groups = NULL,
+  alpha = 0.6,
+  ellipse = TRUE,
+  alpha.ellipse = 0.2,
+  ind_labels = TRUE,
+  ind_labels.names = NULL
+)
 }
 \arguments{
 \item{rpcaObj}{Object returned by the \code{\link[rsvd]{rpca}} function.}

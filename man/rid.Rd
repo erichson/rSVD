@@ -4,8 +4,7 @@
 \alias{rid}
 \title{Randomized interpolative decomposition (ID).}
 \usage{
-rid(A, k = NULL, mode = "column", p = 10, q = 0,
-  idx_only = FALSE, rand = TRUE)
+rid(A, k = NULL, mode = "column", p = 10, q = 0, idx_only = FALSE, rand = TRUE)
 }
 \arguments{
 \item{A}{array_like; \cr

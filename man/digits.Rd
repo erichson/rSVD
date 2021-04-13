@@ -4,7 +4,9 @@
 \name{digits}
 \alias{digits}
 \title{Digits}
-\format{An object of class \code{\link[rsvd]{rsvd}}.}
+\format{
+An object of class \code{\link[rsvd]{rsvd}}.
+}
 \source{
 \href{http://yann.lecun.com/exdb/mnist/}{mnist}
 }

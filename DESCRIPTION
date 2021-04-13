@@ -1,8 +1,8 @@
 Package: rsvd
 Type: Package
 Title: Randomized Singular Value Decomposition
-Version: 1.0.2
-Date: 2019-06-01
+Version: 1.0.4
+Date: 2021-04-11
 Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "erichson@berkeley.edu"))
 Author: N. Benjamin Erichson [aut, cre]
 Maintainer: N. Benjamin Erichson <erichson@berkeley.edu>
@@ -16,17 +16,18 @@ Description: Low-rank matrix decompositions are fundamental tools and widely use
   singular value decomposition (rsvd), randomized principal component analysis (rpca), 
   randomized robust principal component analysis (rrpca), randomized interpolative 
   decomposition (rid), and the randomized CUR decomposition (rcur). In addition several plot 
-  functions are provided. The methods are discussed in detail by Erichson et al. (2016) <arXiv:1608.02148>. 
-Depends: R (>= 3.2.2)
+  functions are provided.
+Depends: R (>= 4.0.0)
 Imports:
     Matrix
 License: GPL (>= 3)
 LazyData: TRUE
+LazyDataCompression: xz
 URL: https://github.com/erichson/rSVD
 BugReports: https://github.com/erichson/rSVD/issues
 Suggests:
     ggplot2,
     testthat
-RoxygenNote: 6.1.0
+RoxygenNote: 7.1.1
 NeedsCompilation: no
 Encoding: UTF-8

@@ -10,8 +10,6 @@
 #'
 #' @param ...     Additional arguments passed to the individual plot functions (see below).
 #'
-#' @param ................. .
-#'
 #' @seealso \code{\link{ggscreeplot}}, \code{\link{ggcorplot}} , \code{\link{ggindplot}}  
 #'
 #' @examples #

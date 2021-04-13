@@ -28,8 +28,6 @@
 #' @param  top.n  Scalar, optional. \cr
 #'                Number of (most influencial) variables to label with small circles.  
 #' 
-#' @param ................. .
-#'
 #' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'
 #' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}

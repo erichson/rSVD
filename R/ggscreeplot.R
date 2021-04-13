@@ -12,8 +12,6 @@
 #'
 #' @param type   String c('var', 'ratio', 'cum', 'eigenvals'), optional. \cr
 #'
-#' @param ................. .
-#'
 #' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'
 #' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}

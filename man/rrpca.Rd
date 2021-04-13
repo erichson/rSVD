@@ -4,8 +4,16 @@
 \alias{rrpca}
 \title{Randomized robust principal component analysis (rrpca).}
 \usage{
-rrpca(A, lambda = NULL, maxiter = 50, tol = 1e-05, p = 10, q = 2,
-  trace = FALSE, rand = TRUE)
+rrpca(
+  A,
+  lambda = NULL,
+  maxiter = 50,
+  tol = 1e-05,
+  p = 10,
+  q = 2,
+  trace = FALSE,
+  rand = TRUE
+)
 }
 \arguments{
 \item{A}{array_like; \cr

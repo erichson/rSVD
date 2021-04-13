@@ -10,8 +10,6 @@
 \item{x}{Object returned by the \code{\link[rsvd]{rpca}} function.}
 
 \item{...}{Additional arguments passed to the individual plot functions (see below).}
-
-\item{.................}{.}
 }
 \description{
 Creates a screeplot, variables and individual factor maps to

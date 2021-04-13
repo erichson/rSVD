@@ -4,7 +4,9 @@
 \name{tiger}
 \alias{tiger}
 \title{Tiger}
-\format{An object of class \code{\link[rsvd]{rsvd}}.}
+\format{
+An object of class \code{\link[rsvd]{rsvd}}.
+}
 \source{
 \href{https://en.wikipedia.org/wiki/File:Siberischer_tiger_de_edit02.jpg}{Wikimedia}
 }

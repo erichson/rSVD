@@ -10,8 +10,6 @@ ggscreeplot(rpcaObj, type = c("var", "ratio", "cum", "eigenvals"))
 \item{rpcaObj}{Object returned by the \code{\link[rsvd]{rpca}} function.}
 
 \item{type}{String c('var', 'ratio', 'cum', 'eigenvals'), optional. \cr}
-
-\item{.................}{.}
 }
 \description{
 Creates a pretty screeplpot using \code{\link[ggplot2]{ggplot}}. By default the explained variance is plotted
