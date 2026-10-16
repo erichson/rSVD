@@ -1,7 +1,7 @@
 <img src="https://raw.githubusercontent.com/erichson/rSVD/master/rsvd.png" width="550">
 
-[![Build Status](https://travis-ci.org/erichson/rSVD.svg?branch=master)](https://travis-ci.org/erichson/rSVD)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rsvd)](http://cran.r-project.org/package=rsvd)
+[![R-CMD-check](https://github.com/erichson/rSVD/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/erichson/rSVD/actions/workflows/R-CMD-check.yaml)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/rsvd)](https://CRAN.R-project.org/package=rsvd)
 
 ## Fast Randomized Singular Value Decomposition using R
 
@@ -20,7 +20,7 @@ The SVD is also widely used for computing
 Randomized PCA (rpca) uses the approximated singular value decomposition
 to compute the most significant principal components. This package also includes a
 function to compute (randomized) robust principal component analysis (RPCA).
-In addition several plot functions are provided. See for further details: [Randomized Matrix Decompositions using R](http://arxiv.org/abs/1608.02148).
+In addition several plot functions are provided. See for further details: [Randomized Matrix Decompositions using R](https://arxiv.org/abs/1608.02148).
 
 
 ## SVD example: Image compression
@@ -69,7 +69,7 @@ You can also install the development version from GitHub using [devtools](https:
 devtools::install_github("erichson/rsvd")
 ```
 
-The source packge can be obtained here: [CRAN: rsvd](https://cran.r-project.org/web/packages/rsvd/index.html).
+The source packge can be obtained here: [CRAN: rsvd](https://CRAN.R-project.org/package=rsvd).
 
 ## New in Version 1.0.2
 
