@@ -87,10 +87,11 @@
 #'          "Finding structure with randomness: probabilistic
 #'          algorithms for constructing approximate matrix
 #'          decompositions" (2009).
-#'          (available at arXiv \url{http://arxiv.org/abs/0909.4061}).
-#'   \item  [2] N. B. Erichson, S. Voronin, S. Brunton, J. N. Kutz.
-#'          "Randomized matrix decompositions using R" (2016).
-#'          (available at `arXiv \url{http://arxiv.org/abs/1608.02148}).
+#'          (available at arXiv \url{https://arxiv.org/abs/0909.4061}).
+#'  \item [2] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
+#'        Randomized Matrix Decompositions Using {R}. 
+#'        Journal of Statistical Software, 89(11), 1-48.
+#'         \doi{10.18637/jss.v089.i11}.
 #'}
 #'
 #'

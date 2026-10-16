@@ -7,9 +7,6 @@
 \format{
 An object of class \code{\link[rsvd]{rsvd}}.
 }
-\source{
-\href{http://yann.lecun.com/exdb/mnist/}{mnist}
-}
 \usage{
 data('digits')
 }

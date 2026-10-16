@@ -57,12 +57,12 @@
 #'  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
 #'        Randomized Matrix Decompositions Using {R}. 
 #'        Journal of Statistical Software, 89(11), 1-48.
-#'        \url{http://doi.org/10.18637/jss.v089.i11}.
+#'         \doi{10.18637/jss.v089.i11}.
 #' 
 #'   \item  [2] Lin, Zhouchen, Minming Chen, and Yi Ma.
 #'          "The augmented lagrange multiplier method for exact
 #'          recovery of corrupted low-rank matrices." (2010).
-#'          (available at arXiv \url{http://arxiv.org/abs/1009.5055}).
+#'          (available at arXiv \url{https://arxiv.org/abs/1009.5055}).
 #' }
 #'
 #' @examples
