@@ -1,11 +1,11 @@
 Package: rsvd
 Type: Package
 Title: Randomized Singular Value Decomposition
-Version: 1.0.4
-Date: 2021-04-11
-Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "erichson@berkeley.edu"))
+Version: 1.0.6
+Date: 2026-10-16
+Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "erichson@icsi.berkeley.edu"))
 Author: N. Benjamin Erichson [aut, cre]
-Maintainer: N. Benjamin Erichson <erichson@berkeley.edu>
+Maintainer: N. Benjamin Erichson <erichson@icsi.berkeley.edu>
 Description: Low-rank matrix decompositions are fundamental tools and widely used for data
   analysis, dimension reduction, and data compression. Classically, highly accurate 
   deterministic matrix algorithms are used for this task. However, the emergence of 
