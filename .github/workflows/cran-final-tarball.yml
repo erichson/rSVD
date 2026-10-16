@@ -1,0 +1,48 @@
+name: Final CRAN 1.0.6 tarball
+
+on:
+  push:
+    branches: [cran-1.0.6-final-tarball]
+    paths: ['.github/workflows/cran-final-tarball.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+      - name: Build source package
+        run: R CMD build .
+      - name: Verify package metadata and corrected README
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s rsvd_1.0.6.tar.gz
+          tar -xzOf rsvd_1.0.6.tar.gz rsvd/DESCRIPTION | grep -Fx 'Version: 1.0.6'
+          tar -xzOf rsvd_1.0.6.tar.gz rsvd/DESCRIPTION | grep -Fx 'Maintainer: N. Benjamin Erichson <erichson@icsi.berkeley.edu>'
+          tar -xzOf rsvd_1.0.6.tar.gz rsvd/README.md | grep -F 'https://CRAN.R-project.org/package=rsvd'
+          if tar -xzOf rsvd_1.0.6.tar.gz rsvd/README.md | grep -E 'http://arxiv.org/abs/1608.02148|http://cran.r-project.org/package=rsvd|https://cran.r-project.org/web/packages/rsvd/index.html|https://travis-ci.org/erichson/rSVD'; then
+            echo 'Old CRAN-warning URL remains in README'; exit 1
+          fi
+      - name: CRAN-style check on exact upload archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          R CMD check --as-cran --no-manual rsvd_1.0.6.tar.gz
+          tail -n 25 rsvd.Rcheck/00check.log
+      - name: Upload source package
+        uses: actions/upload-artifact@v4
+        with:
+          name: rsvd-1.0.6-corrected-CRAN-tarball
+          path: rsvd_1.0.6.tar.gz
+          if-no-files-found: error
