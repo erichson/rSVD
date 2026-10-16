@@ -15,8 +15,6 @@
 #' "Gradient-based learning applied to document recognition." 
 #' Proceedings of the IEEE, 86(11):2278-2324, November 1998.
 #'
-#' @source \href{http://yann.lecun.com/exdb/mnist/}{mnist}
-#'
 #' @examples
 #' \dontrun{
 #' library('rsvd')

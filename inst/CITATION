@@ -1,0 +1,21 @@
+bibentry(bibtype = "Article",
+  title        = "Randomized Matrix Decompositions Using {R}",
+  author       = c(person(given = c("N.", "Benjamin"),
+                          family = "Erichson",
+                          email = "erichson@berkeley.edu"),
+                   person(given = "Sergey",
+                          family = "Voronin"),
+                   person(given = c("Steven", "L."),
+                          family = "Brunton"),
+                   person(given = c("J.", "Nathan"),
+                          family = "Kutz")),
+  journal      = "Journal of Statistical Software",
+  year         = "2019",
+  volume       = "89",
+  number       = "11",
+  pages        = "1--48",
+  doi          = "10.18637/jss.v089.i11",
+
+  header       = "To cite rsvd in publications use:"
+)
+
