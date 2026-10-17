@@ -2,7 +2,7 @@
 % Please edit documentation in R/rrpca.R
 \name{rrpca}
 \alias{rrpca}
-\title{Randomized robust principal component analysis (rrpca).}
+\title{Randomized robust principal component analysis}
 \usage{
 rrpca(
   A,
@@ -16,129 +16,158 @@ rrpca(
 )
 }
 \arguments{
-\item{A}{array_like; \cr
-a real \eqn{(m, n)} input matrix (or data frame) to be decomposed. \cr
-Rows containing missing values are omitted with a warning.}
+\item{A}{A real numeric matrix or data frame to decompose. A sparse matrix from
+\pkg{Matrix} is accepted and converted to a dense matrix. Rows containing
+missing values are omitted with a warning. In the dimensions below,
+\eqn{m} and \eqn{n} are the numbers of rows and columns after omission;
+both must be positive.}
 
-\item{lambda}{scalar, optional; \cr
-tuning parameter (default \eqn{lambda = max(m,n)^-0.5}).}
+\item{lambda}{A positive numeric penalty on the entrywise sparse component. The
+default, \code{NULL}, uses \code{1 / sqrt(max(m, n))}. Larger values
+penalize the sparse component more strongly.}
 
-\item{maxiter}{integer, optional; \cr
-maximum number of iterations (default \eqn{maxiter = 50});
-reaching this limit does not imply convergence.}
+\item{maxiter}{A positive integer maximum number of iterations (default \code{50}).
+Reaching this limit does not imply convergence.}
 
-\item{tol}{scalar, optional; \cr
-tolerance for the relative reconstruction residual and
-stationarity diagnostic (default \eqn{tol = 1.0e-5}).}
+\item{tol}{A positive numeric tolerance for both the relative reconstruction
+residual and stationarity diagnostic (default \code{1e-5}).}
 
-\item{p}{integer, optional; \cr
-oversampling parameter for \eqn{rsvd} (default \eqn{p=10}), see \code{\link{rsvd}}.}
+\item{p}{A nonnegative integer oversampling parameter for \code{\link{rsvd}}
+(default \code{10}); used only in randomized SVD steps.}
 
-\item{q}{integer, optional; \cr
-initial number of additional power iterations for \eqn{rsvd}
-(default \eqn{q=2}); increased adaptively if convergence stalls.
-See \code{\link{rsvd}}.}
+\item{q}{A nonnegative integer initial number of power iterations for
+\code{\link{rsvd}} (default \code{2}); increased adaptively if randomized
+accuracy stalls. Ignored when \code{rand = FALSE}.}
 
-\item{trace}{bool, optional; \cr
-print progress, including both convergence diagnostics.}
+\item{trace}{Logical; print iteration progress, including both convergence
+diagnostics (default \code{FALSE}).}
 
-\item{rand}{bool, optional; \cr
-if (\eqn{TRUE}), start with \eqn{rsvd}, with deterministic SVD
-fallback for a large target rank or stalled accuracy;
-otherwise use \eqn{svd} throughout.}
+\item{rand}{Logical; start with randomized SVD steps when \code{TRUE} (default),
+with deterministic SVD used for large target ranks or stalled accuracy.
+With \code{FALSE}, use the deterministic SVD throughout.}
 }
 \value{
-\code{rrpca} returns a list containing the following components:
+A list of class \code{"rrpca"} containing:
 \describe{
-   \item{L}{  array_like; \cr
-             low-rank component; \eqn{(m, n)} dimensional array.
-   }
-   \item{S}{  array_like \cr
-              sparse component; \eqn{(m, n)} dimensional array.
-   }
-   \item{err}{ numeric vector; \cr
-              relative Frobenius residual at each iteration, or zero for a zero input.
-   }
+  \item{L}{A dense \eqn{m} by \eqn{n} matrix: the estimated low-rank
+    component.}
+  \item{S}{A dense \eqn{m} by \eqn{n} matrix containing the estimated
+    sparse component. Sparsity refers to its entries, not its storage
+    class.}
+  \item{err}{A numeric vector of relative Frobenius reconstruction
+    residuals, one per completed iteration. For a zero input, the
+    function returns zero components and \code{err = 0} immediately.}
 }
+Rows of \code{L} and \code{S} correspond to retained input rows after
+missing rows have been omitted. No fitted loading basis or new-data
+prediction method is returned.
 }
 \description{
-Robust principal components analysis separates a matrix into a low-rank plus sparse component.
+Decompose a real matrix into a low-rank component and an entrywise
+sparse component using principal component pursuit, with randomized or
+deterministic singular value decompositions.
 }
 \details{
-Robust principal component analysis (RPCA) is a method for the robust separation of
-a rectangular \eqn{(m,n)} matrix \eqn{A} into a low-rank component \eqn{L} and a
-sparse component \eqn{S}:
+Principal component pursuit separates a matrix into components satisfying
+\deqn{A = L + S.}{A = L + S.}
+The objective is to minimize the nuclear norm of \eqn{L} plus
+\code{lambda} times the entrywise one-norm of \eqn{S}, subject to this
+equality. The nuclear norm
+is the sum of singular values; the entrywise one-norm is the sum of
+absolute entries. These penalties encourage a low-rank component and a
+component with few nonzero entries. Whether the result recovers an
+underlying signal depends on the data and the separation assumptions;
+the decomposition is not a general guarantee of denoising.
 
-\deqn{A = L + S}
+The inexact augmented Lagrange multiplier method (IALM) alternates
+entrywise soft thresholding and singular-value thresholding. The
+low-rank component's rank is selected through thresholding rather than
+through a fixed user-specified rank. Input and working arrays are dense,
+including for sparse input. No automatic centering or scaling is applied:
+any desired preprocessing must be done before calling \code{rrpca}.
+Use \code{set.seed} before fitting for reproducible random draws when
+\code{rand = TRUE}.
 
-To decompose the matrix, we use the inexact augmented Lagrange multiplier
-method (IALM). The algorithm can be used in combination with either the randomized or deterministic SVD.
-Input and working arrays are dense, including when a sparse \pkg{Matrix} input
-is supplied. A zero input returns zero components and zero residual immediately.
-
-The stopping test requires both the relative reconstruction residual and a
-stationarity diagnostic to be at most \code{tol}, unless \code{maxiter} is
-reached first. With the sparse component
-updated first, the latter is
-\eqn{\mu\|L_{new}-L_{old}\|_F / \max(1,\|Z\|_F)}, where \eqn{Z} is the
-Lagrange multiplier. The penalty \eqn{\mu} increases only after this diagnostic
-is sufficiently small. This prevents stopping on reconstruction feasibility alone
-and makes the stopping tests invariant to rescaling the input.
+The stopping test requires both the relative reconstruction residual
+\deqn{\frac{\|A-L-S\|_F}{\|A\|_F}}{norm(A - L - S, "F") / norm(A, "F")}
+and a stationarity diagnostic to be at most \code{tol}, unless
+\code{maxiter} is reached first. With the sparse component updated first,
+the stationarity diagnostic is
+\deqn{\frac{\mu\|L_{new}-L_{old}\|_F}{\max(1,\|Z\|_F)}}{mu * norm(L_new - L_old, "F") / max(1, norm(Z, "F"))}
+where \eqn{Z} is the updated Lagrange multiplier and \eqn{\mu} is the
+penalty used for that iteration. The penalty increases only when this
+diagnostic is sufficiently small. This avoids stopping on reconstruction
+feasibility alone and makes the tests invariant to rescaling the input.
 
 Randomized singular-value thresholding increases its target rank if all
-returned singular values exceed the shrinkage threshold. If convergence
-stalls, a bounded heuristic increases the power iterations by two, at most
-twice, before switching to the deterministic SVD. These refinements can
-increase runtime. The stopping diagnostics and randomized approximations
-are not a general certificate of optimality. The iteration limit may be
-reached before both diagnostics satisfy \code{tol}; \code{trace=TRUE} displays
-both, whereas the returned \code{err} contains reconstruction residuals only.
+returned singular values exceed the shrinkage threshold. If accuracy
+stalls, the algorithm makes bounded increases in the number of power
+iterations before falling back to deterministic SVD. These refinements
+can increase runtime. The stopping diagnostics and randomized
+approximations are not a general certificate of optimality. The iteration
+limit may be reached before both diagnostics satisfy \code{tol}.
+\code{trace = TRUE} displays both diagnostics; \code{err} records only
+reconstruction residuals, so a small final \code{err} alone is not a
+convergence certificate.
+
+\code{rrpca} is a batch decomposition of the supplied matrix. Its
+\code{L} and \code{S} contain fitted entries for those observations, not
+a reusable PCA rotation matrix, and there is no \code{predict.rrpca}
+method. Projecting new rows onto a basis extracted from \code{L} gives
+an ordinary low-rank projection with a generally dense residual; it does
+not compute a robust sparse component for the new rows. Robust inference
+with a fixed learned basis requires a separate optimization problem.
+For ordinary PCA with new-data scores, use \code{\link{rpca}} and its
+\code{predict} method.
 }
 \examples{
-library('rsvd')
-
-# Create toy video
-# background frame
-xy <- seq(-50, 50, length.out=100)
-mgrid <- list( x=outer(xy*0,xy,FUN="+"), y=outer(xy,xy*0,FUN="+") )
-bg <- 0.1*exp(sin(-mgrid$x**2-mgrid$y**2))
-toyVideo <- matrix(rep(c(bg), 100), 100*100, 100)
-
-# add moving object
-for(i in 1:90) {
-  mobject <- matrix(0, 100, 100)
-  mobject[i:(10+i), 45:55] <- 0.2
-  toyVideo[,i] =  toyVideo[,i] + c( mobject )
+# A small video: each column is one frame, with pixels stored in rows.
+background <- outer(1:32, 1:32, function(x, y) 0.1 + 0.001 * (x + y))
+video <- matrix(rep(as.vector(background), 30), nrow = 32 * 32)
+for (i in 1:30) {
+  foreground <- matrix(0, 32, 32)
+  foreground[i:(i + 2), 15:17] <- 0.8
+  video[, i] <- video[, i] + as.vector(foreground)
 }
 
-# Foreground/Background separation
-out <- rrpca(toyVideo, trace=TRUE)
+set.seed(42)
+out <- rrpca(video, maxiter = 100, tol = 1e-6)
+tail(out$err, 1) # Reconstruction residual; see Details for convergence.
 
-# Display results of the separation for the 10th frame
-par(mfrow=c(1,4))
-image(matrix(bg, ncol=100, nrow=100)) #true background
-image(matrix(toyVideo[,10], ncol=100, nrow=100)) # frame
-image(matrix(out$L[,10], ncol=100, nrow=100)) # separated background
-image(matrix(out$S[,10], ncol=100, nrow=100)) # separated foreground
+# Compare one frame and its estimated background and foreground.
+# Each panel uses its own intensity range.
+old_par <- par(mfrow = c(1, 4), mar = c(0, 0, 2, 0))
+image(background, col = gray.colors(64), axes = FALSE,
+      asp = 1, useRaster = TRUE, main = "Background")
+image(matrix(video[, 10], 32, 32), col = gray.colors(64),
+      axes = FALSE, asp = 1, useRaster = TRUE, main = "Frame")
+image(matrix(out$L[, 10], 32, 32), col = gray.colors(64),
+      axes = FALSE, asp = 1, useRaster = TRUE, main = "Low-rank part")
+image(matrix(out$S[, 10], 32, 32), col = gray.colors(64),
+      axes = FALSE, asp = 1, useRaster = TRUE, main = "Sparse part")
+par(old_par)
+
 }
 \references{
 \itemize{
- \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
-       Randomized Matrix Decompositions Using {R}. 
-       Journal of Statistical Software, 89(11), 1-48.
-        \doi{10.18637/jss.v089.i11}.
-
-  \item  [2] Lin, Zhouchen, Minming Chen, and Yi Ma.
-         "The augmented Lagrange multiplier method for exact
-         recovery of corrupted low-rank matrices." (2010).
-         (available at arXiv \url{https://arxiv.org/abs/1009.5055}).
-
-  \item [3] S. Boyd, N. Parikh, E. Chu, B. Peleato and J. Eckstein. 2011.
-        Distributed Optimization and Statistical Learning via the Alternating
-        Direction Method of Multipliers. Foundations and Trends in Machine
-        Learning, 3(1), 1-122. \doi{10.1561/2200000016}.
+  \item N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
+  Randomized Matrix Decompositions Using R.
+  Journal of Statistical Software, 89(11), 1--48.
+  \doi{10.18637/jss.v089.i11}.
+  \item Z. Lin, M. Chen and Y. Ma. 2010.
+  The Augmented Lagrange Multiplier Method for Exact Recovery of
+  Corrupted Low-Rank Matrices.
+  \url{https://arxiv.org/abs/1009.5055}.
+  \item S. Boyd, N. Parikh, E. Chu, B. Peleato and J. Eckstein. 2011.
+  Distributed Optimization and Statistical Learning via the Alternating
+  Direction Method of Multipliers.
+  Foundations and Trends in Machine Learning, 3(1), 1--122.
+  \doi{10.1561/2200000016}.
 }
+}
+\seealso{
+\code{\link{rpca}}, \code{\link{rsvd}}.
 }
 \author{
-N. Benjamin Erichson, \email{erichson@berkeley.edu}
+N. Benjamin Erichson
 }

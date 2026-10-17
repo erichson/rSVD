@@ -1,122 +1,116 @@
-#' @title  Randomized CUR matrix decomposition
-#
-#' @description Randomized CUR matrix decomposition.
-#
+#' @title Randomized CUR matrix decomposition
+#'
+#' @description
+#' Approximate a matrix using a subset of its columns, a subset of its rows,
+#' and a small connector matrix. Randomized column selection is useful when
+#' the input has low-rank structure and the requested rank is small.
+#'
+#' @param A A real or complex numeric matrix, a numeric data frame, or a matrix
+#' from the \pkg{Matrix} package. Rows containing missing values are omitted
+#' with a warning; the remaining entries must be finite.
+#' @param k A positive integer giving the number of columns and rows to select.
+#' The default, \code{NULL}, uses \code{min(dim(A))} after missing rows are
+#' omitted. Larger requests are capped at this value.
+#' @param p A non-negative integer oversampling parameter for randomized
+#' column selection. The default is 10. Ignored when \code{rand = FALSE}.
+#' @param q A non-negative integer number of power iterations for randomized
+#' column selection. The default is zero. Ignored when \code{rand = FALSE}.
+#' @param idx_only Logical. If \code{TRUE}, leave \code{C} and \code{R} as
+#' \code{NULL} in the returned object. Their indices and the connector
+#' \code{U} are still computed and returned. The default is \code{FALSE}.
+#' @param rand Logical. If \code{TRUE} (the default), use randomized column
+#' selection; otherwise use a deterministic column-pivoted QR decomposition.
+#' Row selection from the chosen column matrix is deterministic in both cases.
+#'
 #' @details
-#' Algorithm for computing the CUR matrix decomposition of a rectangular \eqn{(m, n)} matrix \eqn{A}, 
-#' with target rank \eqn{k << min(m,n)}. The input matrix is approximated as
-#' 
-#' \deqn{A \approx C U R}{A is approximately C \%*\% U \%*\% R}
-#' 
-#' using the \code{\link{rid}} decomposition. The factor matrix \eqn{C} is formed using actual 
-#' columns of \eqn{A}, also called the partial column skeleton. The factor matrix \eqn{R} is formed 
-#' using actual rows of \eqn{A}, also called the partial row skeleton.
-#' 
-#' If \eqn{rand=TRUE} a probabilistic strategy is used to compute the decomposition, otherwise a
-#' deterministic algorithm is used.
+#' For an \eqn{m \times n}{m by n} matrix, CUR has the form
+#' \deqn{A \approx C U R.}{A is approximately C \%*\% U \%*\% R.}
+#' The \code{m} by \code{k} matrix \code{C} contains actual columns of the
+#' input, and the \code{k} by \code{n} matrix \code{R} contains actual rows.
+#' These subsets preserve the interpretation of measured variables and
+#' observations. The \code{k} by \code{k} matrix \code{U} connects them;
+#' it is not the orthonormal left singular-vector matrix of an SVD.
 #'
-#' Sparse matrices from the \pkg{Matrix} package are supported. The randomized
-#' algorithm uses sparse matrix products to choose columns, then operates on dense
-#' selected row and column subsets. The returned factors are dense matrices.
-#' With \code{rand=FALSE}, the column selection also requires a dense copy of the input.
+#' The algorithm first computes a column interpolative decomposition with
+#' \code{\link{rid}}. It chooses rows using column-pivoted QR of the conjugate
+#' transpose of \code{C}, and forms
+#' \deqn{U = Z R^{+},}{U = Z times the numerical Moore-Penrose inverse of R,}
+#' where \code{Z} is the interpolation matrix from the column ID.
+#' Numerically negligible singular values are excluded from the pseudoinverse
+#' using a threshold that depends on matrix dimensions and floating-point
+#' precision. The selected subsets can be rank deficient when \code{k}
+#' exceeds the input's numerical rank.
 #'
+#' CUR is an approximation, and column/row selection does not guarantee the
+#' smallest possible rank-\code{k} error. Accuracy depends on the spectrum,
+#' the selected subsets and their conditioning. The input is not centered or
+#' scaled automatically; preprocessing can materially change the selected
+#' variables and observations. The QR scores describe the selection procedure
+#' and should not be treated as statistical importance scores.
 #'
-#' @param A   array_like; \cr
-#'            numeric \eqn{(m, n)} input matrix (or data frame). \cr
-#'            Rows containing missing values are omitted with a warning.
-#'            
-#' @param k   integer; \cr
-#'            target rank of the low-rank approximation, i.e., the number of columns/rows
-#'            to be selected. It is required that \eqn{k} is smaller or equal to \eqn{min(m,n)}.
-#'        
-#' @param p   integer, optional; \cr
-#'            oversampling parameter (default \eqn{p=10}).
+#' Sparse \pkg{Matrix} input is supported. Randomized column selection uses
+#' sparse matrix products, but the selected column and row matrices and the
+#' connector are dense. With \code{rand = FALSE}, column selection also
+#' requires a dense input matrix. The option \code{idx_only = TRUE} reduces
+#' the returned object's size; selected data are still used internally to
+#' compute \code{U}. Explicit reconstruction creates a dense matrix.
 #'
-#' @param q   integer, optional; \cr
-#'            number of additional power iterations (default \eqn{q=0}).
+#' Oversampling and power iterations can improve randomized selection but
+#' increase work; they do not implement an adaptive error tolerance. Set the
+#' random seed before a randomized call for a repeatable result in the same
+#' computational environment.
 #'
-#' @param idx_only  bool, optional; \cr
-#'              if (\eqn{TRUE}), omit the selected matrices \code{C} and \code{R}
-#'              from the result. The indices and connector matrix \code{U}
-#'              are still computed and returned.
-#'              
-#' @param rand  bool, optional; \cr
-#'              if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.                
-#'
-#'
-#' @return \code{rcur} returns a list with class \eqn{rcur} containing the following components:
-#'\describe{
-#'    \item{C}{ array_like; \cr
-#'              column subset \eqn{C = A[,C.idx]}; \eqn{(m, k)} dimensional array.
-#'    }
-#'
-#'    \item{R}{ Array_like. \cr
-#'               row subset \eqn{R = A[R.idx, ]}; \eqn{(k, n)} dimensional array.
-#'    }
-#'    
-#'    \item{U}{ array_like; \cr
-#'             connector matrix; \eqn{(k,k)} dimensional array.
-#'    }
-#'    
-#'    \item{C.idx}{ array_like; \cr
-#'                index set of the \eqn{k} selected columns used to form \eqn{C}. 
-#'    }   
-#' 
-#'    \item{R.idx}{ array_like; \cr
-#'                index set of the \eqn{k} selected rows used to form \eqn{R}. 
-#'                Indices refer to the input after rows with missing values are omitted.
-#'    }   
-#'       
-#'      
-#'    \item{C.scores}{ array_like; \cr
-#'                   scores of the input columns, as returned by \code{\link{rid}}.
-#'                   Entries without a corresponding QR diagonal are \code{NA}.
-#'    } 
-#' 
-#'    \item{R.scores}{ array_like; \cr
-#'                   scores  of the selected rows.
-#'    }                   
-#'}                                                       
+#' @return
+#' A list of class \code{"rcur"} with the following components. Dimensions
+#' refer to the input after missing-row omission and the effective \code{k}
+#' after clamping.
+#' \describe{
+#'   \item{C}{The dense \code{m} by \code{k} matrix containing columns
+#'   \code{C.idx} of \code{A}. It is \code{NULL} when \code{idx_only = TRUE}.}
+#'   \item{R}{The dense \code{k} by \code{n} matrix containing rows
+#'   \code{R.idx} of \code{A}. It is \code{NULL} when \code{idx_only = TRUE}.}
+#'   \item{U}{The dense \code{k} by \code{k} connector matrix.}
+#'   \item{C.idx}{An integer vector of \code{k} selected column indices,
+#'   in selection order.}
+#'   \item{R.idx}{An integer vector of \code{k} selected row indices,
+#'   in selection order. These index the matrix after rows with missing
+#'   values have been omitted.}
+#'   \item{C.scores}{Column QR scores in input column order, as returned by
+#'   \code{\link{rid}}. Entries without a QR diagonal are \code{NA}.}
+#'   \item{R.scores}{The \code{k} selected-row QR scores, in the same order
+#'   as \code{R.idx}; these are not a score for every input row.}
+#'   \item{rand}{The randomization setting.}
+#' }
 #'
 #' @references
-#' \itemize{
-#'  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
-#'        Randomized Matrix Decompositions Using R.
-#'        Journal of Statistical Software, 89(11), 1-48.
-#'         \doi{10.18637/jss.v089.i11}.
-#' 
-#'   \item  [2] N. Halko, P. Martinsson, and J. Tropp.
-#'          "Finding structure with randomness: probabilistic
-#'          algorithms for constructing approximate matrix
-#'          decompositions" (2009).
-#'          (available at arXiv \url{https://arxiv.org/abs/0909.4061}).
-#'}
+#' N. B. Erichson, S. Voronin, S. L. Brunton, and J. N. Kutz (2019).
+#' Randomized Matrix Decompositions Using R.
+#' \emph{Journal of Statistical Software}, 89(11), 1--48.
+#' \doi{10.18637/jss.v089.i11}.
 #'
+#' N. Halko, P. G. Martinsson, and J. A. Tropp (2009).
+#' Finding structure with randomness: probabilistic algorithms for constructing
+#' approximate matrix decompositions. \url{https://arxiv.org/abs/0909.4061}.
 #'
-#' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
-#'
-#' @seealso \code{\link{rid}}
-#'
-#'
+#' @author N. Benjamin Erichson
+#' @seealso \code{\link{rid}}, \code{\link{rsvd}}
 #'
 #' @examples
-#' \dontrun{
-#' # Load test image
-#' data('tiger')
+#' set.seed(42)
+#' A <- matrix(rnorm(60 * 5), 60, 5) %*% matrix(rnorm(5 * 35), 5, 35)
+#' A <- A + 0.01 * matrix(rnorm(length(A)), nrow(A), ncol(A))
 #'
-#' # Compute a randomized CUR decomposition
-#' # Note that the image needs to be transposed for correct plotting
-#' out <- rcur(tiger, k = 150)
+#' fit <- rcur(A, k = 5)
+#' A_cur <- fit$C %*% fit$U %*% fit$R
+#' norm(A - A_cur, "F") / norm(A, "F")
+#' fit$C.idx
+#' fit$R.idx
 #'
-#' # Reconstruct image
-#' tiger.re <- out$C %*% out$U %*% out$R
-#'
-#' # Compute relative error
-#' print(norm(tiger-tiger.re, 'F') / norm(tiger, 'F')) 
-#'
-#' # Plot approximated image
-#' image(tiger.re, col = gray((0:255)/255))
-#' }
+#' # idx_only still returns the connector, so reconstruction remains possible.
+#' small <- rcur(A, k = 5, idx_only = TRUE, rand = FALSE)
+#' A_small <- A[, small$C.idx, drop = FALSE] %*% small$U %*%
+#'   A[small$R.idx, , drop = FALSE]
+#' norm(A - A_small, "F") / norm(A, "F")
 
 #' @export
 rcur <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TRUE) UseMethod("rcur")

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ggindplot.R
 \name{ggindplot}
 \alias{ggindplot}
-\title{Individual factor map for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.}
+\title{PCA observation scores}
 \usage{
 ggindplot(
   rpcaObj,
@@ -16,42 +16,83 @@ ggindplot(
 )
 }
 \arguments{
-\item{rpcaObj}{Object returned by the \code{\link[rsvd]{rpca}} function.}
+\item{rpcaObj}{An object returned by \code{\link{rpca}}, with
+real-valued scores. Fit with \code{retx = TRUE} so that \code{rpcaObj$x}
+is available.}
 
-\item{pcs}{Array_like. \cr
-An array with two values indicating the two PCs which should be used for plotting. 
-By default the first two PCs are used, e.g., \eqn{c(1,2)}.}
+\item{pcs}{Integer vector of length two selecting the retained principal
+components to plot, in horizontal and vertical order. The default is
+\code{c(1, 2)}; both selected components must be present in the fit.}
 
-\item{groups}{Factor, optional. \cr
-Factor indicating groups.}
+\item{groups}{Optional factor with one entry for each row of \code{rpcaObj$x},
+in the same order. It controls the point colours and, when requested, the
+ellipses. The default, \code{NULL}, uses one colour and draws no ellipse.
+If \code{rpca} omitted incomplete observations, supply groups for the
+retained rows only.}
 
-\item{alpha}{Scalar, optional. \cr
-Alpha transparency for scatter plot.}
+\item{alpha}{Numeric value between zero and one controlling point
+transparency, with zero fully transparent and one opaque. The default is
+\code{0.6}.}
 
-\item{ellipse}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-Draw the default 95\% multivariate-t data ellipse from
-\code{\link[ggplot2]{stat_ellipse}} for each supplied
-group, if \eqn{TRUE}.}
+\item{ellipse}{Logical; draw a filled data ellipse for each supplied group
+when \code{TRUE} (the default). Uses the defaults of
+\code{\link[ggplot2]{stat_ellipse}}: a multivariate-t ellipse at level
+\code{0.95}. See Details for its interpretation.}
 
-\item{alpha.ellipse}{Scalar, optional. \cr
-Alpha transparency for ellipse.}
+\item{alpha.ellipse}{Numeric value between zero and one controlling ellipse
+transparency. The default is \code{0.2}; ignored when no ellipse is drawn.}
 
-\item{ind_labels}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-Plot names for each individual point, if \eqn{TRUE}.}
+\item{ind_labels}{Logical; show a text label for each observation when
+\code{TRUE} (the default). Set to \code{FALSE} to reduce clutter.}
 
-\item{ind_labels.names}{Array_like, optional. \cr
-User specific labels for the individual points.}
+\item{ind_labels.names}{Optional character vector with one label per row of
+\code{rpcaObj$x}, in the same order. By default, the score row names are
+used, or sequential row numbers when names are absent. Labels are displayed
+only when \code{ind_labels = TRUE}.}
+}
+\value{
+A \pkg{ggplot2} plot object. Print the object to draw the
+plot, or add layers, labels, and themes with \pkg{ggplot2}.
 }
 \description{
-Creates a pretty plot which is showing the individual factor map, i.e,
-   plotting the principal component scores.
+Plot fitted observation scores for two retained
+principal components from \code{\link{rpca}}, with optional group colours,
+data ellipses, and observation labels. The optional \pkg{ggplot2} package
+is required.
+}
+\details{
+Coordinates are the selected columns of
+\code{rpcaObj$x}, the fitted principal-component scores. Their values
+reflect the centering and scaling used in \code{rpca}; the plotting helper
+does not standardize or recompute the scores. For randomized fits these
+are the stored projected-SVD scores described in \code{\link{rpca}}.
+
+Axis labels include each selected component's share of
+\code{rpcaObj$var}, the total variance of the processed input. These shares
+include the contribution of omitted components in the denominator.
+
+The ellipses describe the spread of fitted scores in
+each group under the multivariate-t model used by
+\code{\link[ggplot2]{stat_ellipse}}. Its multivariate-t computation also
+requires the recommended package \pkg{MASS}. They are data ellipses, not confidence
+regions for group means or tests of group separation. Small groups or
+degenerate score distributions may not support ellipse estimation; use
+\code{ellipse = FALSE} in that case.
 }
 \examples{
-#See ?rpca
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  set.seed(42)
+  fit <- rpca(iris[, 1:4], k = 3)
+  print(ggindplot(fit, pcs = c(1, 3), groups = iris$Species,
+                  ellipse = FALSE, ind_labels = FALSE))
+}
+
 }
 \seealso{
-\code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
+\code{\link{rpca}}, \code{\link{ggbiplot}},
+\code{\link{ggcorplot}}, \code{\link{ggscreeplot}},
+\code{\link[ggplot2]{ggplot}}, \code{\link[ggplot2]{stat_ellipse}}
 }
 \author{
-N. Benjamin Erichson, \email{erichson@berkeley.edu}
+N. Benjamin Erichson
 }

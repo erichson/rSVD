@@ -1,47 +1,84 @@
-#devtools::use_package('ggplot2')
-#library('ggplot2')
-
-#' @title  Variables factor map for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.
-#
-#' @description Plots retained principal-component directions, optionally
-#' scaled by the square roots of their eigenvalues.
+#' @title PCA variable directions and correlation circle
 #'
-#' @details With \code{loadings = TRUE}, the plotted coordinates are
-#' \eqn{V_{ji}\sqrt{\lambda_i}}. They have a variable-component correlation
-#' interpretation when the input variables are centered and have unit sample
-#' variance. For unscaled or uncentered input they are loadings rather than
-#' necessarily correlations; the unit circle is then only a visual reference.
+#' @description Plot the variable directions for two retained
+#' principal components, optionally scaled by the component standard
+#' deviations, together with a unit circle. The optional \pkg{ggplot2} package
+#' is required.
 #'
-#' @param rpcaObj  Object returned by the \code{\link[rsvd]{rpca}} function.
+#' @param rpcaObj An object returned by \code{\link{rpca}}, with
+#' real-valued directions. Scores are not needed, so fits made with
+#' \code{retx = FALSE} are supported.
 #'
-#' @param pcs   Array_like. \cr
-#'              An array with two values indicating the two PCs which should be used for plotting. 
-#'              By default the first two PCs are used, e.g., \eqn{c(1,2)}. 
-#'              
-#' @param loadings   Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                  If \eqn{TRUE}, each eigenvector is multiplied by the square
-#'                  root of its eigenvalue, \eqn{W = W * diag(sqrt(eigvals))}.
-#'              
-#' @param var_labels  Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                Plot variable names, if \eqn{TRUE}.
-#'                
-#' @param var_labels.names  Array_like, optional. \cr
-#'                User specific labels for the variables                  
-#' 
-#' @param  alpha  Scalar, optional. \cr
-#'                Alpha transparency of the arrows. 
-#' 
-#' @param  top.n  Scalar, optional. \cr
-#'                Number of (most influential) variables to label with small circles.
-#' 
-#' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
+#' @param pcs Integer vector of length two selecting the retained principal
+#' components to plot, in horizontal and vertical order. The default is
+#' \code{c(1, 2)}; both selected components must be present in the fit.
 #'
-#' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
+#' @param loadings Logical; when \code{TRUE} (the default), multiply each
+#' selected direction by its component standard deviation, so the coordinates
+#' are \code{rotation[, pcs]} scaled columnwise by \code{sdev[pcs]}.
+#' When \code{FALSE}, plot the unscaled entries of \code{rotation[, pcs]}.
 #'
-#' @examples #
+#' @param var_labels Logical; show text labels for the variables
+#' selected by \code{top.n} when \code{TRUE}. The default is \code{FALSE}.
 #'
-
-
+#' @param var_labels.names Optional character vector with one label per row of
+#' \code{rpcaObj$rotation}, in the original variable order. By default, the
+#' rotation row names are used, or sequential variable numbers when names
+#' are absent.
+#' These names identify the endpoint markers and, when requested, the text
+#' labels.
+#'
+#' @param alpha Numeric value between zero and one controlling
+#' arrow transparency. The default is \code{1} (opaque).
+#'
+#' @param top.n Positive integer limiting the number of variables
+#' selected for endpoint markers and text labels. Selection is by decreasing
+#' arrow length in the plotted two-component plane. The default, \code{NULL},
+#' selects all variables; values larger than the number of variables are
+#' clamped to that number. See Details for the marker display rule.
+#'
+#' @details With \code{loadings = TRUE}, the plotted coordinate of
+#' variable \eqn{j} on component \eqn{i} is
+#' \eqn{V_{ji}\sqrt{\lambda_i}}{V[j, i] * sqrt(lambda[i])}, where \eqn{V} is
+#' \code{rotation} and \eqn{\lambda_i}{lambda[i]} is the corresponding
+#' eigenvalue. For centered variables
+#' with unit sample variance and nonzero component variance, this is the
+#' correlation between the variable and the fitted component score. In that
+#' setting the unit circle helps show how well the selected component plane
+#' represents each variable. With unscaled or uncentered input, the coordinates
+#' need not be correlations and the circle is only a visual reference.
+#'
+#' With \code{loadings = FALSE}, the plotted coordinates are the unscaled
+#' principal-component directions. This changes the relative arrow lengths
+#' and may change which variables \code{top.n} selects.
+#'
+#' All variable arrows are drawn. The \code{top.n} selection affects endpoint
+#' markers and, if \code{var_labels = TRUE}, text labels. Endpoint markers are
+#' drawn only when the effective number selected is less than 50. A variable's
+#' ranking measures its arrow length in this selected plane, not its overall
+#' importance across all components.
+#'
+#' The plot uses equal horizontal and vertical scales. Axis labels include
+#' the variance shares relative to \code{rpcaObj$var}, the total variance of
+#' the processed input, rather than only the retained variance.
+#'
+#' @return A \pkg{ggplot2} plot object. Print the object to draw the
+#' plot, or add layers, labels, and themes with \pkg{ggplot2}.
+#'
+#' @seealso \code{\link{rpca}}, \code{\link{ggbiplot}},
+#' \code{\link{ggindplot}}, \code{\link{ggscreeplot}},
+#' \code{\link[ggplot2]{ggplot}}
+#'
+#' @author N. Benjamin Erichson
+#'
+#' @examples
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   set.seed(42)
+#'   fit <- rpca(iris[, 1:4], k = 2, retx = FALSE)
+#'   # Label the three longest arrows in the selected component plane.
+#'   print(ggcorplot(fit, var_labels = TRUE, top.n = 3))
+#' }
+#'
 #' @export
 ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var_labels.names=NULL, alpha=1, top.n=NULL) {
   

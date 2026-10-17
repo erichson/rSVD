@@ -1,28 +1,40 @@
-#'Digits
+#' @title Handwritten digit images
 #'
-#' @description Subsampled MNIST database of handwritten digits. This smaller dataset has 3000 samples for each
-#' of the digits corresponding to the class labels 0,1,2,3. Each 28x28 image patch is stored as a flattened row vector.
+#' @description
+#' A subset of MNIST containing 3,000 handwritten examples of each of the
+#' digits 0, 1, 2 and 3. Each observation consists of a class label and a
+#' flattened 28 by 28 grayscale image.
 #'
 #' @docType data
+#' @usage data("digits")
+#' @format An integer matrix with 12,000 rows and 785 columns. The first column,
+#' \code{label}, contains the digit class (0, 1, 2 or 3). The remaining 784
+#' columns, named \code{pixel0} through \code{pixel783}, contain grayscale
+#' pixel values from 0 to 255. There are 3,000 rows per class.
+#' @details
+#' Remove the label column before passing the pixel data to a decomposition
+#' or other unsupervised method: the labels are outcomes, not image features.
+#' The stored intensities are not centered, standardized or divided by 255.
+#' Some background pixels may be constant across a chosen subset, so scaling
+#' every pixel to unit variance can be inappropriate.
 #'
-#' @usage data('digits')
+#' The example reshapes only the 784 pixel columns. Reversing the second matrix
+#' axis gives the display orientation used by \code{\link[graphics]{image}};
+#' the reversed grayscale palette shows dark handwriting on a light background.
 #'
-#' @format An object of class \code{\link[rsvd]{rsvd}}.
-#'
-#' @keywords pattern recognition
-#'
-#' @references Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner. 
-#' "Gradient-based learning applied to document recognition." 
-#' Proceedings of the IEEE, 86(11):2278-2324, November 1998.
-#'
+#' @keywords datasets
+#' @references Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner (1998).
+#' Gradient-based learning applied to document recognition.
+#' \emph{Proceedings of the IEEE}, 86(11), 2278--2324.
 #' @examples
-#' \dontrun{
-#' library('rsvd')
-#' data('digits')
+#' data("digits")
+#' dim(digits)
+#' table(digits[, "label"])
 #'
-#' #Display first digit
-#' digit <- matrix(digits[1,], nrow = 28, ncol = 28)
-#' image(digit[,28:1], col = gray(255:0 / 255))
-#' }   
-#'
+#' # Keep the label separate from the pixels.
+#' label <- digits[1L, "label"]
+#' digit <- matrix(digits[1L, -1L], nrow = 28, ncol = 28)
+#' image(digit[, 28:1], col = gray((255:0) / 255), asp = 1,
+#'       axes = FALSE, useRaster = TRUE, main = paste("Digit", label))
+
 "digits"

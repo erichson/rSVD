@@ -3,30 +3,43 @@
 \docType{data}
 \name{tiger}
 \alias{tiger}
-\title{Tiger}
+\title{Tiger image}
 \format{
-A numeric matrix with 1600 rows and 1200 columns.
+A numeric matrix with 1600 rows and 1200 columns. There are no labels
+or color channels; each entry is a grayscale intensity.
 }
 \source{
-\href{https://en.wikipedia.org/wiki/File:Siberischer_tiger_de_edit02.jpg}{Wikimedia}
+\href{https://en.wikipedia.org/wiki/File:Siberischer_tiger_de_edit02.jpg}{Wikimedia image and attribution}
 }
 \usage{
-data('tiger')
+data("tiger")
 }
 \description{
-A 1600 by 1200 grayscale image with pixel intensities
-normalized from 8-bit values to the interval [0, 1].
+A grayscale tiger photograph for illustrating low-rank approximation and
+image reconstruction. Pixel intensities have been divided by 255 to lie
+between zero and one.
+}
+\details{
+The stored orientation is suitable for \code{\link[graphics]{image}} as
+shown below. Matrix rows and columns correspond to the horizontal and
+vertical axes used by that function, respectively. For a decomposition,
+use \code{tiger} directly and reconstruct the matrix in the same orientation.
+
+The image is a useful visual example rather than an exactly low-rank matrix.
+Increasing the approximation rank preserves more texture and fine detail,
+while storing only the factors can require much less space than storing
+all pixels. See \code{\link{rsvd}}, \code{\link{rid}} and \code{\link{rcur}}
+for decomposition examples.
 }
 \examples{
-\dontrun{
-library('rsvd')
-data('tiger')
-
-#Display image
-image(tiger, col = gray((0:255)/255))
-}
+data("tiger")
+dim(tiger)
+range(tiger)
+image(seq_len(nrow(tiger)), seq_len(ncol(tiger)), tiger,
+      col = gray((0:255) / 255), asp = 1,
+      axes = FALSE, useRaster = TRUE)
 }
 \references{
-S. Taheri (2006). "Panthera tigris altaica", (Online image)
+S. Taheri (2006). Panthera tigris altaica. Online photograph.
 }
-\keyword{image}
+\keyword{datasets}
