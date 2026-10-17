@@ -70,8 +70,19 @@ jobs:
         with:
           extra-packages: |
             any::rcmdcheck
+            any::V8
             Matrix@1.7-6
           needs: check
+      - uses: r-lib/actions/setup-pandoc@v2
+      - name: Install HTML validation prerequisites
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP"
+          curl --fail --location --retry 3 --output tidy.deb \
+            https://github.com/htacg/tidy-html5/releases/download/5.8.0/tidy-5.8.0-Linux-64bit.deb
+          echo '59e594312207234f5a17455683c13c6bc47a89cb7bf994d493acfffb591d9830  tidy.deb' | sha256sum --check
+          sudo dpkg -i tidy.deb
+          tidy --version
       - uses: r-lib/actions/setup-tinytex@v2
       - name: Install PDF manual prerequisites
         shell: bash
