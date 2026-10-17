@@ -103,7 +103,7 @@ readme_dense_fixture <- function(m, n, seed = 20261016L, offsets = FALSE,
   right <- qr.Q(qr(matrix(stats::rnorm(n * rank), n, rank)))
   values <- 10^seq(0, -2, length.out = rank)
   A <- left %*% (values * t(right))
-  # The noise makes the matrix full rank; its expected Frobenius norm is 0.01.
+  # The noise makes the matrix full rank; its RMS Frobenius norm is 0.01.
   # Column blocks preserve the full-matrix RNG ordering while avoiding a
   # second full-size noise matrix and full-size preprocessing temporaries.
   # Fixture generation is outside all timing and allocation profiles.

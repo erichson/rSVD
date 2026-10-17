@@ -1,10 +1,16 @@
-# Release review for rsvd 1.0.7
+# Release review for rsvd 2.0.0
 
 This review combines an independent mathematical audit, targeted numerical
 experiments, regression tests, downstream-interface checks, and reproducible
 performance measurements. Passing tests is evidence about the cases tested;
 it is not a proof for every floating-point input or a guarantee about future
 R, Matrix, or downstream releases.
+
+The numerical audit and downstream campaign were completed while the working
+version was 1.0.7. The same numerical implementation is now designated 2.0.0;
+the original evidence retains its tested version and source hashes. The
+2.0.0 update adds larger README benchmarks and educational examples, and the
+final package is checked again under its new version number.
 
 ## Assessment
 
@@ -136,6 +142,15 @@ The added sparse-product cases cover compressed-row, compressed-column,
 coordinate, logical, and pattern storage, structural zeros, complex adjoints,
 and custom matrix dispatch without changing the product helper.
 
+The renamed **2.0.0** source at `421c803` also passed all four hosted package
+checks: R 4.4.3 / Matrix 1.7-0 on Linux, and R 4.6.1 / Matrix 1.7-6 on Linux,
+Windows, and macOS. Every job reports `Status: OK` and 4,013 assertions, with
+zero failures, warnings, or skips. These checks used `--as-cran --no-manual`;
+see the [recorded results](release-2.0.0-ci.csv) and
+[workflow logs](https://github.com/erichson/rSVD/actions/runs/39010517081).
+The subsequent README and illustration work leaves the numerical source,
+public interfaces, and package tests unchanged.
+
 - [Release test summary](release-test-summary.csv): actual test blocks,
   assertions, and outcomes by R/Matrix/BLAS environment.
 - [Core audit](release-core-audit.md): tests established before the CUR and
@@ -150,8 +165,9 @@ and custom matrix dispatch without changing the product helper.
   Linux, Windows, and macOS package checks with an explicit loaded-Matrix
   version check, including R 4.4 / Matrix 1.7-0 at the supported minimum.
 
-The regenerated 25-page PDF manual also builds successfully. Its pages were
-rendered and checked for clipping. The conventional Rd layout retains some
+During the numerical audit, the regenerated 25-page PDF manual also built
+successfully. Its pages were rendered and checked for clipping. The conventional
+Rd layout retains some
 long signature lines in margins and external-package PDF destinations that
 cannot be resolved within this package's standalone manual.
 
@@ -162,28 +178,20 @@ earlier draft; they are separate from the new README comparisons.
 
 ## Performance evidence
 
-The README uses 19 fixtures and 220 timed calls against deterministic
-references, with one OpenBLAS thread, warmups, rotated method positions, and
+The 2.0.0 README uses 11 fixtures and 125 timed calls against deterministic
+references, with four OpenBLAS threads, warmups, rotated method positions, and
 separate allocation profiling. Results include achieved residuals. Dense
 fixtures have a geometric signal plus noise, sparse fixtures have noisy
-blocks at 5% density, and the bundled tiger image supplies a nonsynthetic case.
+blocks at 5% density. SVD and sparse-input PCA scale from 10,000 by 3,000
+to 20,000 by 6,000. Dense PCA, ID, and CUR use 15,000 by 4,500 matrices.
+The fixture grid and five repetitions were fixed before collecting results.
 
-Representative measured outcomes:
-
-| Case | Deterministic time | Randomized time | Relative residual, deterministic / randomized |
-| --- | ---: | ---: | ---: |
-| Dense tall SVD, 8,000 by 2,000, rank 40 | 7.924 s | 0.364 s | 9.67% / 9.67% |
-| Dense square SVD, 2,000 by 2,000, rank 40 | 3.123 s | 0.094 s | 9.67% / 9.68% |
-| Sparse-input PCA, 6,400 by 1,600, rank 40 | 4.818 s | 0.144 s | 0.495% / 0.495% |
-| Sparse-input PCA, 4,000 by 2,000, rank 40 | 5.765 s | 0.115 s | 0.487% / 0.487% |
-| Dense column ID, 4,000 by 1,000, rank 40 | 0.502 s | 0.040 s | 14.9% / 16.4% |
-| Dense CUR, 4,000 by 1,000, rank 40 | 0.556 s | 0.055 s | 19.2% / 19.9% |
-
-The small 500-by-125 SVD case took 0.005 s with either method and allocated
-more with rsvd. It remains in the scaling plot and raw measurements; the
-tables emphasize larger matrices. ID/CUR retain their measured
-accuracy tradeoff. The sparse-PCA figure includes a dense-input randomized
-control to distinguish algorithmic speed from sparse-storage savings.
+The [README tables](../../README.md#measured-performance) are generated from
+the committed measurements. ID/CUR retain their measured accuracy tradeoff.
+The sparse-PCA figure includes a dense-input randomized control to distinguish
+algorithmic speed from sparse-storage savings. The tiger image and iris biplot
+appear separately as educational illustrations with reproducible numerical
+checks; they are not used to make large-matrix timing claims.
 
 Base `svd()`/`prcomp()` compute the full singular spectrum even when only
 `k` vectors are requested; these are not specialized partial-SVD baselines.
@@ -206,7 +214,7 @@ spectrum and chosen rank, and performance depends on the BLAS and workload.
 
 Some permissive behavior for malformed arguments and minor legacy plot
 highlighting policies is intentionally left unchanged; the core audit names
-those cases. This maintenance release does not redesign validation policy or
+those cases. This release does not redesign validation policy or
 make exact-vector reproducibility promises. Release confidence should be
 based on the concrete evidence above and maintained through future CI and
 downstream checks.

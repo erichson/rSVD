@@ -27,11 +27,11 @@ install.packages("rsvd")
 # remotes::install_github("erichson/rSVD")
 ```
 
-The development version is **1.0.7**; the CRAN badge shows the published version.
+The development version is **2.0.0**; the CRAN badge shows the published version.
 rsvd requires **R 4.4 or later and Matrix 1.7-0 or later**. Matrix need not be
 attached with `library(Matrix)` for sparse dispatch to work.
 
-## A first example
+## See what rank means: reconstructing a tiger
 
 ```r
 library(rsvd)
@@ -49,6 +49,52 @@ norm(tiger - tiger_approx, "F") / norm(tiger, "F")
 For complex data, reconstruct with
 `sweep(fit$u, 2, fit$d, "*") %*% Conj(t(fit$v))`.
 
+![Original tiger and randomized reconstructions at ranks 10, 50, and 150, with approximation errors and factor sizes.](man/figures/tiger-rank-comparison.png)
+
+Increasing `k` retains more detail and requires more storage. For this
+1,600-by-1,200 image, rank 50 uses **7.3% of the original number of numeric
+entries**, with a relative Frobenius error of **15.1%**. Rank 150 uses 21.9%
+of the entries and reduces the error to 10.3%.
+
+The full matrix stores `m * n` numbers; its rank-`k` factors store
+`k * (m + n + 1)`. This comparison counts numeric entries in the matrix and
+factors; it is not a comparison with JPEG or PNG file compression. Reconstructing
+the image creates a full dense matrix again, so retain the factors when a
+compact representation is the goal.
+
+Image: S. Taheri (2006), edited by Fir0002,
+[CC BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5/),
+via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Sibirischer_tiger_de_edit02.jpg).
+The package supplies a grayscale version; the panels add low-rank
+reconstructions. [Reproduce this figure](tools/benchmarks/tiger-results/README.md).
+
+## PCA: from measurements to a map
+
+This small example makes the output easy to interpret. The larger benchmarks
+below demonstrate performance. Install `ggplot2` to use the plotting helpers.
+
+```r
+library(rsvd)
+data(iris)
+set.seed(42)
+pca <- rpca(as.matrix(iris[, 1:4]), k = 2, center = TRUE, scale = TRUE)
+ggbiplot(pca, groups = iris$Species, ellipse = FALSE,
+         ind_labels = FALSE)
+```
+
+![PCA biplot of iris flowers with observation scores, variable directions, and the variance retained by the first two components.](man/figures/iris-pca-biplot.svg)
+
+Each point is a flower's fitted score in two coordinates. For these centered,
+standardized measurements, the arrows show variable–component correlations.
+The nearly parallel petal arrows indicate that both measurements vary in a
+similar direction. The two components retain **95.8% of total variance**;
+species labels are used only for color, not for fitting the PCA.
+
+The figure adds a legend and separates the variable labels for readability.
+[Reproduce the styled figure and its numerical checks](tools/benchmarks/example-results/README.md).
+
+## Available decompositions
+
 | Function | Result and typical use |
 | --- | --- |
 | `rsvd(A, k)` | Singular vectors and values for `A ≈ U D V*`; low-rank compression. |
@@ -60,6 +106,18 @@ For complex data, reconstruct with
 
 Here `V*` denotes the conjugate transpose. ID and CUR retain interpretable
 subsets of the data; their residuals need not match a truncated SVD.
+
+### Why a small random sketch helps
+
+For a 20,000-by-6,000 matrix with `k = 40` and `p = 10`, the algorithm builds
+a basis with 50 columns. It then factors a projected matrix of size
+**50 by 6,000**, and maps the resulting singular vectors back to the original
+space. The projected matrix has 300,000 entries; the original has 120 million.
+
+The sketch still requires products with the original matrix. Sparse storage
+and the number of power iterations therefore matter. Randomness makes it
+possible to find a useful subspace quickly; the decomposition within that
+subspace uses conventional numerical linear algebra.
 
 ## Choosing rank and assessing accuracy
 
@@ -94,14 +152,15 @@ advantage. Base `svd()` is a natural reference for a full deterministic SVD.
 
 The following results compare **the same requested rank and returned factors**
 with deterministic references. They were measured on Linux x86_64 with R 4.6.1,
-Matrix 1.7-6, and OpenBLAS 0.3.26 using one BLAS thread. Times are medians of
+Matrix 1.7-6, and OpenBLAS 0.3.26 using four BLAS threads. Times are medians of
 five calls after warmup, with method order rotated between repetitions.
 The synthetic matrices contain a low-rank signal plus noise; they are not exact
-low-rank inputs. The tiger image is the dataset shipped with the package.
+low-rank inputs. Scaling cases range from **10,000 × 3,000 to 20,000 × 6,000**;
+dense PCA, ID, and CUR use **15,000 × 4,500** matrices.
 
 **R allocations** are the cumulative bytes allocated during a separate profiled
-call, expressed in MiB. They are not peak resident memory or live workspace, and
-do not include every allocation made inside native libraries. Fixture creation,
+call, expressed in GiB (`2^30` bytes). They are not peak resident memory or live
+workspace, and do not include every allocation made inside native libraries. Fixture creation,
 explicit garbage collection, and error calculation are outside the measurement;
 preprocessing and any required sparse-to-dense conversion are inside it.
 
@@ -110,7 +169,7 @@ centered/scaled input in PCA. Values below are percentages, not variance
 explained. The [benchmark guide](tools/benchmarks/README.md) includes the exact
 fixtures, baseline calls, raw measurements, environment, and rerun commands.
 
-### SVD: shapes, an image, and growth with size
+### SVD as matrix dimensions grow
 
 The reference is `base::svd(A, nu = k, nv = k)`. Base SVD computes the full
 singular spectrum even when only `k` vectors are requested; it is not a
@@ -118,20 +177,18 @@ specialized truncated-SVD solver. rsvd uses `p = 10, q = 2` here.
 
 <!-- BEGIN BENCHMARK SVD -->
 
-| Input | k | Time (s), deterministic / randomized | R allocations (MiB), deterministic / randomized | Relative error, deterministic / randomized |
+| Input | k | Time (s), deterministic / randomized | R allocations (GiB), deterministic / randomized | Relative error, deterministic / randomized |
 | --- | ---: | ---: | ---: | ---: |
-| Dense, large, 8,000 × 2,000 | 40 | 7.924 / 0.364 | 644.75 / 105.28 | 9.67% / 9.67% |
-| Dense, tall, 4,000 × 1,000 | 40 | 0.981 / 0.098 | 162.16 / 52.71 | 9.67% / 9.68% |
-| Dense, wide, 1,000 × 4,000 | 40 | 1.129 / 0.111 | 163.08 / 83.23 | 9.67% / 9.68% |
-| Dense, square, 2,000 × 2,000 | 40 | 3.123 / 0.094 | 246.17 / 41.65 | 9.67% / 9.68% |
-| Tiger image, 1,600 × 1,200 | 150 | 0.755 / 0.186 | 107.24 / 95.18 | 10.2% / 10.3% |
+| Dense, 10,000 × 3,000 | 40 | 16.858 / 0.697 | 1.234 / 0.133 | 9.67% / 9.68% |
+| Dense, 20,000 × 6,000 | 40 | 97.157 / 2.144 | 4.928 / 0.267 | 9.67% / 9.68% |
 
 <!-- END BENCHMARK SVD -->
 
-![Dense SVD elapsed time and cumulative R allocations across five matrix sizes.](man/figures/benchmark-svd-scaling.svg)
+![Dense SVD elapsed time and cumulative R allocations at 10,000 by 3,000, 15,000 by 4,500, and 20,000 by 6,000.](man/figures/benchmark-svd-scaling.svg)
 
-The table emphasizes matrices with millions of entries. The plot holds
-`k = 40` while both dimensions grow, showing where the benefit begins.
+The plot holds `k = 40` while the input grows from **30 million to 120 million
+entries**. Its largest dense input alone occupies about 0.89 GiB in double
+precision, before any factorization workspace.
 Shading shows the interquartile range of the recorded times. Matrix size and
 the ratio of sketch width to input width matter; the measured advantage is
 not a universal speedup guarantee.
@@ -146,12 +203,11 @@ fixtures have 5% nonzero entries in twenty noisy blocks. Randomized PCA uses
 
 <!-- BEGIN BENCHMARK PCA -->
 
-| Input | k | Time (s), deterministic / randomized | R allocations (MiB), deterministic / randomized | Relative error, deterministic / randomized |
+| Input | k | Time (s), deterministic / randomized | R allocations (GiB), deterministic / randomized | Relative error, deterministic / randomized |
 | --- | ---: | ---: | ---: | ---: |
-| Dense PCA, 4,000 × 1,000 | 40 | 1.147 / 0.202 | 483.00 / 224.58 | 10.2% / 10.2% |
-| Sparse PCA, large, 6,400 × 1,600 | 40 | 4.818 / 0.144 | 1,312.34 / 127.00 | 0.495% / 0.495% |
-| Sparse PCA, tall, 4,000 × 2,000 | 40 | 5.765 / 0.115 | 1,102.10 / 94.31 | 0.487% / 0.487% |
-| Sparse PCA, wide, 2,000 × 4,000 | 40 | 5.825 / 0.110 | 1,103.53 / 91.23 | 0.511% / 0.511% |
+| Dense PCA, 15,000 × 4,500 | 40 | 54.085 / 5.256 | 8.056 / 2.981 | 10.3% / 10.3% |
+| Sparse-input PCA, 10,000 × 3,000 | 40 | 18.336 / 0.463 | 3.806 / 0.213 | 0.516% / 0.516% |
+| Sparse-input PCA, 20,000 × 6,000 | 40 | 110.634 / 1.976 | 15.212 / 0.482 | 0.548% / 0.548% |
 
 <!-- END BENCHMARK PCA -->
 
@@ -175,12 +231,12 @@ or connector factors; randomized calls use `k = 40, p = 10, q = 0`.
 
 <!-- BEGIN BENCHMARK ID_CUR -->
 
-| Input | k | Time (s), deterministic / randomized | R allocations (MiB), deterministic / randomized | Relative error, deterministic / randomized |
+| Input | k | Time (s), deterministic / randomized | R allocations (GiB), deterministic / randomized | Relative error, deterministic / randomized |
 | --- | ---: | ---: | ---: | ---: |
-| Column ID, dense, 4,000 × 1,000 | 40 | 0.502 / 0.040 | 73.82 / 34.89 | 14.9% / 16.4% |
-| CUR, dense, 4,000 × 1,000 | 40 | 0.556 / 0.055 | 98.81 / 59.88 | 19.2% / 19.9% |
-| Column ID, sparse, 4,000 × 2,000 | 40 | 2.663 / 0.033 | 227.95 / 28.01 | 0.152% / 0.152% |
-| CUR, sparse, 4,000 × 2,000 | 40 | 2.739 / 0.042 | 241.71 / 41.77 | 0.189% / 0.189% |
+| Column ID, dense, 15,000 × 4,500 | 40 | 43.727 / 0.684 | 1.257 / 0.326 | 14.3% / 15.8% |
+| CUR, dense, 15,000 × 4,500 | 40 | 42.141 / 1.076 | 1.546 / 0.615 | 18.1% / 19.2% |
+| Column ID, sparse, 15,000 × 4,500 | 40 | 46.938 / 0.287 | 1.522 / 0.095 | 0.153% / 0.153% |
+| CUR, sparse, 15,000 × 4,500 | 40 | 40.352 / 0.346 | 1.572 / 0.145 | 0.189% / 0.189% |
 
 <!-- END BENCHMARK ID_CUR -->
 
@@ -193,10 +249,10 @@ cost, including cases where a randomized selection is less accurate.
 
 ```r
 set.seed(42)
-# An 8,000 by 2,000 sparse matrix: 20 signal-plus-noise blocks, 5% density.
+# A 10,000 by 3,000 sparse matrix: 20 signal-plus-noise blocks, 5% density.
 A <- Matrix::bdiag(replicate(20, {
-  signal <- outer(seq_len(400) / 400, seq_len(100) / 100)
-  signal + matrix(rnorm(400 * 100, sd = 0.001), 400, 100)
+  signal <- outer(seq_len(500) / 500, seq_len(150) / 150)
+  signal + matrix(rnorm(500 * 150, sd = 0.001), 500, 150)
 }, simplify = FALSE))
 fit <- rpca(A, k = 20, center = TRUE, scale = TRUE, retx = FALSE)
 scores <- predict(fit, A[1:5, , drop = FALSE])
@@ -208,14 +264,17 @@ new columns in their **training order**. Names are not used to reorder them.
 `retx = FALSE` omits training scores and avoids unused left singular vectors.
 
 As with `prcomp()`, `center = FALSE` skips centering: this is appropriate for
-already-centered data and also permits an uncentered SVD. With centering off,
+already-centered data and also permits an uncentered SVD. For real columns with centering off,
 `scale = TRUE` uses `sqrt(sum(x^2) / (nrow(A) - 1))`, generally not the centered
 standard deviation. Unlike `prcomp()`'s default, `rpca()` defaults to scaling.
 The existing rsvd convention replaces scales below `1e-8` with 1.
 
-`fit$var` measures total processed energy across all directions, so explained
-proportions use the same denominator regardless of `k`. Without centering it
-is a total second moment. Fitted scores retain the `U D` convention, while
+`fit$var` is the squared Frobenius norm of the processed observations divided
+by `m - 1`, where `m` is the number of complete observations. With centering,
+this is the sum of all component variances, including omitted components;
+explained proportions use the same denominator regardless of `k`. Without
+centering it is the total squared energy with the same normalization.
+Fitted scores retain the `U D` convention, while
 `predict()` projects observations onto the fitted loadings; these can differ
 by the randomized approximation residual. Sample variances need at least two
 complete observations, and explained proportions are undefined for zero energy.
@@ -260,7 +319,7 @@ the limits of the validation.
 
 ```sh
 R CMD build .
-R CMD check rsvd_1.0.7.tar.gz
+R CMD check rsvd_2.0.0.tar.gz
 ```
 
 With development dependencies installed, `testthat::test_local()` runs the
@@ -270,7 +329,7 @@ rank-deficient ID/CUR, robust-PCA rank selection and convergence, and public
 result shapes. CI checks the actual Matrix version before testing on Linux,
 Windows, and macOS, including R 4.4 with Matrix 1.7-0 at the supported minimum.
 
-- [NEWS.md](NEWS.md): changes in 1.0.7, including compatibility and memory behavior.
+- [NEWS.md](NEWS.md): changes in 2.0.0, including compatibility and memory behavior.
 - [Release review](tools/validation/release-review.md): numerical audit,
   downstream checks, supported environments, and remaining limitations.
 - [Benchmark guide and measurements](tools/benchmarks/README.md): reproduce the

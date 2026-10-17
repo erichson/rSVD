@@ -46,7 +46,7 @@ def short_number(value: float, _position: float = 0) -> str:
     return f"{value:.3g}"
 
 
-def style_axes(ax: plt.Axes, sizes: list[int], ylabel: str) -> None:
+def style_axes(ax: plt.Axes, sizes: list[int], ylabel: str, column_ratio: float) -> None:
     ax.set_xscale("log", base=2)
     ax.set_yscale("log", base=10)
     ax.xaxis.set_major_locator(FixedLocator(sizes))
@@ -62,7 +62,7 @@ def style_axes(ax: plt.Axes, sizes: list[int], ylabel: str) -> None:
     ax.spines[["left", "bottom"]].set_linewidth(0.75)
     ax.tick_params(axis="both", which="major", length=3.5, color="#75838E")
     ax.tick_params(axis="both", which="minor", length=2, color="#ABB5BD")
-    ax.set_xlabel("Rows, m   (columns = m / 4)", labelpad=8)
+    ax.set_xlabel(f"Rows, m   (columns = {column_ratio:g} m)", labelpad=8)
     ax.set_ylabel(ylabel, labelpad=9)
     ax.set_xlim(min(sizes) / 1.13, max(sizes) * 1.13)
 
@@ -84,6 +84,22 @@ def scaling_figure(
     if len(repetitions) != 1:
         raise ValueError(f"Inconsistent repetition counts for {family}")
     reps = repetitions.pop()
+    settings = [{int(r[key]) for r in selected} for key in ("k", "p", "q")]
+    ratios = {int(r["n"]) / int(r["m"]) for r in selected}
+    if any(len(values) != 1 for values in settings) or len(ratios) != 1:
+        raise ValueError(f"Inconsistent rank, iteration, or aspect-ratio settings for {family}")
+    k, p, q = (values.pop() for values in settings)
+    column_ratio = ratios.pop()
+    entries = [int(r["m"]) * int(r["n"]) / 1e6 for r in selected]
+    nonzeros = [number(r, "input_nonzeros") / 1e6 for r in selected]
+    densities = {number(r, "density") for r in selected}
+    density_label = f"{100 * densities.pop():g}%" if len(densities) == 1 else "varying density"
+    subtitle = subtitle.format(
+        entries=f"{min(entries):g}–{max(entries):g}",
+        nonzeros=f"{min(nonzeros):g}–{max(nonzeros):g}",
+        density=density_label, k=k,
+    )
+    threads = args.metadata.get("OPENBLAS_NUM_THREADS", "unspecified")
     fig, axes = plt.subplots(1, 2, figsize=(10.8, 4.9))
     fig.subplots_adjust(left=0.087, right=0.981, bottom=0.225, top=0.72, wspace=0.29)
     fig.suptitle(title, x=0.087, y=0.985, ha="left", fontsize=15, fontweight="semibold")
@@ -99,7 +115,7 @@ def scaling_figure(
         elapsed = np.array([number(r, "elapsed_median_s") for r in data])
         lower = np.array([number(r, "elapsed_q25_s") for r in data])
         upper = np.array([number(r, "elapsed_q75_s") for r in data])
-        memory = np.array([number(r, "r_allocation_total_bytes") / 2**20 for r in data])
+        memory = np.array([number(r, "r_allocation_total_bytes") / 2**30 for r in data])
         if min(elapsed.min(), lower.min(), memory.min()) <= 0:
             raise ValueError("Logarithmic plots require positive measured values")
         label, color, marker, line = STYLES[method]
@@ -114,8 +130,8 @@ def scaling_figure(
     fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.077, 0.855),
                ncol=len(methods), frameon=False, columnspacing=2, handlelength=2.2,
                fontsize=10)
-    style_axes(axes[0], sizes, "Seconds per call")
-    style_axes(axes[1], sizes, "R allocations per call (MiB)")
+    style_axes(axes[0], sizes, "Seconds per call", column_ratio)
+    style_axes(axes[1], sizes, "R allocations per call (GiB)", column_ratio)
     axes[0].set_title("A   Elapsed time", loc="left", fontsize=11, fontweight="semibold", pad=11)
     axes[1].set_title("B   Cumulative allocation", loc="left", fontsize=11, fontweight="semibold", pad=11)
     axes[0].set_ylim(min(time_limits) / 1.5, max(time_limits) * 1.5)
@@ -123,10 +139,10 @@ def scaling_figure(
     randomized = [r for r in selected if r["method"] in ("rsvd", "rpca", "rpca_dense")]
     max_ratio = max(number(r, "error_over_optimal_max") for r in randomized)
     fig.text(0.087, 0.082,
-             f"k = 40, p = 10, q = 2  ·  timing: {reps}-run medians, IQR shaded  ·  allocations: one profile  ·  OpenBLAS, one thread",
+             f"k = {k}, p = {p}, q = {q}  ·  {reps}-run timing medians, IQR shaded  ·  allocations: one profile  ·  BLAS threads: {threads}",
              fontsize=9, color="#465866")
     fig.text(0.087, 0.037,
-             f"Largest observed error / optimal rank-40 error: {max_ratio:.4f}.  "
+             f"Largest observed error / optimal rank-{k} error: {max_ratio:.4f}.  "
              "R allocations exclude setup and do not measure peak RSS.",
              fontsize=9, color="#465866")
     args.figures.mkdir(parents=True, exist_ok=True)
@@ -147,8 +163,8 @@ def value_pair(first: dict[str, str], second: dict[str, str], field: str, kind: 
     values = [number(r, field) for r in (first, second)]
     if kind == "seconds":
         parts = [f"{v:.3f}" for v in values]
-    elif kind == "mib":
-        parts = [f"{v / 2**20:,.2f}" for v in values]
+    elif kind == "gib":
+        parts = [f"{v / 2**30:,.3f}" for v in values]
     elif kind == "percent":
         parts = [f"{100 * v:.3g}%" for v in values]
     else:
@@ -158,7 +174,7 @@ def value_pair(first: dict[str, str], second: dict[str, str], field: str, kind: 
 
 def benchmark_table(index: dict, entries: list[tuple[str, str, str, str]]) -> str:
     lines = [
-        "| Input | k | Time (s), deterministic / randomized | R allocations (MiB), deterministic / randomized | Relative error, deterministic / randomized |",
+        "| Input | k | Time (s), deterministic / randomized | R allocations (GiB), deterministic / randomized | Relative error, deterministic / randomized |",
         "| --- | ---: | ---: | ---: | ---: |",
     ]
     for case, reference, method, label in entries:
@@ -167,7 +183,7 @@ def benchmark_table(index: dict, entries: list[tuple[str, str, str, str]]) -> st
         lines.append(
             f"| {label}, {m:,} × {n:,} | {k} | "
             f"{value_pair(first, second, 'elapsed_median_s', 'seconds')} | "
-            f"{value_pair(first, second, 'r_allocation_total_bytes', 'mib')} | "
+            f"{value_pair(first, second, 'r_allocation_total_bytes', 'gib')} | "
             f"{value_pair(first, second, 'relative_error_median', 'percent')} |"
         )
     return "\n".join(lines)
@@ -177,17 +193,13 @@ def tables(rows: list[dict[str, str]]) -> dict[str, str]:
     index = {(r["case"], r["method"]): r for r in rows}
     return {
         "SVD": benchmark_table(index, [
-            ("svd_tall_8000", "base_svd", "rsvd", "Dense, large"),
-            ("svd_tall_4000", "base_svd", "rsvd", "Dense, tall"),
-            ("svd_wide", "base_svd", "rsvd", "Dense, wide"),
-            ("svd_square", "base_svd", "rsvd", "Dense, square"),
-            ("svd_tiger", "base_svd", "rsvd", "Tiger image"),
+            ("svd_tall_10000", "base_svd", "rsvd", "Dense"),
+            ("svd_tall_20000", "base_svd", "rsvd", "Dense"),
         ]),
         "PCA": benchmark_table(index, [
             ("pca_dense", "prcomp", "rpca", "Dense PCA"),
-            ("pca_sparse_scale_6400", "prcomp", "rpca", "Sparse PCA, large"),
-            ("pca_sparse_tall", "prcomp", "rpca", "Sparse PCA, tall"),
-            ("pca_sparse_wide", "prcomp", "rpca", "Sparse PCA, wide"),
+            ("pca_sparse_scale_10000", "prcomp", "rpca", "Sparse-input PCA"),
+            ("pca_sparse_scale_20000", "prcomp", "rpca", "Sparse-input PCA"),
         ]),
         "ID_CUR": benchmark_table(index, [
             ("id_dense", "id_deterministic", "rid", "Column ID, dense"),
@@ -218,6 +230,8 @@ def main() -> None:
     args = parser.parse_args()
     with (args.results / "summary.csv").open(newline="") as source:
         rows = list(csv.DictReader(source))
+    with (args.results / "metadata.csv").open(newline="") as source:
+        args.metadata = {row["key"]: row["value"] for row in csv.DictReader(source)}
     plt.rcParams.update({
         "font.family": "DejaVu Sans", "font.size": 10,
         "axes.labelsize": 10.5, "xtick.labelsize": 9.5, "ytick.labelsize": 9.5,
@@ -228,11 +242,11 @@ def main() -> None:
     })
     scaling_figure(rows, "svd", ["base_svd", "rsvd"],
                    "Dense SVD as matrix dimensions grow",
-                   "Full-rank matrices with a geometric low-rank signal and Gaussian noise",
+                   "{entries} million entries; geometric low-rank signal plus Gaussian noise",
                    "benchmark-svd-scaling", args)
     scaling_figure(rows, "pca", ["prcomp", "rpca_dense", "rpca"],
                    "PCA on sparse input: preserving sparse storage",
-                   "Same observations, centering, scaling, and 40 score columns; 5% density",
+                   "{nonzeros} million nonzeros ({density}); same preprocessing and {k} score columns",
                    "benchmark-pca-scaling", args)
     blocks = tables(rows)
     rendered = "\n\n".join(f"## {name}\n\n{body}" for name, body in blocks.items()) + "\n"
@@ -242,6 +256,8 @@ def main() -> None:
         "font": "DejaVu Sans", "svg_text": "editable text", "pdf_fonts": "embedded TrueType",
         "timing_band": "25th to 75th percentile of the recorded repetitions",
         "repetition_counts": sorted({int(r["repetitions"]) for r in rows}),
+        "allocation_unit": "GiB (2^30 bytes)",
+        "blas_thread_limit": args.metadata.get("OPENBLAS_NUM_THREADS", "unspecified"),
     }, indent=2) + "\n", encoding="utf-8")
     if args.update_readme:
         readme = args.update_readme.read_text(encoding="utf-8")

@@ -7,31 +7,31 @@ an older rsvd version.
 
 ## Recorded experiment
 
-The complete run on 2026-10-17 measured 19 fixtures, 44 fixture/method pairs,
-and five timed repetitions per pair: 220 timed calls. Every method also had
+The complete run on 2026-10-17 measured 11 fixtures, 25 fixture/method pairs,
+and five timed repetitions per pair: 125 timed calls. Every method also had
 one warmup and one separate allocation profile. No observations were removed.
 Other local numerical jobs were paused during measurement.
 
-The run used `--suite all`, so every case was measured before the final table
-selection. The README tables now feature the already measured 8,000 by 2,000
-SVD case and 6,400 by 1,600 sparse PCA case. Where present, the `table` flag in
-the original CSV files records the initial selection and is retained unchanged;
-all numeric measurements are also unchanged. A new `--suite tables` run uses
-the current selection in `readme_cases()`.
+The run used `--suite all`. The fixture grid and table selection were fixed
+before collecting measurements. The scaling plots start at 10,000 by 3,000
+and reach 20,000 by 6,000; the tables show the first and last scaling sizes,
+with dense PCA, ID, and CUR at 15,000 by 4,500. The same rows are selected by
+`--suite tables`. All three measured sizes remain in the scaling plots.
 
 | Setting | Recorded value |
 | --- | --- |
-| Numerical source | `b4c64a291aae9aa70a05206573e2d69c96704969`, rsvd 1.0.7 |
+| Numerical source and driver | `421c803e33273a2faee42660b7579afde31120cf`, rsvd 2.0.0 |
 | Runtime | R 4.6.1, Matrix 1.7-6 |
-| BLAS | OpenBLAS 0.3.26, one thread |
+| BLAS | OpenBLAS 0.3.26, four threads, checked with the loaded library's native thread-count function |
 | Platform | Linux x86_64, virtualized environment |
-| Hardware information | CPU model and physical RAM were not exposed by the environment |
+| Hardware information | CPU affinity exposes 9 logical CPUs; `sysconf` reports 9.73 GiB of physical pages. CPU model and cgroup CPU/memory quotas are unavailable. |
 | Synthetic fixture seed | `20261016` |
 | Timed sampling seeds | `8101` through `8105` |
 | Allocation sampling seed | `8101` |
 
-The subsequent requirement, plotting-wrapper, and documentation changes do not alter any
-decomposition used in these measurements. Exact package/BLAS paths and session
+Later edits change documentation, figures, result files, and a driver comment;
+the measured numerical implementation and executable driver statements are
+unchanged. Exact package/BLAS paths and session
 details are preserved in [metadata.csv](results/metadata.csv) and
 [session-info.txt](results/session-info.txt). Absolute paths in those files
 describe the measurement environment; use your own library and output paths
@@ -66,11 +66,12 @@ specification. Shapes, density, object size, and target rank are recorded in
 
 **Dense synthetic data:** independent random orthonormal left and right
 bases carry 80 geometrically spaced singular values from 1 to 0.01. Dense
-Gaussian noise with expected Frobenius norm 0.01 makes the matrices full rank
-with probability one. PCA adds nonzero column offsets before preprocessing.
-The SVD scaling grid has 500, 1,000, 2,000, 4,000, and 8,000 rows, with one
-quarter as many columns and `k = 40`. Separate cases cover wide and square
-inputs. Dense ID, CUR, and PCA use 4,000 by 1,000 matrices.
+Gaussian noise with root-mean-square Frobenius norm 0.01 makes the matrices
+full rank with probability one. PCA adds nonzero column offsets before preprocessing.
+The SVD scaling grid is 10,000 by 3,000, 15,000 by 4,500, and 20,000 by 6,000,
+with `k = 40`. Dense ID, CUR, and PCA use 15,000 by 4,500 matrices. Noise and
+offsets are applied in column blocks during setup, avoiding an extra full-size
+noise array while preserving the generator's values and random-number order.
 
 **Sparse synthetic data:** twenty diagonal blocks each contain a rank-two
 signal: a constant and a zero-mean slope on the left, random orthonormal
@@ -78,13 +79,16 @@ directions on the right, and two positive singular values. Gaussian noise
 within each block produces a full-rank block while retaining exactly 5%
 density. This represents data with clear low-dimensional structure and
 nonzero column means; it is not intended as a universal sparse-data model.
-The sparse PCA table uses 6,400 by 1,600, 4,000 by 2,000, and 2,000 by 4,000
-matrices; sparse ID and CUR use 4,000 by 2,000. The PCA scaling grid has 800,
-1,600, 3,200, and 6,400 rows, one quarter as many columns, and `k = 40`.
-Noise and centering mean that rank-40 reconstruction is approximate.
+The sparse PCA scaling grid uses the same three shapes as the SVD grid, with
+`k = 40`. Sparse ID and CUR use 15,000 by 4,500 matrices.
+The within-block noise makes rank-40 reconstruction approximate, including
+after centering.
 
-**Image:** the package's 1,600 by 1,200 `tiger` grayscale image uses `k = 150`.
-It provides a nonsynthetic spectrum and a less pronounced memory advantage.
+The package's 1,600 by 1,200 `tiger` grayscale image is presented separately
+as an [educational rank comparison](tiger-results/README.md), with actual
+reconstruction errors and factor-entry counts. The
+[iris biplot](example-results/README.md) illustrates PCA interpretation.
+Neither small example is included in the performance tables or scaling plots.
 
 These examples deliberately target compressible matrices. The unit suite
 also checks difficult spectra and numerical edge cases. Performance curves
@@ -99,8 +103,8 @@ explicit garbage collection before starting the timer. Fixture generation,
 seed setup, explicit garbage collection, and numerical validation are excluded;
 garbage collection triggered inside a call remains part of its elapsed time.
 The README shows medians. The CSV also contains all five observations,
-interquartile ranges, and extrema. Millisecond-scale measurements should not
-be interpreted more precisely than their timer and run-to-run variation allow.
+interquartile ranges, and extrema. Display precision does not imply that a
+future run will reproduce the final decimal place.
 
 Allocation profiling is a separate, untimed run using `Rprofmem()`.
 The driver sums numeric allocation records and retains their largest value
@@ -109,7 +113,9 @@ and count. It does not count unquantified `new page` markers. This is
 or a complete accounting of allocations inside BLAS/LAPACK. Reused memory
 can be counted repeatedly. The input fixture already exists; conversion,
 preprocessing, temporary arrays, and returned factors created by the call
-are included. See R's [Rprofmem documentation](https://stat.ethz.ch/R-manual/R-devel/library/utils/html/Rprofmem.html).
+are included. Tables and figures use **GiB = 2^30 bytes**. Cumulative allocation
+can exceed physical RAM because successive allocations need not be live at
+the same time. See R's [Rprofmem documentation](https://stat.ethz.ch/R-manual/R-devel/library/utils/html/Rprofmem.html).
 Raw profiles are regenerated on every rerun; their compact numeric summaries
 are committed here.
 
@@ -138,7 +144,7 @@ Use a fresh output directory; the driver refuses to overwrite prior results.
 mkdir -p benchmark-library
 R CMD INSTALL --library=benchmark-library .
 
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+OPENBLAS_NUM_THREADS=4 OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 \
   Rscript tools/benchmarks/benchmark-readme.R \
   --library benchmark-library --output benchmark-results \
   --suite all --reps 5 --source-ref YOUR_COMMIT \
@@ -169,13 +175,24 @@ in [figure-environment.json](results/figure-environment.json).
 
 ## Files
 
-- [summary.csv](results/summary.csv): 44 method summaries, including timings,
+- [summary.csv](results/summary.csv): 25 method summaries, including timings,
   allocations, approximation errors, and orthogonality.
-- [timings.csv](results/timings.csv): all 220 timed observations and seeds.
+- [timings.csv](results/timings.csv): all 125 timed observations and seeds.
+- [integrity-check.json](results/integrity-check.json): summary statistics
+  recomputed from all observations and allocation totals checked against all
+  25 raw profiles before publication.
+- [runtime-verification.csv](results/runtime-verification.csv),
+  [installed-source-sha256.json](results/installed-source-sha256.json), and
+  [resource-observations.json](results/resource-observations.json): loaded
+  runtime and native thread count, installed source hashes, and observed
+  machine information. The benchmark runtime did not contain testthat;
+  the package test results come from the separately documented release checks.
 - [tables.md](results/tables.md): generated Markdown tables.
 - [SVD PDF](figures/benchmark-svd-scaling.pdf) and
   [PCA PDF](figures/benchmark-pca-scaling.pdf): vector figures for export.
 - SVG figures live in `man/figures` and are displayed in the main README.
+- [Tiger example](tiger-results/README.md) and [PCA example](example-results/README.md):
+  illustration scripts, numerical checks, image attribution, and export files.
 
 The source data retain unrounded numbers. Display rounding can make two
 slightly different approximation errors look equal; use the CSV ratios when

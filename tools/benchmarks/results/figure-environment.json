@@ -7,5 +7,7 @@
   "timing_band": "25th to 75th percentile of the recorded repetitions",
   "repetition_counts": [
     5
-  ]
+  ],
+  "allocation_unit": "GiB (2^30 bytes)",
+  "blas_thread_limit": "4"
 }

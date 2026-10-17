@@ -1,3 +1,4 @@
 ^\.github$
 ^\.travis\.yml$
 ^rsvd\.png$
+^man/figures/iris-pca-biplot\.png$

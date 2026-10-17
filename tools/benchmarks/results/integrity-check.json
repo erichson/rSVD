@@ -1,0 +1,15 @@
+{
+  "source_ref": "421c803e33273a2faee42660b7579afde31120cf",
+  "rsvd_version": "2.0.0",
+  "fixture_count": 11,
+  "summary_count": 25,
+  "timing_count": 125,
+  "allocation_profiles_checked": 25,
+  "summary_statistics_recomputed_from_all_observations": true,
+  "allocation_statistics_recomputed_from_raw_profiles": true,
+  "max_error_over_optimal": {
+    "svd": 1.0006669213405,
+    "pca": 1.00036061355247
+  },
+  "max_orthogonality_error": 1.4242263441037e-14
+}
