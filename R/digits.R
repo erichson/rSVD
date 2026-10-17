@@ -12,15 +12,18 @@
 #' columns, named \code{pixel0} through \code{pixel783}, contain grayscale
 #' pixel values from 0 to 255. There are 3,000 rows per class.
 #' @details
-#' Remove the label column before passing the pixel data to a decomposition
-#' or other unsupervised method: the labels are outcomes, not image features.
-#' The stored intensities are not centered, standardized or divided by 255.
-#' Some background pixels may be constant across a chosen subset, so scaling
-#' every pixel to unit variance can be inappropriate.
+#' Use only the pixel columns when fitting a decomposition or another
+#' unsupervised method. Keeping class labels separate allows the fitted
+#' representation to be compared with the known digits without treating the
+#' labels as image features. The stored intensities are not centered,
+#' standardized or divided by 255. Some background pixels may be constant
+#' across a chosen subset, so scaling every pixel to unit variance can be
+#' inappropriate.
 #'
-#' The example reshapes only the 784 pixel columns. Reversing the second matrix
-#' axis gives the display orientation used by \code{\link[graphics]{image}};
-#' the reversed grayscale palette shows dark handwriting on a light background.
+#' The example reshapes the 784 pixel values from one observation into a
+#' 28 by 28 matrix. Reversing its second axis gives the display orientation
+#' used by \code{\link[graphics]{image}}. The reversed grayscale palette
+#' shows dark handwriting on a light background.
 #'
 #' @keywords datasets
 #' @references Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner (1998).

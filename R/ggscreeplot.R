@@ -1,8 +1,10 @@
 #' @title PCA scree plot and explained variance
 #'
-#' @description Plot the variance, variance proportion, or
-#' cumulative variance proportion of the retained principal components from
-#' \code{\link{rpca}}. The optional \pkg{ggplot2} package is required.
+#' @description Show how much variation each retained principal component
+#' from \code{\link{rpca}} captures in the processed data. Plot individual
+#' component variances, their proportions of total variance,
+#' or the cumulative proportion to assess how much variation the retained
+#' representation captures. The optional \pkg{ggplot2} package is required.
 #'
 #' @param rpcaObj An object returned by \code{\link{rpca}}.
 #' Scores are not needed, so fits made with \code{retx = FALSE} are supported.
@@ -15,19 +17,24 @@
 #' object, \code{"var"} and \code{"eigenvals"} give the same values with
 #' different axis labels. Unambiguous partial matches are accepted.
 #'
-#' @details The horizontal axis indexes the retained components,
-#' in their fitted order. The variance and eigenvalue views use squared units
-#' of the processed input. The ratio and cumulative views show proportions
-#' between zero and one when the total processed variance is positive.
+#' @details The horizontal axis follows the retained components in their
+#' fitted order. The variance and eigenvalue views show how much variation
+#' each component captures, in squared units of the processed input. The
+#' ratio view expresses each amount as a proportion of total variance; the
+#' cumulative view adds those proportions through each displayed component.
 #'
-#' The denominator \code{rpcaObj$var} includes the energy outside the retained
-#' components. Consequently, the cumulative proportion need not reach one
-#' when only a low-rank approximation is retained. Ratios are not defined for
-#' an input with zero total processed variance.
+#' Both proportion views use \code{rpcaObj$var} as their denominator. This
+#' total includes energy outside the retained components, so the cumulative
+#' curve can end below one when the fit retains only a low-rank approximation.
+#' The proportions lie between zero and one when total processed variance is
+#' positive. They are undefined for an input with zero total processed
+#' variance.
 #'
-#' As in \code{\link{rpca}}, with \code{center = FALSE} these quantities describe
-#' the uncentered sum-of-squares convention. They need not equal variances
-#' calculated by subtracting the means from the fitted score columns.
+#' Interpretation follows the preprocessing used in \code{\link{rpca}}.
+#' With \code{center = FALSE}, the quantities use uncentered sums of squares,
+#' which include the contribution of any nonzero column means. They need not
+#' equal variances computed after subtracting the means of the fitted score
+#' columns.
 #'
 #' @return A \pkg{ggplot2} plot object. Print the object to draw the
 #' plot, or add layers, labels, and themes with \pkg{ggplot2}.

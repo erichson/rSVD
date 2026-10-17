@@ -15,9 +15,10 @@ or color channels; each entry is a grayscale intensity.
 data("tiger")
 }
 \description{
-A grayscale tiger photograph for illustrating low-rank approximation and
-image reconstruction. Pixel intensities have been divided by 255 to lie
-between zero and one.
+A grayscale tiger photograph for examining how low-rank approximation
+changes image detail. The image is stored as a matrix, so a factorization
+and its reconstruction can be compared directly with the original pixels.
+Intensities have been divided by 255 to lie between zero and one.
 }
 \details{
 The stored orientation is suitable for \code{\link[graphics]{image}} as
@@ -25,11 +26,11 @@ shown below. Matrix rows and columns correspond to the horizontal and
 vertical axes used by that function, respectively. For a decomposition,
 use \code{tiger} directly and reconstruct the matrix in the same orientation.
 
-The image is a useful visual example rather than an exactly low-rank matrix.
-Increasing the approximation rank preserves more texture and fine detail,
-while storing only the factors can require much less space than storing
-all pixels. See \code{\link{rsvd}}, \code{\link{rid}} and \code{\link{rcur}}
-for decomposition examples.
+The photograph is not exactly low rank. A low-rank factorization retains
+part of its structure, and increasing the approximation rank preserves
+more texture and fine detail. Storing only the factors can require much
+less space than storing all pixels. See \code{\link{rsvd}},
+\code{\link{rid}} and \code{\link{rcur}} for decomposition examples.
 }
 \examples{
 data("tiger")

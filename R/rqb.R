@@ -1,53 +1,64 @@
 #' @title Randomized QB decomposition
 #'
-#' @description Compute an orthonormal basis and the projection of a matrix onto that
-#' basis, using either randomized range finding or a deterministic QR
-#' factorization.
+#' @description
+#' Project the columns of a matrix onto an orthonormal basis and return the
+#' basis and projected coordinates. A basis with few columns gives a smaller
+#' matrix for subsequent computations. The basis is found using either
+#' randomized range finding or a deterministic QR factorization.
 #'
 #' @details
-#' The QB decomposition approximates a matrix by
+#' The QB decomposition uses the same set of orthonormal vectors to approximate
+#' every column of \code{A}. These vectors form \code{Q}, and each column of
+#' \code{B} gives the coordinates of an input column projected onto their
+#' span. Their product gives the approximation
 #' \deqn{A \approx Q B, \qquad B = Q^{H} A.}{A is approximately Q \%*\% B, where B = Conj(t(Q)) \%*\% A.}
 #' The superscript \eqn{H} denotes the conjugate transpose, which is the ordinary
-#' transpose for real input. Thus \code{Q \%*\% B} is the orthogonal projection
-#' of \code{A} onto the column space of \code{Q}. The input is not centered
-#' or scaled.
+#' transpose for real input. Thus \code{Q \%*\% B} retains the part of each
+#' column of \code{A} that lies in the column space of \code{Q}. This is an
+#' orthogonal projection. The input is used without centering or scaling.
 #'
-#' When \code{rand = TRUE}, the basis width is
+#' When \code{rand = TRUE}, random matrix products identify a candidate
+#' subspace. The algorithm refines it with \code{q} power iterations and
+#' intermediate orthogonalization before projecting the input. The basis width is
 #' \eqn{\ell = \min(k+p,m,n)}{ell = min(k + p, m, n)} for integer \code{k}
-#' and \code{p}. The oversampled columns are retained. Consequently, the result
-#' generally has \code{k + p} basis vectors, rather than the \code{k} singular
-#' triplets returned by \code{\link{rsvd}}. An SVD of the smaller matrix \code{B}
-#' can be used to truncate the approximation further.
+#' and \code{p}, with \code{m} rows and \code{n} columns in the input. The
+#' oversampled columns are retained, so the result generally has \code{k + p}
+#' basis vectors. A singular value decomposition (SVD) of the projected matrix
+#' \code{B} can then identify its leading directions and truncate the
+#' approximation further. The function \code{\link{rsvd}} follows this approach
+#' and returns \code{k} singular triplets with its default vector counts.
 #'
-#' Randomized range finding samples \code{A}, applies \code{q} power iterations
-#' with intermediate orthogonalization, and projects onto the resulting basis.
-#' Oversampling and power iterations can improve approximation quality,
-#' especially when singular values decay slowly, but increase computational
-#' work. The parameters are fixed: there is no adaptive error tolerance or
-#' automatic rank selection. Low-rank approximation is useful when the retained
-#' subspace captures the information needed by the application; full algebraic
-#' rank by itself does not rule this out.
+#' Oversampling gives the sampled subspace additional directions, and power
+#' iterations can improve how well it captures the input. Both can improve
+#' approximation quality, especially when singular values decay slowly, at
+#' the cost of more computation. The parameters remain fixed throughout the
+#' calculation; there is no adaptive error tolerance or automatic rank
+#' selection. The useful rank depends on how much information the application
+#' needs to retain. Even a matrix with full algebraic rank may be well
+#' represented in a much smaller subspace.
 #'
 #' When \code{rand = FALSE}, the basis width is
 #' \eqn{\ell = \min(k,m,n)}{ell = min(k, m, n)}. The result uses the first
 #' \eqn{\ell}{ell} columns of \code{qr.Q(qr(as.matrix(A)))}, with base R's
-#' default QR conventions. For real input with a numerically independent leading
-#' block, only that block needs dense factorization. Complex input, dependent
-#' leading columns and other cases use the full dense QR fallback. This preserves
-#' base QR's ordering, including its pivoting behavior; it does not guarantee an
-#' optimal rank-\code{k} subspace.
+#' default QR conventions. For real input whose leading block is numerically
+#' independent, only that block needs dense factorization. Complex input,
+#' dependent leading columns and other cases use the full dense QR fallback.
+#' This preserves base QR's ordering, including its pivoting behavior. The
+#' resulting subspace follows that ordering and need not minimize the
+#' rank-\code{k} approximation error.
 #'
 #' For randomized decompositions, real-valued sparse \pkg{Matrix} inputs are
 #' multiplied by thin dense factors without converting the entire input to a
 #' dense matrix. Logical and pattern matrices are treated as zero/one data.
 #' Complex input is supported for ordinary R matrices. Samples, orthonormal
 #' bases and projected matrices are dense. The deterministic fallback can
-#' densify the entire input, so it is not a general sparse QR implementation.
-#' Constructing \code{Q \%*\% B} also forms a dense matrix.
+#' convert the entire input to dense storage, which limits its usefulness
+#' for large sparse matrices. It does not provide a general sparse QR
+#' implementation. Constructing \code{Q \%*\% B} also forms a dense matrix.
 #'
 #' Setting \code{k = NULL} uses the full available basis width and gives up the
-#' small-rank storage advantage. The function does not reduce that width based
-#' on an estimated numerical rank.
+#' storage advantage of a small basis. The function does not reduce that width
+#' based on an estimated numerical rank.
 #'
 #' @param A A real or complex numeric matrix or a numeric data frame. Sparse and
 #' dense matrices from the \pkg{Matrix} package are supported; see Details.
@@ -56,28 +67,28 @@
 #'
 #' @param k A positive integer giving the target rank before randomized
 #' oversampling. Requests larger than \code{min(dim(A))} are capped at that
-#' value. The default, \code{NULL}, requests the full available rank. Use a
+#' value. The default, \code{NULL}, requests the full available basis width. Use a
 #' rank much smaller than the matrix dimensions for the main computational
 #' savings.
 #'
 #' @param p A non-negative integer oversampling parameter for the randomized
-#' algorithm. The default is 10. Unlike \code{rsvd}, \code{rqb} retains the
-#' oversampled basis; see Details. This does not change the basis width when
-#' \code{rand = FALSE}.
+#' algorithm. The default is 10. The oversampled basis is retained in the
+#' result; see Details for its relationship to \code{rsvd}. This does not
+#' change the basis width when \code{rand = FALSE}.
 #'
 #' @param q A non-negative integer giving the number of randomized power
 #' (subspace) iterations. The default is 2; zero skips these iterations.
 #' Unused when \code{rand = FALSE}.
 #'
 #' @param sdist A character string selecting the sampling distribution.
-#' \code{"normal"} (the default) uses
-#' standard normal entries, \code{"unif"} uses uniform entries on \eqn{[0,1]},
+#' \code{"normal"} (the default) uses standard normal entries,
+#' \code{"unif"} uses uniform entries on \eqn{[0,1]},
 #' and \code{"rademacher"} uses equally likely values of -1 and 1. For complex
 #' input, the real and imaginary parts are sampled independently. Unused when
 #' \code{rand = FALSE}.
 #'
 #' @param rand A logical value. If \code{TRUE} (the default), use randomized range
-#' finding; otherwise use the deterministic QR basis described below.
+#' finding; otherwise use the deterministic QR basis described in Details.
 #'
 #' @return
 #' A list of class \code{"rqb"} containing two ordinary R matrices:
@@ -90,9 +101,11 @@
 #' is defined in Details and is not automatically reduced to the numerical rank.
 #'
 #' @note
-#' The basis is not unique: signs, complex phases or rotations within the
-#' same subspace can change \code{Q} and \code{B} while preserving their product.
-#' Assess the reconstruction or subspace instead of individual basis entries.
+#' Different bases can describe the same subspace. Signs, complex phases or
+#' rotations within that subspace can change \code{Q} and \code{B} while
+#' preserving their product. Assess agreement through the reconstruction or
+#' subspace, since individual basis entries can differ between valid results.
+#'
 #' Use \code{set.seed} for reproducible random sampling within a fixed numerical
 #' environment. The deterministic branch does not draw random numbers.
 #'

@@ -47,13 +47,13 @@ with deterministic SVD used for large target ranks or stalled accuracy.
 With \code{FALSE}, use the deterministic SVD throughout.}
 }
 \value{
-A list of class \code{"rrpca"} containing:
+A list of class \code{"rrpca"} with the following components.
 \describe{
-  \item{L}{A dense \eqn{m} by \eqn{n} matrix: the estimated low-rank
-    component.}
+  \item{L}{A dense \eqn{m} by \eqn{n} matrix containing the estimated
+    low-rank component.}
   \item{S}{A dense \eqn{m} by \eqn{n} matrix containing the estimated
-    sparse component. Sparsity refers to its entries, not its storage
-    class.}
+    sparse component. It is stored densely even when most entries are
+    zero.}
   \item{err}{A numeric vector of relative Frobenius reconstruction
     residuals, one per completed iteration. For a zero input, the
     function returns zero components and \code{err = 0} immediately.}
@@ -63,62 +63,84 @@ missing rows have been omitted. No fitted loading basis or new-data
 prediction method is returned.
 }
 \description{
-Decompose a real matrix into a low-rank component and an entrywise
-sparse component using principal component pursuit, with randomized or
-deterministic singular value decompositions.
+Estimate a low-rank component and an entrywise sparse component
+whose sum reconstructs a real matrix. Principal component pursuit uses
+penalties to encourage this separation, with randomized or deterministic
+singular value decompositions for the low-rank updates.
 }
 \details{
-Principal component pursuit separates a matrix into components satisfying
-\deqn{A = L + S.}{A = L + S.}
-The objective is to minimize the nuclear norm of \eqn{L} plus
-\code{lambda} times the entrywise one-norm of \eqn{S}, subject to this
-equality. The nuclear norm
-is the sum of singular values; the entrywise one-norm is the sum of
-absolute entries. These penalties encourage a low-rank component and a
-component with few nonzero entries. Whether the result recovers an
-underlying signal depends on the data and the separation assumptions;
-the decomposition is not a general guarantee of denoising.
+A matrix can contain patterns shared across many entries together
+with corruption confined to a few entries. For example, frames of a
+nearly static video can share a low-rank background while a small moving
+object affects only a subset of the pixels in each frame. Principal
+component pursuit seeks a low-rank term \eqn{L} and a sparse term \eqn{S}
+satisfying \eqn{A = L + S}.
 
-The inexact augmented Lagrange multiplier method (IALM) alternates
-entrywise soft thresholding and singular-value thresholding. The
-low-rank component's rank is selected through thresholding rather than
-through a fixed user-specified rank. Input and working arrays are dense,
-including for sparse input. No automatic centering or scaling is applied:
-any desired preprocessing must be done before calling \code{rrpca}.
-Use \code{set.seed} before fitting for reproducible random draws when
-\code{rand = TRUE}.
+Among such splits, the objective minimizes the sum of singular values of
+\eqn{L} plus \code{lambda} times the sum of absolute entries of \eqn{S}.
+These penalties are called the nuclear norm and the entrywise one-norm,
+respectively. They encourage low rank in \eqn{L} and few nonzero entries
+in \eqn{S}. Successful denoising depends on the data and the assumptions
+that make low-rank structure distinguishable from sparse corruption.
 
-The stopping test requires both the relative reconstruction residual
-\deqn{\frac{\|A-L-S\|_F}{\|A\|_F}}{norm(A - L - S, "F") / norm(A, "F")}
-and a stationarity diagnostic to be at most \code{tol}, unless
-\code{maxiter} is reached first. With the sparse component updated first,
-the stationarity diagnostic is
-\deqn{\frac{\mu\|L_{new}-L_{old}\|_F}{\max(1,\|Z\|_F)}}{mu * norm(L_new - L_old, "F") / max(1, norm(Z, "F"))}
-where \eqn{Z} is the updated Lagrange multiplier and \eqn{\mu} is the
-penalty used for that iteration. The penalty increases only when this
-diagnostic is sufficiently small. This avoids stopping on reconstruction
-feasibility alone and makes the tests invariant to rescaling the input.
+\subsection{Computation}{
+The inexact augmented Lagrange multiplier method (IALM) first updates
+the sparse component by shrinking entries toward zero and setting small
+entries to zero. It then applies the same idea to singular values to
+update the low-rank component. These steps are entrywise soft thresholding
+and singular-value thresholding. The surviving singular values determine
+the rank, so the function selects it during iteration.
 
 Randomized singular-value thresholding increases its target rank if all
-returned singular values exceed the shrinkage threshold. If accuracy
-stalls, the algorithm makes bounded increases in the number of power
-iterations before falling back to deterministic SVD. These refinements
-can increase runtime. The stopping diagnostics and randomized
-approximations are not a general certificate of optimality. The iteration
-limit may be reached before both diagnostics satisfy \code{tol}.
-\code{trace = TRUE} displays both diagnostics; \code{err} records only
-reconstruction residuals, so a small final \code{err} alone is not a
-convergence certificate.
+returned singular values exceed the shrinkage threshold, allowing it to
+examine further directions that might survive thresholding. Large target
+ranks use deterministic SVD. If accuracy stalls, the algorithm makes
+bounded increases in the number of power iterations before falling back
+to deterministic SVD. These refinements can increase runtime.
 
-\code{rrpca} is a batch decomposition of the supplied matrix. Its
-\code{L} and \code{S} contain fitted entries for those observations, not
-a reusable PCA rotation matrix, and there is no \code{predict.rrpca}
-method. Projecting new rows onto a basis extracted from \code{L} gives
-an ordinary low-rank projection with a generally dense residual; it does
-not compute a robust sparse component for the new rows. Robust inference
-with a fixed learned basis requires a separate optimization problem.
-For ordinary PCA with new-data scores, use \code{\link{rpca}} and its
-\code{predict} method.
+Input and working arrays are dense, including for sparse input. Apply any
+desired centering or scaling before calling \code{rrpca}; the function
+uses the supplied values without this preprocessing. Use \code{set.seed}
+before fitting for reproducible random draws when \code{rand = TRUE}.
+}
+
+\subsection{Stopping diagnostics}{
+Many different splits can reconstruct the input, so reconstruction
+accuracy alone is insufficient to establish convergence. The algorithm
+also monitors the change in the low-rank component.
+
+The relative reconstruction residual combines errors across all entries
+and compares their Frobenius norm with that of the input,
+\deqn{\frac{\|A-L-S\|_F}{\|A\|_F}.}{norm(A - L - S, "F") / norm(A, "F").}
+A small value means that \eqn{L+S} closely reproduces \eqn{A} relative
+to its magnitude. With the sparse component updated first, the
+stationarity diagnostic measures the change in \eqn{L} scaled by the
+current penalty,
+\deqn{\frac{\mu\|L_{new}-L_{old}\|_F}{\max(1,\|Z\|_F)}.}{mu * norm(L_new - L_old, "F") / max(1, norm(Z, "F")).}
+Here \eqn{Z} is the updated Lagrange multiplier and \eqn{\mu} is the
+penalty used for that iteration. Both diagnostics must be at most
+\code{tol} for the stopping test to be satisfied. The penalty increases
+only when the stationarity diagnostic is at most \code{tol}. These
+normalized tests are invariant to rescaling the input.
+
+The iteration limit \code{maxiter} may be reached before both diagnostics
+satisfy \code{tol}. The stopping diagnostics and randomized approximations
+provide no general certificate of optimality. Use \code{trace = TRUE}
+to display both diagnostics during fitting. The returned \code{err}
+records reconstruction residuals only; a small final value cannot
+establish convergence on its own.
+}
+
+\subsection{Using the decomposition}{
+\code{rrpca} fits all entries of the supplied matrix jointly. Its
+\code{L} and \code{S} describe those observations, and a fitted PCA
+rotation or a \code{predict.rrpca} method is unavailable. Projecting new
+rows onto a basis extracted from \code{L} gives an ordinary low-rank
+projection with a generally dense residual. Estimating a robust sparse
+component for those new rows with a fixed learned basis requires a
+separate optimization problem. For ordinary PCA with new-data scores,
+use \code{\link{rpca}} and its \code{predict} method.
+}
 }
 \examples{
 # A small video: each column is one frame, with pixels stored in rows.

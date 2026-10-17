@@ -6,17 +6,18 @@ Date: 2026-10-16
 Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "erichson@icsi.berkeley.edu"))
 Author: N. Benjamin Erichson [aut, cre]
 Maintainer: N. Benjamin Erichson <erichson@icsi.berkeley.edu>
-Description: Low-rank matrix decompositions are fundamental tools and widely used for data
-  analysis, dimension reduction, and data compression. Classically, highly accurate 
-  deterministic matrix algorithms are used for this task. However, the emergence of 
-  large-scale data has severely challenged our computational ability to analyze big data. 
-  The concept of randomness has been demonstrated as an effective strategy to quickly produce
-  approximate answers to familiar problems such as the singular value decomposition (SVD). 
-  The rsvd package provides several randomized matrix algorithms such as the randomized 
-  singular value decomposition (rsvd), randomized principal component analysis (rpca), 
-  randomized robust principal component analysis (rrpca), randomized interpolative 
-  decomposition (rid), and the randomized CUR decomposition (rcur). In addition several plot 
-  functions are provided.
+Description: Computes low-rank matrix approximations for dimension reduction, data
+  analysis, and data compression. Randomized algorithms form a small subspace
+  from random combinations of the input and carry out the main factorization
+  in that subspace. This can reduce computational work when the requested rank
+  is small relative to the matrix dimensions and the input admits an accurate
+  low-rank approximation. Methods include singular value decomposition,
+  principal component analysis, QB factorization, interpolative and CUR
+  decompositions, and robust principal component analysis. Selected methods
+  support sparse matrices, including principal component analysis with
+  implicit centering and scaling. Plotting functions display scores, loadings,
+  and explained variance. The methods and their applications are described
+  by Erichson et al. (2019) <doi:10.18637/jss.v089.i11>.
 Depends: R (>= 4.4.0)
 Imports:
     Matrix (>= 1.7-0),

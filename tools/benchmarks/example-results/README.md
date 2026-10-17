@@ -1,7 +1,9 @@
 # PCA teaching example
 
-This small iris example illustrates PCA output and plotting; it is not a
-performance benchmark. Species is supplied only to the plot for coloring.
+This small iris example shows how PCA represents flowers through their
+measurements and how to interpret the resulting plot. Species labels enter
+at the plotting stage, where they determine point colors. The example
+provides no performance comparison.
 
 ```r
 library(rsvd)
@@ -12,17 +14,18 @@ ggbiplot(pca, groups = iris$Species, ellipse = FALSE, ind_labels = FALSE)
 ```
 
 Each point is a flower's fitted score in the two retained components. The
-arrows use `rotation * sqrt(eigvals)`: with centered, standardized variables,
-these are variable–component correlations. The observations retain their
-original score scale. Axis labels report proportions of **total variance**,
+arrows show how the original measurements relate to those components. Their
+coordinates use `rotation * sqrt(eigvals)`, which gives variable–component
+correlations for centered, standardized variables. The observations retain
+their original score scale. Axis labels report proportions of **total variance**,
 including the two omitted components. A change of sign in a PC reverses both
 its scores and arrows together and leaves the interpretation unchanged.
 
-The figure extends the public `ggbiplot()` result with a
-color legend, equal coordinate units, a title, and separated variable labels.
-The short dotted leaders connect those labels to the original arrow endpoints;
-neither scores nor arrow endpoints are rescaled. Full labels for the two almost
-parallel petal arrows would otherwise overlap.
+The figure extends the public `ggbiplot()` result with a color legend, equal
+coordinate units, a title, and separated variable labels. The two almost
+parallel petal arrows would otherwise have overlapping labels. Short dotted
+leaders connect the labels to the original arrow endpoints while scores and
+arrow coordinates retain their original scale.
 
 Run the complete figure script from the repository root:
 
@@ -45,8 +48,8 @@ example. Its [recorded check](sparse-example-check.txt) confirms 1,500,000
 nonzero entries (5% density), 3,000 by 20 loadings, omitted training scores,
 and finite 5 by 20 predictions with rsvd 2.0.0. Rerun that README code to
 exercise the same fitted preprocessing and prediction path. It is an API
-example; performance measurements use the separately specified benchmark
-fixtures and rank settings.
+example. The performance measurements use the separately specified benchmark
+fixtures and rank settings, so their results describe a different workload.
 
 The recorded source commit is the checkout HEAD at generation time. Source-file
 hashes identify the numerical code independently of version or documentation

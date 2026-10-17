@@ -1,16 +1,16 @@
 # README benchmarks
 
 This directory contains the driver, raw measurements, and renderer for the
-performance tables and figures in the top-level README. The comparisons use
-deterministic references at the same requested rank. They do not compare with
-an older rsvd version.
+performance tables and figures in the top-level README. Each comparison uses
+a deterministic reference at the same requested rank. Comparisons with older
+rsvd versions are outside the scope of this experiment.
 
 ## Recorded experiment
 
 The complete run on 2026-10-17 measured 11 fixtures, 25 fixture/method pairs,
-and five timed repetitions per pair: 125 timed calls. Every method also had
-one warmup and one separate allocation profile. No observations were removed.
-Other local numerical jobs were paused during measurement.
+and five timed repetitions per pair, giving 125 timed calls. Every method
+also had one warmup and one separate allocation profile. No observations
+were removed. Other local numerical jobs were paused during measurement.
 
 The run used `--suite all`. The fixture grid and table selection were fixed
 before collecting measurements. The scaling plots start at 10,000 by 3,000
@@ -29,10 +29,10 @@ with dense PCA, ID, and CUR at 15,000 by 4,500. The same rows are selected by
 | Timed sampling seeds | `8101` through `8105` |
 | Allocation sampling seed | `8101` |
 
-Later edits change documentation, figures, result files, and a driver comment;
+Later edits affect documentation, figures, result files, and a driver comment;
 the measured numerical implementation and executable driver statements are
-unchanged. Exact package/BLAS paths and session
-details are preserved in [metadata.csv](results/metadata.csv) and
+unchanged. Exact package/BLAS paths and session details are preserved in
+[metadata.csv](results/metadata.csv) and
 [session-info.txt](results/session-info.txt). Absolute paths in those files
 describe the measurement environment; use your own library and output paths
 when rerunning.
@@ -47,16 +47,18 @@ when rerunning.
 | CUR | `rcur(A, k, rand = FALSE)` | `rcur(A, k, p = 10, q = 0)` | Selected columns, rows, and connector |
 
 Base SVD and `prcomp()` compute the full singular spectrum even when fewer
-vectors are requested. They are familiar deterministic references, not
-specialized truncated-SVD competitors. There are no base-R ID/CUR functions;
-those references are the package's dense LAPACK column-pivoted-QR paths.
-Their selected columns or rows need not agree with randomized selections.
+vectors are requested. The comparisons therefore measure performance against
+familiar references that compute the full spectrum; specialized truncated-SVD
+methods are outside their scope. For ID and CUR, the package's dense LAPACK
+column-pivoted-QR paths serve as references because base R provides no such
+functions. Their selected columns or rows need not agree with randomized
+selections.
 
 For sparse PCA, a third method calls `rpca(as.matrix(A), ...)` with otherwise
 identical arguments. This separates the benefit of implicit preprocessing
 from the benefit of the randomized decomposition. The dense conversion is
 inside the measured call for both dense-input comparators. All methods
-compute scores; the sparse method is not given a `retx = FALSE` advantage.
+compute scores; none uses `retx = FALSE`.
 
 ## Fixtures
 
@@ -74,11 +76,11 @@ offsets are applied in column blocks during setup, avoiding an extra full-size
 noise array while preserving the generator's values and random-number order.
 
 **Sparse synthetic data:** twenty diagonal blocks each contain a rank-two
-signal: a constant and a zero-mean slope on the left, random orthonormal
-directions on the right, and two positive singular values. Gaussian noise
-within each block produces a full-rank block while retaining exactly 5%
-density. This represents data with clear low-dimensional structure and
-nonzero column means; it is not intended as a universal sparse-data model.
+signal formed from a constant and a zero-mean slope on the left, random
+orthonormal directions on the right, and two positive singular values.
+Gaussian noise within each block produces a full-rank block while retaining
+exactly 5% density. This represents data with clear low-dimensional structure
+and nonzero column means. Other sparsity patterns may give different results.
 The sparse PCA scaling grid uses the same three shapes as the SVD grid, with
 `k = 40`. Sparse ID and CUR use 15,000 by 4,500 matrices.
 The within-block noise makes rank-40 reconstruction approximate, including
@@ -90,10 +92,11 @@ reconstruction errors and factor-entry counts. The
 [iris biplot](example-results/README.md) illustrates PCA interpretation.
 Neither small example is included in the performance tables or scaling plots.
 
-These examples deliberately target compressible matrices. The unit suite
-also checks difficult spectra and numerical edge cases. Performance curves
-here do not claim to cover every spectral shape, sparsity pattern, rank,
-hardware configuration, or application.
+These examples deliberately target compressible matrices, for which a small
+number of factors can capture much of the data. The unit suite also checks
+difficult spectra and numerical edge cases. The performance curves describe
+the measured fixtures and runtime; their scope is limited by the chosen
+spectra, sparsity patterns, ranks, hardware, and applications.
 
 ## Timing, allocations, and accuracy
 
@@ -103,28 +106,31 @@ explicit garbage collection before starting the timer. Fixture generation,
 seed setup, explicit garbage collection, and numerical validation are excluded;
 garbage collection triggered inside a call remains part of its elapsed time.
 The README shows medians. The CSV also contains all five observations,
-interquartile ranges, and extrema. Display precision does not imply that a
-future run will reproduce the final decimal place.
+interquartile ranges, and extrema. These summaries describe variation within
+the recorded run; display precision should not be read as reproducibility to
+the final decimal place.
 
 **Speedup** is the deterministic reference's median elapsed time divided by
 the method's median elapsed time. It is calculated from the unrounded saved
-values and displayed to one decimal place. It is a ratio of medians, not the
-median of per-repetition ratios. The SVD reference is `base_svd`; the sparse
-PCA figure uses `prcomp` for both randomized paths. The standalone tables
-state the deterministic/randomized order of paired values.
+values and displayed to one decimal place. A separate median is calculated
+for each method before their ratio is formed. The SVD reference is
+`base_svd`; the sparse PCA figure uses `prcomp` for both randomized paths.
+The standalone tables state the deterministic/randomized order of paired values.
 
 Elapsed-time panels show the median, an interquartile band, and min–max
 whiskers. Speedup panels show the derived ratio with a 1× reference line.
-They do not attach timing quartiles or confidence bands to that ratio.
-The saved observations include the slower calls, and the sparse PCA speedup
-is allowed to peak at the middle size rather than being forced to increase.
+Timing quartiles and confidence bands are omitted from the ratio panels.
+All observations, including slower calls, remain in the saved results. The
+sparse PCA speedup peaks at the middle size, so the plotted curve follows
+that measured pattern.
 
 Allocation profiling is a separate, untimed run using `Rprofmem()`.
 The driver sums numeric allocation records and retains their largest value
-and count. It does not count unquantified `new page` markers. This is
-**cumulative R allocation volume**, not peak RSS, a maximum-live-heap estimate,
-or a complete accounting of allocations inside BLAS/LAPACK. Reused memory
-can be counted repeatedly. The input fixture already exists; conversion,
+and count. Unquantified `new page` markers are excluded. The resulting
+**cumulative R allocation volume** counts allocation events over the entire
+call, so reused memory can be counted repeatedly. Memory allocated internally
+by BLAS/LAPACK may be absent from the profile. This total cannot measure peak
+RSS or the maximum live heap. The input fixture already exists; conversion,
 preprocessing, temporary arrays, and returned factors created by the call
 are included. Tables and figures use **GiB = 2^30 bytes**. Cumulative allocation
 can exceed physical RAM because successive allocations need not be live at
@@ -136,8 +142,8 @@ are committed here.
 allocation bytes by the method's cumulative allocation bytes. Its 1× line
 means equal allocation volume; larger values mean less volume for the
 method. Ratios use the single separate profile for each method, so they have
-no sampling-error bands. This is an allocation-volume ratio, not a peak-RAM
-ratio or a comparison of allocation counts.
+no sampling-error bands. The ratio describes allocation volume; peak RAM
+and allocation counts are separate quantities.
 
 The speedup columns and ratio panels were added by re-rendering the saved
 2026-10-17 experiment. The timings, allocation totals, accuracy measurements,
@@ -150,14 +156,14 @@ just to validate a large input. SVD and PCA also check dimensions,
 orthogonality, and the error relative to the exact optimal rank-`k` Frobenius
 tail. The oracle comes from the full deterministic singular spectrum and is
 checked for completeness and a finite positive tail. PCA errors refer to the
-processed observations, not to the uncentered data.
+processed observations after centering and scaling.
 
 ID checks the selected identity submatrix as well as reconstruction; CUR
 checks factor dimensions and reconstruction. Neither comparison assumes that
 pivoted QR is an optimal rank-`k` approximation. Dense ID/CUR results show
 the measured increase in residual from randomized selection at `q = 0`.
-Robust PCA is not included in these speed tables: its iterative convergence
-and optimality checks are documented in the separate release audit.
+Robust PCA's iterative convergence and optimality checks are documented in
+the separate release audit. It is outside the scope of these speed tables.
 
 ## Reproduce the run
 
@@ -178,7 +184,7 @@ OPENBLAS_NUM_THREADS=4 OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 \
 
 The driver requires only base R, Matrix, rsvd, and an R build with memory
 profiling enabled. `--suite smoke --reps 3` runs smaller functional checks;
-it is not a substitute for the published performance run. `--suite tables`,
+the published performance run requires the larger suite. `--suite tables`,
 `--suite scaling`, and `--cases name,name` permit focused reruns. For timing,
 run numerical work serially and avoid competing workloads.
 
@@ -191,9 +197,10 @@ python tools/benchmarks/render-readme.py \
   --update-readme README.md
 ```
 
-The renderer reads measurements only; it does not run benchmarks or adjust
-values. It replaces three marked table sections in the README and produces
-two SVG/PDF figures. Each uses four panels: elapsed time, speedup, cumulative
+The renderer constructs tables and figures from saved measurements, leaving
+the recorded values unchanged and performing no new benchmark calls. It
+replaces three marked table sections in the README and produces two SVG/PDF
+figures. Each uses four panels showing elapsed time, speedup, cumulative
 R allocations, and allocation reduction. Curves use both shape and color
 and named deterministic references. Matrix-size axes and absolute-cost axes
 are logarithmic; ratio axes are linear. Only elapsed-time

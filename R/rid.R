@@ -1,9 +1,11 @@
 #' @title Randomized interpolative decomposition (ID)
 #'
 #' @description
-#' Approximate a matrix using selected columns or rows of the original data and
-#' an interpolation matrix. A randomized sketch can reduce the work needed to
-#' select the subset when the target rank is small.
+#' Approximate a matrix by expressing its columns or rows as linear
+#' combinations of a selected subset of the original data. The selected data
+#' and the coefficients of these combinations form an interpolative
+#' decomposition. A randomized sketch can reduce the work needed to choose
+#' the subset when the target rank is small.
 #'
 #' @usage
 #' rid(A, k = NULL, mode = "column", p = 10, q = 0,
@@ -32,40 +34,59 @@
 #' input, or its conjugate transpose for a row ID.
 #'
 #' @details
-#' For an \eqn{m \times n}{m by n} matrix, a column ID has the form
+#' An interpolative decomposition (ID) retains actual columns or rows, so
+#' the selected subset can be examined in the original units of the data.
+#' This is useful when the factors should correspond to measured variables
+#' or observations. An orthonormal representation of the data is available
+#' through \code{\link{rsvd}}.
+#'
+#' A column ID combines the selected columns with coefficients that
+#' approximate each input column. For an \eqn{m \times n}{m by n} matrix,
+#' this gives
 #' \deqn{A \approx C Z.}{A is approximately C \%*\% Z.}
 #' Here \code{C = A[, idx, drop = FALSE]} contains \code{k} actual columns,
-#' and \code{Z} expresses all columns in terms of that subset. Its selected
-#' columns satisfy \code{Z[, idx, drop = FALSE] = diag(k)}. For a row ID,
+#' and each column of \code{Z} gives the coefficients for one input column.
+#' Its selected columns satisfy \code{Z[, idx, drop = FALSE] = diag(k)},
+#' so the selected data columns are reproduced exactly. A row ID applies the
+#' same idea to rows and has the form
 #' \deqn{A \approx Z R,}{A is approximately Z \%*\% R,}
 #' \code{R = A[idx, , drop = FALSE]} contains the selected rows, and
 #' \code{Z[idx, , drop = FALSE] = diag(k)}. Dimensions and indices in these
 #' expressions refer to the input after missing-row omission.
 #'
-#' Unlike the orthonormal directions returned by \code{\link{rsvd}}, the
-#' selected columns or rows retain their original units and can correspond to
-#' measured variables or observations. Selection is sensitive to preprocessing:
-#' centering or rescaling the data can change which subset is chosen. This
-#' function does not center or scale the input automatically.
+#' Selection depends on how the data are represented. Centering or rescaling
+#' changes the matrix used to choose the subset and can therefore change the
+#' selected variables or observations. The function uses the supplied data
+#' without automatic centering or scaling.
 #'
-#' The randomized algorithm applies column-pivoted QR to the projected factor
-#' from \code{\link{rqb}}. Oversampling and power iterations can improve the
-#' subspace used for selection, at additional time and memory cost. They are
-#' fixed controls, not an adaptive error tolerance. The interpolation
-#' coefficients are computed using a numerical pseudoinverse of the selected
-#' QR block, so requesting more columns than the numerical rank is allowed.
+#' To reduce the work of subset selection, the randomized algorithm first
+#' compresses the input with \code{\link{rqb}}. It applies column-pivoted QR
+#' to the projected factor and selects the first \code{k} columns in the
+#' resulting pivot order. A row ID applies this procedure to the conjugate
+#' transpose, so the pivots identify input rows. Oversampling and power
+#' iterations can improve the subspace used for selection, at additional time
+#' and memory cost. The supplied parameters remain fixed throughout the
+#' calculation; the algorithm does not adjust them to meet an error tolerance.
+#'
+#' The interpolation coefficients are computed using a numerical pseudoinverse
+#' of the selected QR block. This permits requests for more columns than the
+#' numerical rank, including cases where the selected columns are dependent.
 #' Neither column-pivoted QR nor this pseudoinverse guarantees an optimal
-#' rank-\code{k} approximation or uniformly small coefficients. Inspect the
-#' reconstruction error when approximation quality matters; QR scores are
-#' selection diagnostics, not statistical importance scores or probabilities.
+#' rank-\code{k} approximation or uniformly small coefficients. Assess the
+#' reconstruction error to determine whether the selected subset meets the
+#' accuracy needs of the application. The QR scores describe the selection
+#' procedure and have no interpretation as statistical importance scores or
+#' probabilities.
 #'
 #' With sparse \pkg{Matrix} input, the randomized algorithm forms its dense
 #' sketch using sparse matrix products. Returned factors are ordinary dense R
 #' matrices. With \code{rand = FALSE}, the input is converted to a dense matrix
 #' before QR. Forming \code{C \%*\% Z} or \code{Z \%*\% R} also produces a
-#' dense reconstruction. Use \code{set.seed()} before a randomized call for a
-#' repeatable result in the same computational environment; pivot choices can
-#' differ across numerical libraries when columns have similar scores.
+#' dense reconstruction.
+#'
+#' Use \code{set.seed()} before a randomized call for a repeatable result in
+#' the same computational environment. Pivot choices can differ across
+#' numerical libraries when columns have similar scores.
 #'
 #' @return
 #' A list of class \code{"rid"} with the following components. Here \code{m}
@@ -76,8 +97,8 @@
 #'   or \code{NULL} for a row ID or when \code{idx_only = TRUE}.}
 #'   \item{R}{The selected \code{k} by \code{n} row matrix for a row ID,
 #'   or \code{NULL} for a column ID or when \code{idx_only = TRUE}.}
-#'   \item{Z}{The dense interpolation matrix: \code{k} by \code{n} for a
-#'   column ID, or \code{m} by \code{k} for a row ID.}
+#'   \item{Z}{The dense interpolation matrix, with dimensions \code{k} by
+#'   \code{n} for a column ID or \code{m} by \code{k} for a row ID.}
 #'   \item{idx}{An integer vector of length \code{k} containing the selected
 #'   column or row indices, in selection order. Row indices refer to the
 #'   matrix after rows with missing values have been omitted.}
