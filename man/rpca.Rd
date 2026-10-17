@@ -30,7 +30,8 @@ shifted to be zero centered (\eqn{TRUE} by default).}
 
 \item{scale}{bool, optional; \cr
 logical value which indicates whether the variables should
-be scaled to have unit variance (\eqn{TRUE} by default).}
+be scaled (\eqn{TRUE} by default). Scaling gives unit sample
+variance for centered, nonconstant columns; see Details.}
 
 \item{retx}{bool, optional; \cr
 logical value indicating whether the rotated variables / scores
@@ -43,7 +44,8 @@ oversampling parameter for \eqn{rsvd} (default \eqn{p=10}), see \code{\link{rsvd
 number of additional power iterations for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.}
 
 \item{rand}{bool, optional; \cr
-if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.}
+if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.
+If \code{k = NULL}, the deterministic SVD is used.}
 }
 \value{
 \code{rpca} returns a list with class \eqn{rpca} containing the following components:
@@ -57,6 +59,10 @@ if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.}
    }
    \item{sdev}{     array_like; \cr
                     standard deviations of the principal components; \eqn{k} dimensional vector.
+   }
+   \item{var}{      numeric; \cr
+                    total variance / second moment of the processed data,
+                    including components not returned.
    }
    \item{x}{        array_like; \cr
                     the scores / rotated data; \eqn{(m, k)} dimensional array.
@@ -85,8 +91,28 @@ The predict function can be used to compute the scores of new observations. The 
 will automatically be centered (and scaled if requested), including for complex input.
 Complex variables are scaled using their squared moduli, so their scale factors are real.
 
-Input is converted to a dense matrix for centering and scaling. Sparse inputs are
-accepted, but this routine does not preserve sparse storage.
+With \code{rand = TRUE} and a supplied \code{k}, real sparse matrices from
+\pkg{Matrix} are centered and scaled through implicit matrix products. The
+entire centered matrix is never formed; working storage includes the sparse
+entries and dense factors with width up to \eqn{k+p}. Returned loadings and
+scores are dense. With \code{rand = FALSE}, or \code{k = NULL}, the input is
+converted to a dense matrix for the deterministic SVD.
+
+As in \code{\link{prcomp}}, \code{center = FALSE} simply skips centering. It
+supports both already-centered and uncentered data. With \code{scale = TRUE},
+each column is divided by the square root of its sum of squared moduli divided
+by \eqn{m-1}. This is the sample standard deviation when the column is centered.
+For compatibility, scale factors below \eqn{10^{-8}} are replaced by one;
+constant columns are retained rather than rejected.
+
+Total variance is the squared Frobenius norm of the processed matrix divided
+by \eqn{m-1}, including directions omitted from the rank-\eqn{k} approximation.
+For uncentered data this is a total second moment, consistent with the
+eigenvalues from the uncentered SVD.
+
+Fitted scores retain the projected-SVD convention \eqn{U_k D_k}. Prediction
+multiplies the processed observations by the loadings. For a randomized
+approximation these can differ by the range-finder residual.
 }
 \note{
 The principal components are not unique and only defined up to sign
@@ -123,6 +149,11 @@ iris.rpca <- rpca(log.iris)
 summary(iris.rpca) # Summary
 print(iris.rpca) # Prints the rotations
 plot(iris.rpca) # Produce screeplot, variable and individuals factor maps.
+
+# Sparse input: implicit centering and scaling, with scores omitted
+A <- Matrix::bdiag(outer(1:12, 1:6), outer(1:12, 6:1))
+fit <- rpca(A, k = 2, retx = FALSE)
+predict(fit, A[1:2, , drop = FALSE])
 
 }
 \references{

@@ -21,9 +21,13 @@
 #'
 #' In the randomized case, sparse \pkg{Matrix} inputs are kept sparse during
 #' multiplication. Only the samples, basis and projected matrix are dense.
-#' The deterministic case uses a dense QR decomposition and returns the first
-#' \eqn{k} basis vectors; it may therefore require storage for a dense copy of
-#' the input. Both cases return ordinary R matrices for \code{Q} and \code{B}.
+#' The deterministic case returns the first \eqn{k} basis vectors of base R's
+#' QR factorization. For real input with a numerically independent leading
+#' block, only those \eqn{k} columns need a dense factorization. Other cases,
+#' including complex input and deficient leading columns, use the full dense
+#' QR fallback. The deterministic basis follows base QR's column ordering and
+#' is not necessarily an optimal rank-\eqn{k} subspace. Both cases return
+#' ordinary R matrices for \code{Q} and \code{B}.
 #'
 #'
 #' @param A       array_like; \cr
@@ -86,9 +90,8 @@ rqb <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) UseMethod("rq
 #' @export
 rqb.default <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) {
 
-    # Keep sparse Matrix inputs for products with thin dense factors. The
-    # deterministic path retains the established dense QR implementation.
-    if(!inherits(A, "Matrix") || !rand) A <- as.matrix(A)
+    # Keep Matrix inputs for products with thin dense factors.
+    if(!inherits(A, "Matrix")) A <- as.matrix(A)
 
     # Create rqb object
     rqbObj <- list()
@@ -156,9 +159,28 @@ rqb.default <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) {
 
         rqbObj$Q <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
     }else{
+        # With real input, base QR keeps the column order unless a column is
+        # numerically dependent. If the first k columns have full rank, their
+        # Householder vectors are also the first k vectors of the full QR.
+        # This avoids factoring unused columns while retaining the same basis.
+        qrA <- NULL
+        # Preserve full QR's rejection of non-finite values in later columns.
+        # Summary methods check sparse inputs without a dense logical mask.
+        if(isreal && k < min(m, n) && k == as.integer(k) &&
+           is.finite(min(A)) && is.finite(max(A))) {
+            qrA <- qr(as.matrix(A[, seq_len(k), drop = FALSE]))
+            if(qrA$rank < k) qrA <- NULL
+        }
+        # Complex QR pivots across every column. Dependent real prefixes may
+        # also need later columns, so both cases retain the full factorization.
+        if(is.null(qrA)) {
+            A <- as.matrix(A)
+            qrA <- qr(A)
+        }
         # Apply Q to only k identity columns instead of forming the full Q.
         identity <- diag(if(isreal) 1 else 1+0i, nrow = m, ncol = k)
-        rqbObj$Q <- qr.qy(qr(A), identity)
+        rqbObj$Q <- qr.qy(qrA, identity)
+        remove(qrA, identity)
     }
       
     

@@ -18,8 +18,28 @@
 #' will automatically be centered (and scaled if requested), including for complex input.
 #' Complex variables are scaled using their squared moduli, so their scale factors are real.
 #'
-#' Input is converted to a dense matrix for centering and scaling. Sparse inputs are
-#' accepted, but this routine does not preserve sparse storage.
+#' With \code{rand = TRUE} and a supplied \code{k}, real sparse matrices from
+#' \pkg{Matrix} are centered and scaled through implicit matrix products. The
+#' entire centered matrix is never formed; working storage includes the sparse
+#' entries and dense factors with width up to \eqn{k+p}. Returned loadings and
+#' scores are dense. With \code{rand = FALSE}, or \code{k = NULL}, the input is
+#' converted to a dense matrix for the deterministic SVD.
+#'
+#' As in \code{\link{prcomp}}, \code{center = FALSE} simply skips centering. It
+#' supports both already-centered and uncentered data. With \code{scale = TRUE},
+#' each column is divided by the square root of its sum of squared moduli divided
+#' by \eqn{m-1}. This is the sample standard deviation when the column is centered.
+#' For compatibility, scale factors below \eqn{10^{-8}} are replaced by one;
+#' constant columns are retained rather than rejected.
+#'
+#' Total variance is the squared Frobenius norm of the processed matrix divided
+#' by \eqn{m-1}, including directions omitted from the rank-\eqn{k} approximation.
+#' For uncentered data this is a total second moment, consistent with the
+#' eigenvalues from the uncentered SVD.
+#'
+#' Fitted scores retain the projected-SVD convention \eqn{U_k D_k}. Prediction
+#' multiplies the processed observations by the loadings. For a randomized
+#' approximation these can differ by the range-finder residual.
 #'
 #'
 #' @param A      array_like; \cr
@@ -36,7 +56,8 @@
 #'
 #' @param scale   bool, optional; \cr
 #'                logical value which indicates whether the variables should
-#'                be scaled to have unit variance (\eqn{TRUE} by default).
+#'                be scaled (\eqn{TRUE} by default). Scaling gives unit sample
+#'                variance for centered, nonconstant columns; see Details.
 #'
 #' @param retx    bool, optional; \cr
 #'                logical value indicating whether the rotated variables / scores
@@ -50,6 +71,7 @@
 #'
 #' @param rand   bool, optional; \cr
 #'               if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.
+#'               If \code{k = NULL}, the deterministic SVD is used.
 #'
 #'
 #' @return \code{rpca} returns a list with class \eqn{rpca} containing the following components:
@@ -63,6 +85,10 @@
 #'    }
 #'    \item{sdev}{     array_like; \cr
 #'                     standard deviations of the principal components; \eqn{k} dimensional vector.
+#'    }
+#'    \item{var}{      numeric; \cr
+#'                     total variance / second moment of the processed data,
+#'                     including components not returned.
 #'    }
 #'    \item{x}{        array_like; \cr
 #'                     the scores / rotated data; \eqn{(m, k)} dimensional array.
@@ -130,6 +156,11 @@
 #'print(iris.rpca) # Prints the rotations
 #'plot(iris.rpca) # Produce screeplot, variable and individuals factor maps.
 #'
+#'# Sparse input: implicit centering and scaling, with scores omitted
+#'A <- Matrix::bdiag(outer(1:12, 1:6), outer(1:12, 6:1))
+#'fit <- rpca(A, k = 2, retx = FALSE)
+#'predict(fit, A[1:2, , drop = FALSE])
+#'
 
 #' @export
 rpca <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=2, rand = TRUE) UseMethod("rpca")
@@ -137,14 +168,17 @@ rpca <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=2, rand 
 #' @export
 rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=2, rand = TRUE) {
   
-  A <- as.matrix(A)
+  sparse <- inherits(A, "sparseMatrix") && !is.null(k) && rand == TRUE
+  if(!sparse) A <- as.matrix(A)
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Checks
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (any(is.na(A))) {
     warning("Missing values are omitted: na.omit(A).")
-    A <- stats::na.omit(A)
+    if(sparse) {
+      A <- A[Matrix::rowSums(is.na(A)) == 0, , drop=FALSE]
+    } else A <- stats::na.omit(A)
   }   
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -174,21 +208,49 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Center/Scale data
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if(center == TRUE) {
-    rpcaObj$center <- colMeans(A)
-    A <- sweep(A, MARGIN = 2, STATS = rpcaObj$center, FUN = "-", check.margin = TRUE)
-    #A <- H(H(A) - rpcaObj$center)
-  } else { rpcaObj$center <- FALSE }
-  
-  if(scale == TRUE) {
-    squared <- if(is.complex(A)) Mod(A)**2 else A**2
-    rpcaObj$scale <- sqrt(colSums(squared) / (m-1))
-    rm(squared)
-    rpcaObj$scale[rpcaObj$scale < 1e-8] <- 1
-    A <- sweep(A, MARGIN = 2, STATS = rpcaObj$scale, FUN = "/", check.margin = TRUE)
-    #A <- H(H(A) / rpcaObj$scale)
-    #A[is.nan(A)] <- 0
-  } else { rpcaObj$scale <- FALSE }
+  if(sparse) {
+    A <- rpca_sparse_numeric(A)
+    rpcaObj$center <- if(center == TRUE) rpca_sparse_means(A) else FALSE
+    squared_norms <- rpca_sparse_norms(A, rpcaObj$center)
+    if(scale == TRUE) {
+      rpcaObj$scale <- sqrt(squared_norms / (m-1))
+      rpcaObj$scale[rpcaObj$scale < 1e-8] <- 1
+      rpcaObj$var <- sum(squared_norms / rpcaObj$scale^2) / (m-1)
+    } else {
+      rpcaObj$scale <- FALSE
+      rpcaObj$var <- sum(squared_norms) / (m-1)
+    }
+    operators <- rpca_sparse_products(A, rpcaObj$center, rpcaObj$scale)
+    if(!is.finite(rpcaObj$var)) {
+      rpcaObj$var <- sum(operators$squared_norms()) / (m-1)
+    }
+  } else {
+    if(center == TRUE) {
+      rpcaObj$center <- colMeans(A)
+      A <- sweep(A, MARGIN = 2, STATS = rpcaObj$center, FUN = "-", check.margin = TRUE)
+    } else { rpcaObj$center <- FALSE }
+
+    if(scale == TRUE) {
+      squared <- if(is.complex(A)) Mod(A)**2 else A**2
+      squared_norms <- colSums(squared)
+      rm(squared)
+      rpcaObj$scale <- sqrt(squared_norms / (m-1))
+      rpcaObj$scale[rpcaObj$scale < 1e-8] <- 1
+      A <- sweep(A, MARGIN = 2, STATS = rpcaObj$scale, FUN = "/", check.margin = TRUE)
+      rpcaObj$var <- sum(squared_norms / rpcaObj$scale^2) / (m-1)
+      if(!is.finite(rpcaObj$var)) {
+        rpcaObj$var <- (if(is.complex(A)) {
+          norm(Re(A), "F")^2 + norm(Im(A), "F")^2
+        } else norm(A, "F")^2) / (m-1)
+      }
+    } else {
+      rpcaObj$scale <- FALSE
+      squared_norm <- if(is.complex(A)) {
+        norm(Re(A), "F")^2 + norm(Im(A), "F")^2
+      } else norm(A, "F")^2
+      rpcaObj$var <- squared_norm / (m-1)
+    }
+  }
   
   
   
@@ -203,8 +265,12 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=
   
   out <- switch(svdalg,
                 svd = svd(A, nu = if(retx) k else 0, nv = k),
-                rsvd = rsvd(A, k = k, p = p, q = q,
-                            nu = if(retx) k else 0, nv = k),
+                rsvd = if(sparse) {
+                  rsvd_compute(A, k = k, p = p, q = q,
+                               nu = if(retx) k else 0, nv = k,
+                               operators = operators)
+                } else rsvd(A, k = k, p = p, q = q,
+                             nu = if(retx) k else 0, nv = k),
                 stop("Selected SVD algorithm is not supported!")
   )
   
@@ -222,8 +288,6 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=
   # Explained variance and explained variance ratio
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   rpcaObj$sdev <-  sqrt( rpcaObj$eigvals )
-  rpcaObj$var <- sum( apply( Re(A) , 2, stats::var ) )
-  if(is.complex(A)) rpcaObj$var <- Re(rpcaObj$var + sum( apply( Im(A) , 2, stats::var ) ))
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Add row and col names
@@ -307,6 +371,17 @@ predict.rpca <- function( object, newdata, ...)
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Predict
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if(inherits(newdata, "sparseMatrix") && !is.complex(object$center) &&
+     !is.complex(object$rotation)) {
+    operators <- rpca_sparse_products(rpca_sparse_numeric(newdata),
+                                      object$center, object$scale,
+                                      replace_nan = !is.logical(object$scale))
+    x <- operators$forward(as.matrix(object$rotation))
+    rownames(x) <- rownames(newdata)
+    return(x)
+  }
+
+  newdata <- as.matrix(newdata)
   if(!is.logical(object$center)) {
     #newdata <- H(H(newdata) - object$center)
     newdata <- sweep(newdata, MARGIN = 2, STATS = object$center, FUN = "-", check.margin = TRUE)

@@ -19,7 +19,8 @@ Description: Low-rank matrix decompositions are fundamental tools and widely use
   functions are provided.
 Depends: R (>= 4.0.0)
 Imports:
-    Matrix
+    Matrix,
+    methods
 License: GPL (>= 3)
 LazyData: TRUE
 LazyDataCompression: xz

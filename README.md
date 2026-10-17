@@ -99,8 +99,11 @@ the package imports the matrix operations it uses.
 | `rsvd()` | Retains the input representation; samples, the basis, projected problem and singular vectors are generally dense. |
 | `rqb(rand = TRUE)` | Retains sparse Matrix inputs and forms dense sketches and factors. The returned basis includes oversampling. |
 | `rid(rand = TRUE)`, `rcur(rand = TRUE)` | Use sparse products for the randomized sketch, then dense projected or selected factors. |
-| Deterministic QB, ID and CUR | Use dense QR; a sparse input can require a full dense copy. |
-| `rpca()`, `rrpca()` | Use dense input and working arrays. Centering and robust-PCA residual updates do not preserve sparse storage. |
+| `rqb(rand = FALSE)` | Uses only a real, independent leading column block when it gives the same base-QR basis; otherwise uses full dense QR. |
+| Deterministic ID and CUR | Use dense pivoted QR; a sparse input can require a full dense copy. |
+| `rpca(rand = TRUE)` with an explicit `k` | Centers and scales real sparse Matrix inputs implicitly; loadings, sketches and optional scores are dense. |
+| `rpca(rand = FALSE)` or `rpca(k = NULL)` | Uses dense preprocessing and deterministic SVD. |
+| `rrpca()` | Uses dense input and working arrays for its low-rank, sparse and residual updates. |
 
 For sketch width `ell = min(k + p, min(dim(A)))`, the randomized methods need
 thin dense arrays whose storage grows with `(nrow(A) + ncol(A)) * ell`, in
@@ -118,6 +121,54 @@ on R versions before 4.4. CI checks current R with Matrix 1.7-6 on Linux,
 Windows and macOS, and R 4.3 with Matrix 1.6-5. Each job verifies the loaded
 Matrix version before running the package check.
 
+## PCA with sparse data
+
+An explicit small target rank enables implicit centering and scaling:
+
+```r
+A <- Matrix::bdiag(outer(1:100, 1:20), outer(1:100, 20:1))
+set.seed(42)
+fit <- rpca(A, k = 2, center = TRUE, scale = TRUE, retx = FALSE)
+scores <- predict(fit, A[1:5, , drop = FALSE])
+```
+
+The centered matrix is applied through products with thin factors. Sparse
+working storage grows with the number of stored entries, and dense workspace
+grows with the sketch width. Column scales use deviations from the mean
+directly, including the contribution of implicit zeros. Nearly constant,
+fully stored columns are centered before multiplication to reduce cancellation.
+
+As with `prcomp()`, `center = FALSE` simply skips centering. It works for data
+that are already centered and also permits an uncentered SVD. With centering
+disabled, `scale = TRUE` divides each column by
+`sqrt(sum(x^2) / (nrow(A) - 1))`; this is generally not its centered standard
+deviation. `rpca()` retains its existing rule that scales below `1e-8` become 1.
+
+`fit$var` includes the energy of all directions in the processed input, so
+variance proportions do not depend on how many components were requested.
+For uncentered input this is a total second moment. Fitted scores keep the
+existing `U D` convention; `predict()` projects observations onto the fitted
+loadings. These can differ by the randomized range-finder residual.
+
+## Robust PCA convergence
+
+`rrpca()` seeks a low-rank matrix and an entrywise sparse matrix whose sum
+matches the input, minimizing the nuclear norm of the first plus `lambda`
+times the entrywise absolute sum of the second. A small reconstruction
+residual alone does not establish that this split is optimal.
+
+The iteration now checks both reconstruction feasibility and stationarity.
+It increases the penalty only when the stationarity test is satisfied,
+expands a sampled SVD when all returned singular values survive thresholding,
+and refines stalled randomized updates before falling back to exact SVD if
+necessary. These checks can require more work than the earlier stopping rule.
+
+The returned `err` keeps its existing meaning as the reconstruction-error
+history. Use `trace = TRUE` to see the additional stationarity diagnostic.
+`maxiter` remains a work limit and can stop an unconverged iteration. The
+algorithm still uses dense working arrays, even when its sparse component
+contains many zeros.
+
 ## Tests and development
 
 The test suite runs as part of `R CMD check`. It checks low-rank reconstruction,
@@ -131,7 +182,10 @@ R CMD check --no-manual rsvd_1.0.7.tar.gz
 
 For an interactive development check, use `testthat::test_local()` with the
 package dependencies installed. See [NEWS.md](NEWS.md) for the 1.0.7 changes
-and `tools/benchmark-lowrank.R` for reproducible timing and R-allocation checks.
+and [the numerical review](tools/validation/follow-up-review.md) for reference
+tests, measured costs, compatibility decisions and recent randomized NLA
+experiments. `tools/benchmark-lowrank.R` provides reproducible timing and
+R-allocation checks.
 
 ## Installation
 

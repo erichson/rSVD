@@ -136,6 +136,13 @@ rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal") UseMeth
 
 #' @export
 rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal") {
+    rsvd_compute(A, k=k, nu=nu, nv=nv, p=p, q=q, sdist=sdist)
+}
+
+# Shared range finder. Internal products let PCA apply centering and scaling
+# implicitly; ordinary rsvd calls retain the original matrix operations.
+rsvd_compute <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2,
+                         sdist="normal", operators=NULL) {
     #*************************************************************************
     #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
     #***                              <2015>                               ***
@@ -151,11 +158,26 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal")
 
     #Flip matrix, if wide
     if(m < n){
-      A <- H(A)
-      m <- nrow(A)
-      n <- ncol(A)
+      if(is.null(operators)) {
+        A <- H(A)
+      } else {
+        original_operators <- operators
+        operators <- list(
+          forward = original_operators$adjoint,
+          adjoint = original_operators$forward,
+          project = function(Q) H(original_operators$forward(Q)))
+      }
+      temp <- m
+      m <- n
+      n <- temp
       flipped <- TRUE
     } else flipped <- FALSE
+
+    if(is.null(operators)) {
+      operators <- list(forward = function(X) A %*% X,
+                        adjoint = function(X) crossprod_help(A, X),
+                        project = function(Q) crossprod_help(Q, A))
+    }
 
     #Set target rank
     if(is.null(k)) k = n
@@ -210,7 +232,7 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal")
     #Build sample matrix Y : Y = A * O
     #Note: Y should approximate the range of A
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Y <- A %*% O
+    Y <- operators$forward(O)
     remove(O)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -220,9 +242,9 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal")
     if( q > 0 ) {
         for( i in 1:q) {
             Y <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
-            Z <- crossprod_help(A , Y )
+            Z <- operators$adjoint(Y)
             Z <- qr.Q( qr(Z, complete = FALSE) , complete = FALSE )
-            Y <- A %*% Z
+            Y <- operators$forward(Z)
         }#End for
         remove(Z)
     }#End if
@@ -234,7 +256,7 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal")
     #Project the data matrix a into a lower dimensional subspace
     #B := Q.T * A
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    B <- crossprod_help(Q , A )
+    B <- operators$project(Q)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Singular Value Decomposition

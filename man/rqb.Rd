@@ -62,9 +62,13 @@ computational time. The number of power iterations is set to \eqn{q=2} by defaul
 
 In the randomized case, sparse \pkg{Matrix} inputs are kept sparse during
 multiplication. Only the samples, basis and projected matrix are dense.
-The deterministic case uses a dense QR decomposition and returns the first
-\eqn{k} basis vectors; it may therefore require storage for a dense copy of
-the input. Both cases return ordinary R matrices for \code{Q} and \code{B}.
+The deterministic case returns the first \eqn{k} basis vectors of base R's
+QR factorization. For real input with a numerically independent leading
+block, only those \eqn{k} columns need a dense factorization. Other cases,
+including complex input and deficient leading columns, use the full dense
+QR fallback. The deterministic basis follows base QR's column ordering and
+is not necessarily an optimal rank-\eqn{k} subspace. Both cases return
+ordinary R matrices for \code{Q} and \code{B}.
 }
 \references{
 \itemize{

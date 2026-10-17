@@ -1,4 +1,11 @@
-# Validation notes for rsvd 1.0.7
+# Initial validation notes for rsvd 1.0.7
+
+This report records the first candidate, ending at commit
+[`ad8f05a`](https://github.com/erichson/rSVD/commit/ad8f05a).
+The [follow-up review](follow-up-review.md) records the subsequent PCA, QR and
+robust-PCA changes, their new reference tests, and measurements against that
+first candidate. Its findings supersede the deferred-work discussion below.
+Keep the two benchmark baselines distinct when comparing the results.
 
 These notes record the local numerical validation and performance comparison of
 the 1.0.7 candidate against repository commit

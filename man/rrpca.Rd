@@ -24,22 +24,28 @@ Rows containing missing values are omitted with a warning.}
 tuning parameter (default \eqn{lambda = max(m,n)^-0.5}).}
 
 \item{maxiter}{integer, optional; \cr
-maximum number of iterations (default \eqn{maxiter = 50}).}
+maximum number of iterations (default \eqn{maxiter = 50});
+reaching this limit does not imply convergence.}
 
 \item{tol}{scalar, optional; \cr
-precision parameter (default \eqn{tol = 1.0e-5}).}
+tolerance for the relative reconstruction residual and
+stationarity diagnostic (default \eqn{tol = 1.0e-5}).}
 
 \item{p}{integer, optional; \cr
 oversampling parameter for \eqn{rsvd} (default \eqn{p=10}), see \code{\link{rsvd}}.}
 
 \item{q}{integer, optional; \cr
-number of additional power iterations for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.}
+initial number of additional power iterations for \eqn{rsvd}
+(default \eqn{q=2}); increased adaptively if convergence stalls.
+See \code{\link{rsvd}}.}
 
 \item{trace}{bool, optional; \cr
-print progress.}
+print progress, including both convergence diagnostics.}
 
 \item{rand}{bool, optional; \cr
-if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.}
+if (\eqn{TRUE}), start with \eqn{rsvd}, with deterministic SVD
+fallback for a large target rank or stalled accuracy;
+otherwise use \eqn{svd} throughout.}
 }
 \value{
 \code{rrpca} returns a list containing the following components:
@@ -69,6 +75,24 @@ To decompose the matrix, we use the inexact augmented Lagrange multiplier
 method (IALM). The algorithm can be used in combination with either the randomized or deterministic SVD.
 Input and working arrays are dense, including when a sparse \pkg{Matrix} input
 is supplied. A zero input returns zero components and zero residual immediately.
+
+The stopping test requires both the relative reconstruction residual and a
+stationarity diagnostic to be at most \code{tol}, unless \code{maxiter} is
+reached first. With the sparse component
+updated first, the latter is
+\eqn{\mu\|L_{new}-L_{old}\|_F / \max(1,\|Z\|_F)}, where \eqn{Z} is the
+Lagrange multiplier. The penalty \eqn{\mu} increases only after this diagnostic
+is sufficiently small. This prevents stopping on reconstruction feasibility alone
+and makes the stopping tests invariant to rescaling the input.
+
+Randomized singular-value thresholding increases its target rank if all
+returned singular values exceed the shrinkage threshold. If convergence
+stalls, a bounded heuristic increases the power iterations by two, at most
+twice, before switching to the deterministic SVD. These refinements can
+increase runtime. The stopping diagnostics and randomized approximations
+are not a general certificate of optimality. The iteration limit may be
+reached before both diagnostics satisfy \code{tol}; \code{trace=TRUE} displays
+both, whereas the returned \code{err} contains reconstruction residuals only.
 }
 \examples{
 library('rsvd')
@@ -105,9 +129,14 @@ image(matrix(out$S[,10], ncol=100, nrow=100)) # separated foreground
         \doi{10.18637/jss.v089.i11}.
 
   \item  [2] Lin, Zhouchen, Minming Chen, and Yi Ma.
-         "The augmented lagrange multiplier method for exact
+         "The augmented Lagrange multiplier method for exact
          recovery of corrupted low-rank matrices." (2010).
          (available at arXiv \url{https://arxiv.org/abs/1009.5055}).
+
+  \item [3] S. Boyd, N. Parikh, E. Chu, B. Peleato and J. Eckstein. 2011.
+        Distributed Optimization and Statistical Learning via the Alternating
+        Direction Method of Multipliers. Foundations and Trends in Machine
+        Learning, 3(1), 1-122. \doi{10.1561/2200000016}.
 }
 }
 \author{

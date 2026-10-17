@@ -1,0 +1,3 @@
+"operation","result","R_version","Matrix_version"
+"complex_sparse_construction","“zgTMatrix” is not a defined class","4.6.1","1.7.6"
+"complex_dense_by_real_sparse_product","“zgeMatrix” is not a defined class","4.6.1","1.7.6"

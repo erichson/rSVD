@@ -23,7 +23,8 @@ benchmark_options <- function(arguments) {
   usage <- paste(
     "Usage: Rscript tools/benchmark-lowrank.R --library PATH --output FILE.csv",
     "       [--reps 3] [--cases comma,separated,case,names] [--profile-dir PATH]",
-    "Cases: qb_sparse_tall,qb_sparse_wide,rsvd_dense_tall,rpca_no_scores,id_full_rank",
+    "Cases: qb_sparse_tall,qb_sparse_wide,rsvd_dense_tall,rpca_no_scores,id_full_rank,",
+    "       rpca_sparse_tall,rpca_sparse_wide,rpca_sparse_no_scores,rpca_sparse_predict",
     sep = "\n")
   if (length(arguments) == 0L || "--help" %in% arguments) {
     cat(usage, "\n")
@@ -107,6 +108,24 @@ benchmark_case <- function(name) {
                                               center = FALSE, scale = FALSE,
                                               retx = FALSE)))
   }
+  if (name %in% c("rpca_sparse_tall", "rpca_sparse_wide",
+                   "rpca_sparse_no_scores", "rpca_sparse_predict")) {
+    A <- benchmark_sparse_fixture()
+    if (name == "rpca_sparse_wide") A <- Matrix::t(A)
+    scores <- name != "rpca_sparse_no_scores"
+    if (name == "rpca_sparse_predict") {
+      # Fit outside the measured prediction call.
+      set.seed(731)
+      model <- rsvd::rpca(A, k = 20, p = 10, q = 2, retx = FALSE)
+      return(list(A = A, algorithm = "predict.rpca", k = 20L, p = 10L,
+                  q = 2L, rand = TRUE, retx = TRUE, center = TRUE, scale = TRUE,
+                  model = model, run = function(A) stats::predict(model, A)))
+    }
+    return(list(A = A, algorithm = "rpca", k = 20L, p = 10L, q = 2L,
+                rand = TRUE, retx = scores, center = TRUE, scale = TRUE,
+                run = function(A) rsvd::rpca(A, k = 20, p = 10, q = 2,
+                                              retx = scores)))
+  }
   if (name == "id_full_rank") {
     return(list(A = benchmark_dense_fixture(600L, 250L,
                                             seq(2, 1, length.out = 250)),
@@ -117,11 +136,13 @@ benchmark_case <- function(name) {
   stop("Unknown benchmark case: ", name, call. = FALSE)
 }
 
-benchmark_residual <- function(A, reconstructed_rows) {
+benchmark_residual <- function(A, reconstructed_rows, center = FALSE, scale = FALSE) {
   squared_error <- squared_norm <- 0
   for (first in seq.int(1L, nrow(A), by = 256L)) {
     rows <- seq.int(first, min(first + 255L, nrow(A)))
     reference <- as.matrix(A[rows, , drop = FALSE])
+    if (!is.logical(center)) reference <- sweep(reference, 2, center, "-")
+    if (!is.logical(scale)) reference <- sweep(reference, 2, scale, "/")
     difference <- reference - reconstructed_rows(rows)
     squared_error <- squared_error + sum(Mod(difference)^2)
     squared_norm <- squared_norm + sum(Mod(reference)^2)
@@ -136,6 +157,7 @@ benchmark_orthogonality <- function(Q) {
 benchmark_validate <- function(case, fit) {
   A <- case$A
   interpolation_error <- NA_real_
+  center <- scale <- FALSE
   if (case$algorithm == "rqb") {
     reconstructed_rows <- function(rows) fit$Q[rows, , drop = FALSE] %*% fit$B
     orthogonality <- benchmark_orthogonality(fit$Q)
@@ -148,21 +170,33 @@ benchmark_validate <- function(case, fit) {
     orthogonality <- max(benchmark_orthogonality(fit$u),
                           benchmark_orthogonality(fit$v))
     width <- length(fit$d)
-  } else if (case$algorithm == "rpca") {
-    stopifnot(is.null(fit$x))
-    transposed_rotation <- t(fit$rotation)
-    reconstructed_rows <- function(rows) {
-      (A[rows, , drop = FALSE] %*% fit$rotation) %*% transposed_rotation
+  } else if (case$algorithm %in% c("rpca", "predict.rpca")) {
+    model <- if (case$algorithm == "rpca") fit else case$model
+    if (case$algorithm == "rpca") {
+      if (case$retx) stopifnot(is.matrix(fit$x)) else stopifnot(is.null(fit$x))
+      scores <- fit$x
+    } else {
+      stopifnot(is.matrix(fit), identical(dim(fit), c(nrow(A), case$k)))
+      scores <- fit
     }
-    orthogonality <- benchmark_orthogonality(fit$rotation)
-    width <- ncol(fit$rotation)
+    center <- model$center
+    scale <- model$scale
+    transposed_rotation <- t(model$rotation)
+    reconstructed_rows <- function(rows) {
+      projected <- if (is.null(scores)) {
+        stats::predict(model, A[rows, , drop = FALSE])
+      } else scores[rows, , drop = FALSE]
+      projected %*% transposed_rotation
+    }
+    orthogonality <- benchmark_orthogonality(model$rotation)
+    width <- ncol(model$rotation)
   } else {
     reconstructed_rows <- function(rows) fit$C[rows, , drop = FALSE] %*% fit$Z
     interpolation_error <- max(abs(fit$Z[, fit$idx, drop = FALSE] - diag(case$k)))
     orthogonality <- NA_real_
     width <- nrow(fit$Z)
   }
-  residual <- benchmark_residual(A, reconstructed_rows)
+  residual <- benchmark_residual(A, reconstructed_rows, center, scale)
   if (!is.finite(residual) || residual > 1e-8 ||
       (!is.na(orthogonality) && orthogonality > 1e-8) ||
       (!is.na(interpolation_error) && interpolation_error > 1e-8)) {
@@ -200,7 +234,8 @@ benchmark_main <- function(arguments = commandArgs(trailingOnly = TRUE)) {
   loadNamespace("rsvd", lib.loc = options$library)
   loadNamespace("Matrix")
   cases <- c("qb_sparse_tall", "qb_sparse_wide", "rsvd_dense_tall",
-             "rpca_no_scores", "id_full_rank")
+             "rpca_no_scores", "id_full_rank", "rpca_sparse_tall",
+             "rpca_sparse_wide", "rpca_sparse_no_scores", "rpca_sparse_predict")
   if (!is.null(options$cases)) {
     selected <- strsplit(options$cases, ",", fixed = TRUE)[[1L]]
     if (!length(selected) || any(!selected %in% cases)) {
@@ -248,8 +283,10 @@ benchmark_main <- function(arguments = commandArgs(trailingOnly = TRUE)) {
                   input_class = class(case$A)[1L],
                   m = nrow(case$A), n = ncol(case$A), k = case$k,
                   p = case$p, q = case$q, rand = case$rand, retx = case$retx,
-                  center = if (case$algorithm == "rpca") FALSE else NA,
-                  scale = if (case$algorithm == "rpca") FALSE else NA,
+                  center = if (!is.null(case$center)) case$center else
+                    if (case$algorithm == "rpca") FALSE else NA,
+                  scale = if (!is.null(case$scale)) case$scale else
+                    if (case$algorithm == "rpca") FALSE else NA,
                   seed = seed, input_nonzeros = Matrix::nnzero(case$A),
                   input_object_bytes = as.numeric(object.size(case$A))),
              metadata, timing, samples, allocations, numerical,
