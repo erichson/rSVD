@@ -1,58 +1,100 @@
-#devtools::use_package('ggplot2', type = 'Suggests')
-#library('ggplot2')
-
-#' Biplot for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.
+#' @title PCA scores and variable directions in one plot
 #'
-#' @description Overlays the individual and variable factor maps, showing
-#' fitted principal-component scores and directions.
+#' @description Overlay the fitted observation scores and variable
+#' directions for two retained principal components from \code{\link{rpca}}.
+#' The optional \pkg{ggplot2} package is required.
 #'
-#' @details The plotted observations are the fitted scores. The
-#' \code{loadings} argument controls the arrow scale only; it does not rescale
-#' the observation scores.
-#'    
-#' @param  rpcaObj        Object returned by the \code{\link[rsvd]{rpca}} function.
-#'                          
-#' @param  pcs            Array_like. \cr
-#'                        An array with two values indicating the two PCs which should be used for plotting. 
-#'                        By default the first two PCs are used, e.g., \eqn{c(1,2)}. 
+#' @param rpcaObj An object returned by \code{\link{rpca}}, with
+#' real-valued scores and directions. Fit with \code{retx = TRUE} so that
+#' \code{rpcaObj$x} is available.
 #'
-#' @param loadings   Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                  If \eqn{TRUE}, each eigenvector is multiplied by the square
-#'                  root of its eigenvalue, \eqn{W = W * diag(sqrt(eigvals))}.
-#'                                                                              
-#' @param  groups         Factor, optional. \cr
-#'                        Factor indicating groups.
-#'                          
-#' @param  alpha          Scalar, optional. \cr
-#'                        Alpha transparency for scatter plot.
-#'                                                                                
-#' @param  ellipse        Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                        Draw the default 95\% multivariate-t data ellipse from
-#'                        \code{\link[ggplot2]{stat_ellipse}} for each supplied
-#'                        group, if \eqn{TRUE}.
-#'  
-#' @param  alpha.ellipse  Scalar, optional. \cr
-#'                        Alpha transparency for ellipse.
-#' 
-#' @param  var_labels  Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                        Plot variable names, if \eqn{TRUE}.
-#' 
-#' @param var_labels.names     Array_like, optional. \cr
-#'                        User specific labels for the individuals.     
-#' 
-#' @param  ind_labels  Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                        Plot data point names, if \eqn{TRUE}.
-#' 
-#' @param ind_labels.names     Array_like, optional. \cr
-#'                        User specific labels for data points. 
-#' 
-#' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
+#' @param pcs Integer vector of length two selecting the retained principal
+#' components to plot, in horizontal and vertical order. The default is
+#' \code{c(1, 2)}; both selected components must be present in the fit.
 #'
-#' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
-#' 
+#' @param loadings Logical; when \code{TRUE} (the default), multiply each
+#' selected direction by its component standard deviation, so the coordinates
+#' are \code{rotation[, pcs]} scaled columnwise by \code{sdev[pcs]}.
+#' When \code{FALSE}, plot the unscaled entries of \code{rotation[, pcs]}.
+#'
+#' @param groups Optional factor with one entry for each row of \code{rpcaObj$x},
+#' in the same order. It controls the point colours and, when requested, the
+#' ellipses. The default, \code{NULL}, uses one colour and draws no ellipse.
+#' If \code{rpca} omitted incomplete observations, supply groups for the
+#' retained rows only.
+#'
+#' @param alpha Numeric value between zero and one controlling point
+#' transparency, with zero fully transparent and one opaque. The default is
+#' \code{0.6}.
+#'
+#' @param ellipse Logical; draw a filled data ellipse for each supplied group
+#' when \code{TRUE} (the default). Uses the defaults of
+#' \code{\link[ggplot2]{stat_ellipse}}: a multivariate-t ellipse at level
+#' \code{0.95}. See Details for its interpretation.
+#'
+#' @param alpha.ellipse Numeric value between zero and one controlling ellipse
+#' transparency. The default is \code{0.2}; ignored when no ellipse is drawn.
+#'
+#' @param var_labels Logical; label the variable arrows when
+#' \code{TRUE} (the default).
+#'
+#' @param var_labels.names Optional character vector with one label per row of
+#' \code{rpcaObj$rotation}, in the original variable order. By default, the
+#' rotation row names are used, or sequential variable numbers when names
+#' are absent.
+#' Labels are displayed only when \code{var_labels = TRUE}.
+#'
+#' @param ind_labels Logical; show a text label for each observation when
+#' \code{TRUE} (the default). Set to \code{FALSE} to reduce clutter.
+#'
+#' @param ind_labels.names Optional character vector with one label per row of
+#' \code{rpcaObj$x}, in the same order. By default, the score row names are
+#' used, or sequential row numbers when names are absent. Labels are displayed
+#' only when \code{ind_labels = TRUE}.
+#'
+#' @details Observation coordinates are taken directly from
+#' \code{rpcaObj$x}. These are the fitted principal-component scores, with the
+#' centering and scaling requested in \code{rpca}; no additional normalization
+#' is applied. The \code{loadings} argument changes only the arrow coordinates.
+#' Thus, arrows and observations use their respective loading and score
+#' scales, rather than an automatically matched visual scale.
+#'
+#' For centered variables with unit sample variance and nonzero component
+#' variance, the default arrow coordinates describe correlations of the
+#' variables with the fitted component scores. For other preprocessing choices,
+#' they are scaled directions and need not be correlations. Use
+#' \code{\link{ggcorplot}} to view the directions separately with a unit circle.
+#'
+#' Axis labels report the selected components and their shares of the total
+#' processed variance stored in \code{rpcaObj$var}, including variance outside
+#' the retained components.
+#'
+#' The ellipses describe the spread of fitted scores in
+#' each group under the multivariate-t model used by
+#' \code{\link[ggplot2]{stat_ellipse}}. Its multivariate-t computation also
+#' requires the recommended package \pkg{MASS}. They are data ellipses, not confidence
+#' regions for group means or tests of group separation. Small groups or
+#' degenerate score distributions may not support ellipse estimation; use
+#' \code{ellipse = FALSE} in that case.
+#'
+#' @return A \pkg{ggplot2} plot object. Print the object to draw the
+#' plot, or add layers, labels, and themes with \pkg{ggplot2}.
+#'
+#' @seealso \code{\link{rpca}}, \code{\link{ggindplot}},
+#' \code{\link{ggcorplot}}, \code{\link{ggscreeplot}},
+#' \code{\link[ggplot2]{ggplot}}, \code{\link[ggplot2]{stat_ellipse}}
+#'
+#' @author N. Benjamin Erichson
+#'
 #' @examples
-#' #See ?rpca
-
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   set.seed(42)
+#'   fit <- rpca(iris[, 1:4], k = 2)
+#'   p <- ggbiplot(fit, groups = iris$Species, ellipse = FALSE,
+#'                 ind_labels = FALSE)
+#'   print(p + ggplot2::labs(title = "Iris scores and variable directions"))
+#' }
+#'
 #' @export
 ggbiplot <- function( rpcaObj, pcs = c(1,2), loadings=TRUE, groups = NULL, alpha = 0.6, 
                       ellipse = TRUE, alpha.ellipse=0.2,

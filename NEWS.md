@@ -102,3 +102,14 @@
   the selected subset, and that `idx_only = TRUE` still computes and returns
   interpolation or connector factors. Document row indices after missing-row
   omission and provide readable plain-text versions of the help equations.
+* Review all help pages against the implementation, with complete argument and
+  return-value descriptions, readable mathematics, cross-references, and small
+  executable examples. Document the existing PCA prediction and summary
+  methods, and distinguish batch robust PCA from prediction on new data.
+* Correct the `digits` dataset description: its first column contains labels
+  and the remaining 784 columns contain pixels. Exclude the label when
+  reshaping a digit image, and document the stored scales of both datasets.
+* Explain the PCA plotting helpers' coordinate scaling, label selection,
+  retained-versus-total variance, and optional ellipse requirements. Remove
+  obsolete contact addresses from help pages; the maintainer contact remains
+  in `DESCRIPTION`.

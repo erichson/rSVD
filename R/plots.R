@@ -1,32 +1,56 @@
-#devtools::use_package('ggplot2')
-#library('ggplot2')
-
 #' @title PCA summary plots
-#
-#' @description Creates the available scree, variable, and individual factor
-#'              plots for an object returned by \code{\link[rsvd]{rpca}}.
 #'
-#' @details A scree plot is always drawn. The variable factor map requires at
-#' least two retained components. The individual factor map additionally
-#' requires fitted scores, obtained with \code{retx = TRUE}.
+#' @description Draw the available scree, variable, and individual factor plots for an
+#' object returned by \code{\link{rpca}}.
 #'
-#' @param x   Object returned by the \code{\link[rsvd]{rpca}} function.
+#' @details The plots are drawn in sequence on the active graphics device. A scree
+#' plot is always drawn. The variable factor map requires at least two
+#' retained components; the individual factor map additionally requires
+#' fitted scores, obtained with \code{retx = TRUE}. With one retained
+#' component only the scree plot is drawn. With at least two components and
+#' \code{retx = FALSE}, the scree and variable factor plots are drawn.
+#'
+#' The \pkg{ggplot2} package must be installed. Factor maps default to
+#' components one and two. Any observation groups or labels must correspond
+#' to the fitted scores, after incomplete training rows have been omitted.
+#' Call the individual plotting helpers directly to retain, customize, or
+#' save a particular plot.
+#'
+#' @param x An object returned by \code{\link{rpca}}. Factor maps are intended
+#' for real-valued loadings and scores.
 #'
 #' @param ... Named arguments for \code{\link{ggscreeplot}},
-#' \code{\link{ggcorplot}}, or \code{\link{ggindplot}}. Each argument is passed
-#' only to the helpers that accept it; for example, \code{type} selects the
-#' scree-plot quantity and \code{pcs} selects components for the factor maps.
-#' Argument names must be exact and unique. Unknown names are rejected.
-#' An explicit \code{pcs} value must contain two finite numeric component
-#' indices within the retained range, even when a factor map is unavailable.
+#' \code{\link{ggcorplot}}, or \code{\link{ggindplot}}. Each argument is
+#' passed only to helpers that accept it: for example, \code{type} selects
+#' the scree-plot quantity, \code{pcs} selects components for both factor
+#' maps, and \code{groups} is used only for the individual factor map.
+#' Names must be exact and unique; unknown or unnamed arguments are
+#' rejected. An explicit \code{pcs} value must contain two finite numeric
+#' component indices within the retained range, even when a factor map is
+#' unavailable.
 #'
-#' @return The last plot drawn, returned invisibly.
+#' @return The last \pkg{ggplot2} plot drawn, returned invisibly. This is the
+#' individual factor map when available, otherwise the variable factor map
+#' or the scree plot.
 #'
-#' @seealso \code{\link{ggscreeplot}}, \code{\link{ggcorplot}} , \code{\link{ggindplot}}  
+#' @seealso \code{\link{rpca}}, \code{\link{ggscreeplot}},
+#' \code{\link{ggcorplot}}, \code{\link{ggindplot}},
+#' \code{\link{ggbiplot}}.
 #'
-#' @examples #
+#' @author N. Benjamin Erichson
 #'
-#'@export
+#' @examples if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   set.seed(42)
+#'   fit <- rpca(iris[, 1:4], k = 2)
+#'   last_plot <- plot(fit, type = "ratio", pcs = c(1, 2),
+#'                     groups = iris$Species, ind_labels = FALSE,
+#'                     ellipse = FALSE)
+#'
+#'   # Request a single plot directly for further customization or saving.
+#'   scree <- ggscreeplot(fit, type = "cum")
+#' }
+#'
+#' @export
 plot.rpca <- function(x, ... ) {
   
   if (!requireNamespace('ggplot2', quietly = TRUE)) {

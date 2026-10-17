@@ -1,88 +1,141 @@
-#' @title  Randomized QB Decomposition (rqb).
-#
-#' @description Compute the near-optimal QB decomposition of a rectangular matrix.
-#
+#' @title Randomized QB decomposition
+#'
+#' @description Compute an orthonormal basis and the projection of a matrix onto that
+#' basis, using either randomized range finding or a deterministic QR
+#' factorization.
+#'
 #' @details
-#' The randomized QB decomposition factors a rectangular \eqn{(m,n)} matrix \eqn{A} as
-#' \eqn{A \approx Q * B}. In the randomized case, \eqn{Q} has \eqn{l} orthonormal
-#' columns and \eqn{B} has dimensions \eqn{(l,n)}, where
-#' \eqn{l = \min(k+p,m,n)} for integer \eqn{k} and \eqn{p}. The oversampled
-#' basis is retained. In the deterministic case, \eqn{l = \min(k,m,n)}.
-#' The target rank is assumed to be \eqn{k << min(m,n)}.   
+#' The QB decomposition approximates a matrix by
+#' \deqn{A \approx Q B, \qquad B = Q^{H} A.}{A is approximately Q \%*\% B, where B = Conj(t(Q)) \%*\% A.}
+#' The superscript \eqn{H} denotes the conjugate transpose, which is the ordinary
+#' transpose for real input. Thus \code{Q \%*\% B} is the orthogonal projection
+#' of \code{A} onto the column space of \code{Q}. The input is not centered
+#' or scaled.
 #'
-#' \eqn{p} is an oversampling parameter to improve the approximation.
-#' A value between 5 and 10 is recommended, and \eqn{p=10} is set by default.
+#' When \code{rand = TRUE}, the basis width is
+#' \eqn{\ell = \min(k+p,m,n)}{ell = min(k + p, m, n)} for integer \code{k}
+#' and \code{p}. The oversampled columns are retained. Consequently, the result
+#' generally has \code{k + p} basis vectors, rather than the \code{k} singular
+#' triplets returned by \code{\link{rsvd}}. An SVD of the smaller matrix \code{B}
+#' can be used to truncate the approximation further.
 #'
-#' The parameter \eqn{q} specifies the number of power (subspace) iterations
-#' to reduce the approximation error. This is recommended
-#' if the singular values decay slowly. In practice 1 or 2 iterations
-#' achieve good results, however, computing power iterations increases the
-#' computational time. The number of power iterations is set to \eqn{q=2} by default.
+#' Randomized range finding samples \code{A}, applies \code{q} power iterations
+#' with intermediate orthogonalization, and projects onto the resulting basis.
+#' Oversampling and power iterations can improve approximation quality,
+#' especially when singular values decay slowly, but increase computational
+#' work. The parameters are fixed: there is no adaptive error tolerance or
+#' automatic rank selection. Low-rank approximation is useful when the retained
+#' subspace captures the information needed by the application; full algebraic
+#' rank by itself does not rule this out.
 #'
-#' In the randomized case, sparse \pkg{Matrix} inputs are kept sparse during
-#' multiplication. Only the samples, basis and projected matrix are dense.
-#' The deterministic case returns the first \eqn{k} basis vectors of base R's
-#' QR factorization. For real input with a numerically independent leading
-#' block, only those \eqn{k} columns need a dense factorization. Other cases,
-#' including complex input and deficient leading columns, use the full dense
-#' QR fallback. The deterministic basis follows base QR's column ordering and
-#' is not necessarily an optimal rank-\eqn{k} subspace. Both cases return
-#' ordinary R matrices for \code{Q} and \code{B}.
+#' When \code{rand = FALSE}, the basis width is
+#' \eqn{\ell = \min(k,m,n)}{ell = min(k, m, n)}. The result uses the first
+#' \eqn{\ell}{ell} columns of \code{qr.Q(qr(as.matrix(A)))}, with base R's
+#' default QR conventions. For real input with a numerically independent leading
+#' block, only that block needs dense factorization. Complex input, dependent
+#' leading columns and other cases use the full dense QR fallback. This preserves
+#' base QR's ordering, including its pivoting behavior; it does not guarantee an
+#' optimal rank-\code{k} subspace.
 #'
+#' For randomized decompositions, real-valued sparse \pkg{Matrix} inputs are
+#' multiplied by thin dense factors without converting the entire input to a
+#' dense matrix. Logical and pattern matrices are treated as zero/one data.
+#' Complex input is supported for ordinary R matrices. Samples, orthonormal
+#' bases and projected matrices are dense. The deterministic fallback can
+#' densify the entire input, so it is not a general sparse QR implementation.
+#' Constructing \code{Q \%*\% B} also forms a dense matrix.
 #'
-#' @param A       array_like; \cr
-#'                real/complex \eqn{(m, n)} input matrix (or data frame).
+#' Setting \code{k = NULL} uses the full available basis width and gives up the
+#' small-rank storage advantage. The function does not reduce that width based
+#' on an estimated numerical rank.
 #'
-#' @param k       integer, optional; \cr
-#'                target rank of the low-rank decomposition. It should satisfy \eqn{k << min(m,n)}.
+#' @param A A real or complex numeric matrix or a numeric data frame. Sparse and
+#' dense matrices from the \pkg{Matrix} package are supported; see Details.
+#' Other matrix-like inputs are converted with \code{as.matrix}. The input
+#' must have positive dimensions and finite entries.
 #'
-#' @param p       integer, optional; \cr
-#'                oversampling parameter (default \eqn{p=10}).
+#' @param k A positive integer giving the target rank before randomized
+#' oversampling. Requests larger than \code{min(dim(A))} are capped at that
+#' value. The default, \code{NULL}, requests the full available rank. Use a
+#' rank much smaller than the matrix dimensions for the main computational
+#' savings.
 #'
-#' @param q       integer, optional; \cr
-#'                number of power iterations (default \eqn{q=2}).
+#' @param p A non-negative integer oversampling parameter for the randomized
+#' algorithm. The default is 10. Unlike \code{rsvd}, \code{rqb} retains the
+#' oversampled basis; see Details. This does not change the basis width when
+#' \code{rand = FALSE}.
 #'
-#' @param sdist   string \eqn{c( 'unif', 'normal', 'rademacher')}, optional; \cr
-#'                specifies the sampling distribution: \cr
-#'                \eqn{'unif'} :  Uniform `[0,1]`. \cr
-#'                \eqn{'normal}' (default) : Normal `~N(0,1)`. \cr
-#'                \eqn{'rademacher'} : Rademacher random variates. \cr
+#' @param q A non-negative integer giving the number of randomized power
+#' (subspace) iterations. The default is 2; zero skips these iterations.
+#' Unused when \code{rand = FALSE}.
 #'
-#' @param rand  bool, optional; \cr
-#'              If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.
+#' @param sdist A character string selecting the sampling distribution.
+#' \code{"normal"} (the default) uses
+#' standard normal entries, \code{"unif"} uses uniform entries on \eqn{[0,1]},
+#' and \code{"rademacher"} uses equally likely values of -1 and 1. For complex
+#' input, the real and imaginary parts are sampled independently. Unused when
+#' \code{rand = FALSE}.
 #'
+#' @param rand A logical value. If \code{TRUE} (the default), use randomized range
+#' finding; otherwise use the deterministic QR basis described below.
 #'
-#'@return \code{rqb} returns a list containing the following components:
+#' @return
+#' A list of class \code{"rqb"} containing two ordinary R matrices:
 #' \describe{
-#'\item{Q}{  array_like; \cr
-#'           matrix with orthonormal columns; \eqn{(m, l)} dimensional array.
-#'}
+#'   \item{Q}{An \eqn{m \times \ell}{m by ell} matrix with orthonormal columns.}
+#'   \item{B}{An \eqn{\ell \times n}{ell by n} matrix containing the projection
+#'   \eqn{Q^{H} A}{Conj(t(Q)) \%*\% A}.}
+#' }
+#' The input dimensions are \eqn{m \times n}{m by n}. The basis width \eqn{\ell}{ell}
+#' is defined in Details and is not automatically reduced to the numerical rank.
 #'
-#'\item{B}{  array_like; \cr
-#'           smaller matrix; \eqn{(l, n)} dimensional array.
-#'}
-#'}
-#'
+#' @note
+#' The basis is not unique: signs, complex phases or rotations within the
+#' same subspace can change \code{Q} and \code{B} while preserving their product.
+#' Assess the reconstruction or subspace instead of individual basis entries.
+#' Use \code{set.seed} for reproducible random sampling within a fixed numerical
+#' environment. The deterministic branch does not draw random numbers.
 #'
 #' @references
 #' \itemize{
-#'  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
-#'        Randomized Matrix Decompositions Using {R}. 
-#'        Journal of Statistical Software, 89(11), 1-48.
-#'         \doi{10.18637/jss.v089.i11}.
-#' 
-#'   \item  [2] N. Halko, P. Martinsson, and J. Tropp.
-#'          "Finding structure with randomness: probabilistic
-#'          algorithms for constructing approximate matrix
-#'          decompositions" (2009).
-#'          (available at arXiv \url{https://arxiv.org/abs/0909.4061}).
-#'}
+#'   \item N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
+#'   Randomized Matrix Decompositions Using R.
+#'   Journal of Statistical Software, 89(11), 1-48.
+#'   \doi{10.18637/jss.v089.i11}.
 #'
-#' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
-#' 
-#' @seealso \code{\link{svd}}
-#' 
+#'   \item N. Halko, P. Martinsson and J. Tropp. 2009.
+#'   Finding structure with randomness: probabilistic algorithms for
+#'   constructing approximate matrix decompositions.
+#'   \url{https://arxiv.org/abs/0909.4061}.
+#' }
 #'
+#' @author N. Benjamin Erichson
+#'
+#' @seealso \code{\link{rsvd}}, \code{\link{svd}}, \code{\link{qr}}
+#'
+#' @examples
+#' # An exact rank-three signal.
+#' set.seed(42)
+#' A <- matrix(rnorm(60 * 3), 60, 3) %*% matrix(rnorm(3 * 40), 3, 40)
+#' qb <- rqb(A, k = 3, p = 2, q = 1)
+#' dim(qb$Q)  # 60 by 5: randomized QB retains the two oversampling columns.
+#' norm(A - qb$Q %*% qb$B, "F") / norm(A, "F")
+#'
+#' # Further truncation is performed in the projected matrix.
+#' small <- svd(qb$B, nu = 3, nv = 3)
+#' U <- qb$Q %*% small$u
+#' A_approx <- sweep(U, 2, small$d[1:3], "*") %*% Conj(t(small$v))
+#' norm(A - A_approx, "F") / norm(A, "F")
+#'
+#' # The deterministic branch returns k columns, without oversampling.
+#' qb_deterministic <- rqb(A, k = 3, rand = FALSE)
+#' dim(qb_deterministic$Q)
+#' norm(A - qb_deterministic$Q %*% qb_deterministic$B, "F") / norm(A, "F")
+#'
+#' # Sparse randomized QB still returns ordinary dense factors.
+#' S <- Matrix::Diagonal(x = c(9, 4, 1, rep(0, 17)))
+#' qb_sparse <- rqb(S, k = 3, p = 2, q = 1)
+#' dim(qb_sparse$B)
 
 #' @export
 rqb <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) UseMethod("rqb")

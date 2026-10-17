@@ -1,135 +1,152 @@
-#' @title  Randomized Singular Value Decomposition (rsvd).
-#
-#' @description The randomized SVD computes the near-optimal low-rank approximation of a rectangular matrix
-#' using a fast probabilistic algorithm.
-#
+#' @title Randomized singular value decomposition
+#'
+#' @description Compute an approximate truncated singular value decomposition using a
+#' randomized range finder and a singular value decomposition of the projected
+#' matrix.
+#'
 #' @details
-#' The singular value decomposition (SVD) plays an important role in data analysis, and scientific computing.
-#' Given a rectangular \eqn{(m,n)} matrix \eqn{A}, and a target rank \eqn{k << min(m,n)}, 
-#' the SVD factors the input matrix \eqn{A} as
-#' 
-#' \deqn{ A \approx U_{k} diag(d_{k}) V_{k}^{*} }{ A ~ U diag(d) Conj(t(V))}
-#' Here \eqn{*} denotes the conjugate transpose.
-#' 
-#' The \eqn{k} left singular vectors are the columns of the
-#' real or complex unitary matrix \eqn{U}. The \eqn{k} right singular vectors are the columns
-#' of the real or complex unitary matrix \eqn{V}. The \eqn{k} dominant singular values are the 
-#' entries of \eqn{d}, and non-negative and real numbers.
+#' For an \eqn{m \times n}{m by n} input matrix \eqn{A}, the rank-\eqn{k}
+#' approximation has the form
+#' \deqn{A \approx U_k D_k V_k^{H}.}{A is approximately U \%*\% diag(d) \%*\% Conj(t(V)).}
+#' The columns of \eqn{U_k} and \eqn{V_k} are orthonormal and the diagonal of
+#' \eqn{D_k} contains the returned singular values. The superscript \eqn{H}
+#' denotes the conjugate transpose, which is the ordinary transpose for real
+#' data. Reconstruction requires both sets of vectors; use
+#' \code{Conj(t(v))}, rather than \code{t(v)}, with complex input.
 #'
-#' \eqn{p} is an oversampling parameter to improve the approximation.
-#' A value of at least 10 is recommended, and \eqn{p=10} is set by default.
+#' The algorithm first samples a subspace of width
+#' \eqn{\ell = \min(k+p,m,n)}{ell = min(k + p, m, n)}, performs \code{q}
+#' power iterations with intermediate orthogonalization, and computes an SVD
+#' inside that subspace. Oversampling provides extra directions for finding the
+#' dominant rank-\code{k} subspace; only \code{k} singular values are returned.
+#' Increasing \code{p} or \code{q} can improve accuracy but increases work and,
+#' for \code{p}, intermediate storage. These are fixed controls: the function
+#' does not adapt them to an error tolerance or estimate a numerical rank.
 #'
-#' The parameter \eqn{q} specifies the number of power (subspace) iterations
-#' to reduce the approximation error. The power scheme is recommended,
-#' if the singular values decay slowly. In practice, 2 or 3 iterations
-#' achieve good results, however, computing power iterations increases the
-#' computational costs. The power scheme is set to \eqn{q=2} by default.
-#'
-#' If \eqn{k > (min(n,m)/4)}, a deterministic partial or truncated \code{\link{svd}}
-#' algorithm might be faster.
-#'
-#' Approximation quality depends on the singular-value decay, not just the
-#' algebraic rank. A full-rank matrix with rapidly decaying singular values can
-#' have an accurate low-rank approximation. A flat spectrum generally cannot.
-#' The optimal rank-\eqn{k} Frobenius error is
-#' \eqn{\sqrt{\sum_{j>k} d_j^2}}; compare a randomized residual with this tail
+#' Accuracy depends on the singular-value decay and the chosen rank. A full-rank
+#' matrix can have a useful low-rank approximation when its singular values
+#' decay rapidly. For a flat spectrum and a small target rank, even an optimal
+#' approximation leaves a large residual. If \eqn{\sigma_j}{sigma[j]} are the
+#' singular values of the original matrix in decreasing order, its optimal rank-\eqn{k} Frobenius
+#' error is
+#' \deqn{\left(\sum_{j>k}\sigma_j^2\right)^{1/2}.}{The square root of the sum of sigma[j]^2 over j > k.}
+#' The tail is zero when \code{k} reaches the full available rank.
+#' Compare a randomized reconstruction residual with this truncation error,
 #' rather than expecting exact recovery of an arbitrary full-rank matrix.
+#' Use the same preprocessing and target rank for both approximations.
 #'
-#' Sparse matrices from the \pkg{Matrix} package are supported without converting
-#' the entire input to a dense matrix. The random samples, orthonormal basis,
-#' projected matrix and returned singular vectors are generally dense.
-#' Intermediate storage therefore depends on \eqn{k+p} as well as the input size.
-#' Setting \code{k = NULL} requests all singular values and loses the storage
-#' advantage of a small target rank.
+#' The input is not centered or scaled. See \code{\link{rpca}} for principal
+#' component analysis with those preprocessing options.
 #'
+#' Real-valued sparse \pkg{Matrix} inputs are multiplied by thin dense factors
+#' without converting the entire input to a dense matrix. Logical and pattern
+#' matrices are treated as zero/one data. Complex input is supported for ordinary
+#' R matrices. Random samples, intermediate bases, projected matrices and
+#' returned singular vectors are generally dense, so sparse input does not make
+#' all intermediate storage sparse. Explicitly reconstructing the approximation
+#' also creates a dense matrix.
 #'
-#' @param A       array_like; \cr
-#'                a real/complex \eqn{(m, n)} input matrix (or data frame) to be decomposed.
+#' Omitting \code{k} requests all available singular values, even if \code{nu}
+#' or \code{nv} requests only a few vectors. This loses the small-rank storage
+#' advantage. When the target rank is a substantial fraction of the matrix
+#' dimensions, a deterministic method may be faster; \code{\link{svd}} is a
+#' natural reference for a full SVD.
 #'
-#' @param k       integer; \cr
-#'                specifies the target rank of the low-rank decomposition. \eqn{k} should satisfy \eqn{k << min(m,n)}.
+#' @param A A real or complex numeric matrix or a numeric data frame. Sparse and
+#' dense matrices from the \pkg{Matrix} package are supported; see Details.
+#' The input must have positive dimensions and finite entries.
 #'
-#' @param nu      integer, optional; \cr
-#'                number of left singular vectors to be returned. \eqn{nu} must be between \eqn{0} and \eqn{k}.
+#' @param k A positive integer giving the target rank. The default,
+#' \code{NULL}, uses the smaller matrix dimension; larger requests are capped
+#' at that value. Use a rank much smaller than both dimensions for the main
+#' computational savings.
 #'
-#' @param nv      integer, optional; \cr
-#'                number of right singular vectors to be returned. \eqn{nv} must be between \eqn{0} and \eqn{k}.
+#' @param nu An integer giving the number of left singular vectors to return. The default,
+#' \code{NULL}, returns \code{k} vectors. Integer requests are clamped to the
+#' range from zero to the effective target rank; zero omits \code{u}.
 #'
-#' @param p       integer, optional; \cr
-#'                oversampling parameter (by default \eqn{p=10}).
+#' @param nv An integer giving the number of right singular vectors to return. The default,
+#' \code{NULL}, returns \code{k} vectors. Integer requests are clamped to the
+#' range from zero to the effective target rank; zero omits \code{v}.
 #'
-#' @param q       integer, optional; \cr
-#'                number of additional power iterations (by default \eqn{q=2}).
+#' @param p A non-negative integer oversampling parameter. The default is 10.
+#' The sketch uses up to \code{k + p} columns, bounded by the matrix dimensions.
 #'
-#' @param sdist   string \eqn{c( 'unif', 'normal', 'rademacher')}, optional; \cr
-#'                specifies the sampling distribution of the random test matrix: \cr
-#'                		\eqn{'unif'} :  Uniform `[0,1]`. \cr
-#'                		\eqn{'normal}' (default) : Normal `~N(0,1)`. \cr
-#'                		\eqn{'rademacher'} : Rademacher random variates. \cr
+#' @param q A non-negative integer giving the number of power (subspace)
+#' iterations. The default is 2; zero skips the power iterations.
 #'
-#'@return \code{rsvd} returns a list containing the following three components:
-#'\describe{
-#'\item{d}{  array_like; \cr
-#'           singular values; vector of length \eqn{(k)}.
-#'}
+#' @param sdist A character string selecting the sampling distribution.
+#' \code{"normal"} (the default) uses
+#' standard normal entries, \code{"unif"} uses uniform entries on \eqn{[0,1]},
+#' and \code{"rademacher"} uses equally likely values of -1 and 1. For complex
+#' input, the real and imaginary parts are sampled independently.
 #'
-#'\item{u}{  array_like; \cr
-#'           left singular vectors; \eqn{(m, k)} or \eqn{(m, nu)} dimensional array.
-#'           Omitted when \code{nu = 0}.
-#'}
+#' @return
+#' A list of class \code{"rsvd"} with the following components. Here
+#' \code{k} denotes the target rank after clamping to the matrix dimensions.
+#' \describe{
+#'   \item{d}{A numeric vector of length \code{k} containing the approximate
+#'   singular values in decreasing order. The values are non-negative.}
+#'   \item{u}{An ordinary R matrix with \code{nrow(A)} rows and \code{nu}
+#'   orthonormal columns, after applying the default and clamping rules above.
+#'   Omitted when no left singular vectors are requested.}
+#'   \item{v}{An ordinary R matrix with \code{ncol(A)} rows and \code{nv}
+#'   orthonormal columns, after applying the default and clamping rules above.
+#'   Omitted when no right singular vectors are requested.}
+#' }
 #'
-#'\item{v}{  array_like; \cr
-#'           right singular vectors; \eqn{(n, k)} or \eqn{(n, nv)} dimensional array. \cr
-#'           Omitted when \code{nv = 0}.
-#'}
-#'}
-#'
-#' @note The singular vectors are not unique and only defined up to sign
-#' (a constant of modulus one in the complex case). If a left singular vector
-#' has its sign changed, changing the sign of the corresponding right vector
-#' gives an equivalent decomposition.
-#' Use \code{set.seed} for reproducibility within a fixed numerical environment.
-#' Repeated singular values also allow rotations within their singular subspace;
-#' compare residuals or subspaces rather than individual vector entries.
-#'
+#' @note
+#' Singular vectors are defined only up to sign, or a constant of modulus one
+#' for complex data; multiplying a corresponding left and right vector by the
+#' same factor leaves the reconstruction unchanged. Repeated singular values
+#' also allow rotations within their singular subspace, and closely spaced
+#' values can make individual directions sensitive. Compare residuals or
+#' subspaces instead of expecting entrywise agreement between singular vectors.
+#' Use \code{set.seed} for reproducibility within a fixed numerical environment;
+#' identical vectors are not guaranteed across BLAS or package versions.
 #'
 #' @references
 #' \itemize{
-#'  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
-#'        Randomized Matrix Decompositions Using {R}. 
-#'        Journal of Statistical Software, 89(11), 1-48.
-#'         \doi{10.18637/jss.v089.i11}.
-#' 
-#'  \item  [2] N. Halko, P. Martinsson, and J. Tropp.
-#'          "Finding structure with randomness: probabilistic
-#'          algorithms for constructing approximate matrix
-#'          decompositions" (2009).
-#'          (available at arXiv \url{https://arxiv.org/abs/0909.4061}).
+#'   \item N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
+#'   Randomized Matrix Decompositions Using R.
+#'   Journal of Statistical Software, 89(11), 1-48.
+#'   \doi{10.18637/jss.v089.i11}.
+#'
+#'   \item N. Halko, P. Martinsson and J. Tropp. 2009.
+#'   Finding structure with randomness: probabilistic algorithms for
+#'   constructing approximate matrix decompositions.
+#'   \url{https://arxiv.org/abs/0909.4061}.
 #' }
 #'
-#' @author N. Benjamin Erichson, \email{erichson@berkeley.edu}
-#' 
-#' @seealso \code{\link{svd}}, \code{\link{rpca}}
-#' 
+#' @author N. Benjamin Erichson
+#'
+#' @seealso \code{\link{svd}}, \code{\link{rqb}}, \code{\link{rpca}}
+#'
 #' @examples
-#'library('rsvd')
+#' # A low-rank signal with small dense noise.
+#' set.seed(42)
+#' A <- matrix(rnorm(60 * 5), 60, 5) %*% matrix(rnorm(5 * 40), 5, 40)
+#' A <- A + 0.01 * matrix(rnorm(60 * 40), 60, 40)
+#' k <- 5L
+#' fit <- rsvd(A, k = k, p = 5, q = 2)
+#' A_approx <- sweep(fit$u, 2, fit$d, "*") %*% Conj(t(fit$v))
 #'
-#'# Create a n x n Hilbert matrix of order n,
-#'# with entries H[i,j] = 1 / (i + j - 1).
-#'hilbert <- function(n) { i <- 1:n; 1 / outer(i - 1, i, "+") }
-#'H <- hilbert(n=50)
+#' # Compare residuals at the same target rank on this small matrix.
+#' d <- svd(A, nu = 0, nv = 0)$d
+#' best <- sqrt(sum(d[-seq_len(k)]^2))
+#' c(randomized = norm(A - A_approx, "F"), optimal = best)
 #'
-#'# Low-rank (k=10) matrix approximation using rsvd
-#'k=10
-#'s <- rsvd(H, k=k)
-#'Hre <- s$u %*% diag(s$d) %*% t(s$v) # matrix approximation
-#'print(100 * norm( H - Hre, 'F') / norm( H,'F')) # percentage error
-
-#'# Compare to truncated base svd
-#'s <- svd(H)
-#'Hre <- s$u[,1:k] %*% diag(s$d[1:k]) %*% t(s$v[,1:k]) # matrix approximation
-#'print(100 * norm( H - Hre, 'F') / norm( H,'F')) # percentage error
+#' # Complex data require a conjugate transpose for reconstruction.
+#' Z <- A + 1i * A[, rev(seq_len(ncol(A)))]
+#' fit_complex <- rsvd(Z, k = k, p = 5, q = 2)
+#' Z_approx <- sweep(fit_complex$u, 2, fit_complex$d, "*") %*%
+#'   Conj(t(fit_complex$v))
+#' sqrt(sum(Mod(Z - Z_approx)^2) / sum(Mod(Z)^2))
 #'
+#' # Sparse input stays sparse; the returned factors are dense.
+#' S <- Matrix::Diagonal(x = c(9, 4, 1, rep(0, 17)))
+#' fit_sparse <- rsvd(S, k = 3, p = 2, q = 1)
+#' fit_sparse$d
 
 #' @export
 rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal") UseMethod("rsvd")

@@ -2,7 +2,10 @@
 % Please edit documentation in R/rpca.R
 \name{rpca}
 \alias{rpca}
-\title{Randomized principal component analysis (rpca).}
+\alias{print.rpca}
+\alias{summary.rpca}
+\alias{predict.rpca}
+\title{Randomized principal component analysis}
 \usage{
 rpca(
   A,
@@ -14,172 +17,203 @@ rpca(
   q = 2,
   rand = TRUE
 )
+
+\method{print}{rpca}(x, ...)
+
+\method{summary}{rpca}(object, ...)
+
+\method{predict}{rpca}(object, newdata, ...)
 }
 \arguments{
-\item{A}{array_like; \cr
-a numeric \eqn{(m, n)} input matrix (or data frame) to be analyzed. \cr
-If the data contain \eqn{NA}s na.omit is applied.}
+\item{A}{A numeric matrix or data frame with observations in rows and variables
+in columns. Dense real or complex data and real sparse matrices from
+\pkg{Matrix} are supported. Rows containing missing values are omitted
+with a warning. In the dimensions below, \eqn{m} is the number of retained
+observations and \eqn{n} is the number of variables.}
 
-\item{k}{integer; \cr
-number of dominant principal components to be computed. It is required that \eqn{k} is smaller or equal to
-\eqn{min(m,n)}, but it is recommended that \eqn{k << min(m,n)}.}
+\item{k}{A positive integer giving the number of principal components to return.
+Values greater than \code{min(m, n)} are reduced to that limit. The default,
+\code{NULL}, returns \code{min(m, n)} components using the deterministic
+SVD. The randomized method is most useful when \code{k} is much smaller
+than both matrix dimensions.}
 
-\item{center}{bool, optional; \cr
-logical value which indicates whether the variables should be
-shifted to be zero centered (\eqn{TRUE} by default).}
+\item{center}{Logical; subtract the training column means before computing the SVD
+(default \code{TRUE}). \code{FALSE} leaves the column means unchanged.}
 
-\item{scale}{bool, optional; \cr
-logical value which indicates whether the variables should
-be scaled (\eqn{TRUE} by default). Scaling gives unit sample
-variance for centered, nonconstant columns; see Details.}
+\item{scale}{Logical; divide each processed column by its scale factor (default
+\code{TRUE}). This gives unit sample variance for centered columns whose
+scale factors are at least \code{1e-8}; see Details.}
 
-\item{retx}{bool, optional; \cr
-logical value indicating whether the rotated variables / scores
-should be returned (\eqn{TRUE} by default).}
+\item{retx}{Logical; return the fitted component scores in \code{x} (default
+\code{TRUE}). With \code{FALSE}, \code{x} is \code{NULL}; loadings and
+new-data prediction remain available.}
 
-\item{p}{integer, optional; \cr
-oversampling parameter for \eqn{rsvd} (default \eqn{p=10}), see \code{\link{rsvd}}.}
+\item{p}{A nonnegative integer oversampling parameter for \code{\link{rsvd}}
+(default \code{10}). Ignored for the deterministic SVD.}
 
-\item{q}{integer, optional; \cr
-number of additional power iterations for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.}
+\item{q}{A nonnegative integer number of power iterations for
+\code{\link{rsvd}} (default \code{2}). Ignored for the deterministic SVD.}
 
-\item{rand}{bool, optional; \cr
-if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.
-If \code{k = NULL}, the deterministic SVD is used.}
+\item{rand}{Logical; use the randomized SVD when \code{TRUE} and \code{k} is
+supplied. With \code{FALSE}, or \code{k = NULL}, use the deterministic
+SVD. Requesting fewer components does not make the deterministic backend
+a partial SVD algorithm.}
+
+\item{...}{Additional arguments; currently ignored by the \code{print},
+\code{summary}, and \code{predict} methods.}
+
+\item{object, x}{An object returned by \code{rpca}.}
+
+\item{newdata}{A numeric matrix, data frame, or real sparse \pkg{Matrix} containing
+new observations. Supply the same variables in the same column order as
+the training data, with no missing values; see Details.}
 }
 \value{
-\code{rpca} returns a list with class \eqn{rpca} containing the following components:
+\code{rpca} returns a list of class \code{"rpca"} with these components:
 \describe{
-   \item{rotation}{  array_like; \cr
-                     the rotation (eigenvectors); \eqn{(n, k)} dimensional array.
-   }
-
-   \item{eigvals}{  array_like; \cr
-                    eigenvalues; \eqn{k} dimensional vector.
-   }
-   \item{sdev}{     array_like; \cr
-                    standard deviations of the principal components; \eqn{k} dimensional vector.
-   }
-   \item{var}{      numeric; \cr
-                    total variance / second moment of the processed data,
-                    including components not returned.
-   }
-   \item{x}{        array_like; \cr
-                    the scores / rotated data; \eqn{(m, k)} dimensional array.
-   }
-   \item{center, scale}{  array_like; \cr
-                    the centering and scaling used.
-   }
+  \item{rotation}{A dense \eqn{n} by \eqn{k} matrix of orthonormal
+    loadings (right singular vectors of the processed data).}
+  \item{eigvals}{A numeric vector of length \eqn{k} containing the
+    retained squared singular values divided by \eqn{m-1}. These estimate
+    the leading eigenvalues of the processed cross-product matrix divided
+    by \eqn{m-1}, which is the sample covariance matrix for centered data.}
+  \item{sdev}{A numeric vector of length \eqn{k}: the square roots of
+    \code{eigvals}.}
+  \item{var}{The squared Frobenius norm of the processed matrix divided
+    by \eqn{m-1}, including directions not returned. For centered data
+    this is the total sample variance.}
+  \item{x}{A dense \eqn{m} by \eqn{k} matrix of fitted scores, or
+    \code{NULL} when \code{retx = FALSE}. Rows correspond to complete
+    observations retained from the input.}
+  \item{center, scale}{Numeric vectors containing the training column
+    means and scale factors, respectively, or \code{FALSE} when the
+    corresponding operation was disabled. Centers can be complex;
+    scale factors are real.}
 }
+The \code{predict} method returns a dense matrix with one row per new
+observation and one column per retained component. The \code{summary}
+method returns a numeric matrix with rows for explained variance, standard
+deviation, proportion of variance, and cumulative proportion. Its entries
+are rounded to three decimal places. The \code{print} method displays
+standard deviations, eigenvalues, and loadings, and invisibly returns the
+displayed loading matrix.
 }
 \description{
-Fast computation of principal component analysis using the randomized singular value decomposition.
+Compute principal component loadings, scores, and variances from an
+optionally centered and scaled matrix, using a randomized or deterministic
+singular value decomposition (SVD).
 }
 \details{
-Principal component analysis is an important linear dimension reduction technique.
+The randomized algorithm uses \code{\link{rsvd}} to approximate the
+dominant singular subspace. Its computational advantage is greatest for
+large matrices and a small requested rank. The retained scores and
+loadings describe a low-rank approximation to the processed data. The
+\code{p} and \code{q} arguments trade additional work for approximation
+accuracy; use \code{set.seed} before fitting for reproducible random draws.
 
-Randomized PCA is computed via the randomized SVD algorithm (\code{\link{rsvd}}).
-The computational gain is substantial, if the desired number of principal components
-is relatively small, i.e. \eqn{k << min(m,n)}.
+Both centering and scaling are enabled by default. As in
+\code{\link[stats]{prcomp}}, \code{center = FALSE} simply skips centering;
+it supports both already-centered and uncentered data. With
+\code{scale = TRUE}, each column is divided by the square root of its sum
+of squared magnitudes divided by \eqn{m-1}, after any requested centering.
+This is the sample standard deviation for centered data. Scale factors
+below \code{1e-8} are replaced by one for compatibility, so constant and
+nearly constant columns are retained. Complex columns use squared
+magnitudes, giving real scale factors. Unlike the default in
+\code{prcomp}, scaling is enabled by default here.
 
-The print and summary method can be used to present the results in a nice format.
-A scree plot can be produced with \code{\link{ggscreeplot}}. 
-The individuals factor map can be produced with \code{\link{ggindplot}},
-and a correlation plot with \code{\link{ggcorplot}}.
+Total variance is the squared Frobenius norm of the processed matrix
+divided by \eqn{m-1}, including directions omitted from the approximation.
+For uncentered data it is squared energy divided by \eqn{m-1} and includes
+the contribution of the column means. At least two complete observations
+are needed for meaningful sample variances. Variance
+proportions are undefined when the processed matrix has zero total
+variance. The proportion attributed to a retained component is its
+\code{eigvals} entry divided by \code{var}, rather than divided by the sum
+of the retained eigenvalues.
 
-The predict function can be used to compute the scores of new observations. The data
-will automatically be centered (and scaled if requested), including for complex input.
-Complex variables are scaled using their squared moduli, so their scale factors are real.
-Supply new observations with the same variables in the same column order as the
-training input; prediction uses column positions and does not reorder by names.
+\code{predict(object, newdata)} applies the stored training centering and
+scaling, then multiplies the processed new observations by
+\code{object$rotation}. It does not estimate new means or scale factors,
+reorder columns by name, or omit incomplete new rows automatically.
+Prediction also works when the fit was created with \code{retx = FALSE}.
+Fitted scores retain the projected-SVD convention \eqn{U_k D_k}{U_k D_k}.
+For a randomized approximation, projecting the original training data
+with \code{predict} can differ from \code{object$x} by the range-finder
+residual. To reconstruct observations in the input variable coordinates,
+multiply fitted scores by the conjugate transpose of the loadings
+and then undo any scaling and centering. Scores alone are expressed in
+component coordinates.
 
-With \code{rand = TRUE} and a supplied \code{k}, real sparse matrices from
-\pkg{Matrix} are centered and scaled through implicit matrix products. The
-entire centered matrix is never formed; working storage includes the sparse
-entries and dense factors with width up to \eqn{k+p}. Returned loadings and
-scores are dense. With \code{rand = FALSE}, or \code{k = NULL}, the input is
-converted to a dense matrix for the deterministic SVD.
+With \code{rand = TRUE} and a supplied \code{k}, real sparse inputs are
+centered and scaled through implicit matrix products. The entire centered
+matrix is never formed; storage includes the sparse entries and dense
+working factors of width up to \code{k + p}, capped by the matrix
+dimensions. Loadings, fitted scores, and predicted scores are dense.
+With \code{rand = FALSE} or \code{k = NULL}, a sparse input is converted
+to a dense matrix for the deterministic SVD. This is ordinary PCA of
+sparse input, not a method imposing sparsity on the loadings.
 
-As in \code{\link{prcomp}}, \code{center = FALSE} simply skips centering. It
-supports both already-centered and uncentered data. With \code{scale = TRUE},
-each column is divided by the square root of its sum of squared moduli divided
-by \eqn{m-1}. This is the sample standard deviation when the column is centered.
-For compatibility, scale factors below \eqn{10^{-8}} are replaced by one;
-constant columns are retained rather than rejected.
-
-Total variance is the squared Frobenius norm of the processed matrix divided
-by \eqn{m-1}, including directions omitted from the rank-\eqn{k} approximation.
-For uncentered data this is a total second moment, consistent with the
-eigenvalues from the uncentered SVD.
-Meaningful sample variances require at least two complete observations after
-missing rows are omitted. Variance proportions are undefined when the processed
-data have zero total variance.
-
-Fitted scores retain the projected-SVD convention \eqn{U_k D_k}. Prediction
-multiplies the processed observations by the loadings. For a randomized
-approximation these can differ by the range-finder residual.
+The \code{print} and \code{summary} methods describe a fit.
+\code{\link{plot.rpca}} draws the available scree and factor plots;
+the individual plotting helpers can also be called directly.
 }
 \note{
-The principal components are not unique and only defined up to sign
-(a constant of modulus one in the complex case) and so may differ between different
- PCA implementations.
-
-Similar to \code{\link{prcomp}} the variances are computed with the usual divisor N - 1.
+Singular vectors are defined only up to sign (or a constant of modulus
+one for complex data). With repeated singular values, any orthonormal
+basis of the corresponding subspace is valid. Individual loading vectors
+can therefore differ between runs or implementations without changing
+the represented subspace.
 }
 \examples{
+# Fit two components and project observations held out from the fit.
+training <- log(as.matrix(iris[1:145, 1:4]))
+new_data <- log(as.matrix(iris[146:150, 1:4]))
+set.seed(42)
+fit <- rpca(training, k = 2)
+summary(fit)
+predict(fit, new_data)
 
-library('rsvd')
-#
-# Load Edgar Anderson's Iris Data
-#
-data('iris')
+# Reconstruct in input coordinates (here, log measurements).
+reconstructed <- fit$x \%*\% Conj(t(fit$rotation))
+reconstructed <- sweep(reconstructed, 2, fit$scale, "*")
+reconstructed <- sweep(reconstructed, 2, fit$center, "+")
 
-#
-# log transform
-#
-log.iris <- log( iris[ , 1:4] )
-iris.species <- iris[ , 5]
+# k = NULL uses the deterministic SVD and returns all components.
+full <- rpca(training)
+length(full$sdev)
 
-#
-# Perform rPCA and compute only the first two PCs
-#
-iris.rpca <- rpca(log.iris, k=2)
-summary(iris.rpca) # Summary
-print(iris.rpca) # Prints the rotations
-
-#
-# Use rPCA to compute all PCs, similar to \code{\link{prcomp}}
-#
-iris.rpca <- rpca(log.iris)
-summary(iris.rpca) # Summary
-print(iris.rpca) # Prints the rotations
-plot(iris.rpca) # Produce screeplot, variable and individuals factor maps.
-
-# Sparse input: implicit centering and scaling, with scores omitted
+# Sparse input: implicit preprocessing, with training scores omitted.
 A <- Matrix::bdiag(outer(1:12, 1:6), outer(1:12, 6:1))
-fit <- rpca(A, k = 2, retx = FALSE)
-predict(fit, A[1:2, , drop = FALSE])
+set.seed(42)
+sparse_fit <- rpca(A, k = 2, retx = FALSE)
+predict(sparse_fit, A[1:2, , drop = FALSE])
+
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  plot(fit, type = "ratio", groups = iris$Species[1:145],
+       ind_labels = FALSE, ellipse = FALSE)
+}
 
 }
 \references{
 \itemize{
- \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
-       Randomized Matrix Decompositions Using {R}. 
-       Journal of Statistical Software, 89(11), 1-48.
-        \doi{10.18637/jss.v089.i11}.
-
-  \item  [2] N. Halko, P. Martinsson, and J. Tropp.
-         "Finding structure with randomness: probabilistic
-         algorithms for constructing approximate matrix
-         decompositions" (2009).
-         (available at arXiv \url{https://arxiv.org/abs/0909.4061}).
+  \item N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
+  Randomized Matrix Decompositions Using R.
+  Journal of Statistical Software, 89(11), 1--48.
+  \doi{10.18637/jss.v089.i11}.
+  \item N. Halko, P. G. Martinsson and J. A. Tropp. 2011.
+  Finding Structure with Randomness: Probabilistic Algorithms for
+  Constructing Approximate Matrix Decompositions.
+  SIAM Review, 53(2), 217--288.
+  \doi{10.1137/090771806}.
 }
 }
 \seealso{
-\code{\link{ggscreeplot}}, \code{\link{ggindplot}},
-         \code{\link{ggcorplot}}, \code{\link{plot.rpca}},
-         \code{\link{predict}},   \code{\link{rsvd}}
+\code{\link{rsvd}}, \code{\link[stats]{prcomp}},
+\code{\link{plot.rpca}}, \code{\link{ggscreeplot}},
+\code{\link{ggindplot}}, \code{\link{ggcorplot}},
+\code{\link{rrpca}} for a low-rank plus sparse decomposition.
 }
 \author{
-N. Benjamin Erichson, \email{erichson@berkeley.edu}
+N. Benjamin Erichson
 }
