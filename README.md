@@ -1,4 +1,4 @@
-<img src="rsvd.png" width="550" alt="rsvd: randomized matrix decompositions">
+<img src="man/figures/logo.png" width="550" alt="rsvd: randomized matrix decompositions">
 
 [![R-CMD-check](https://github.com/erichson/rSVD/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/erichson/rSVD/actions/workflows/R-CMD-check.yaml)
 [![CRAN version](https://www.r-pkg.org/badges/version/rsvd)](https://CRAN.R-project.org/package=rsvd)

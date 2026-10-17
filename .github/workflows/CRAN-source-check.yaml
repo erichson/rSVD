@@ -1,0 +1,130 @@
+name: CRAN-source-check
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  OPENBLAS_NUM_THREADS: '2'
+  OMP_NUM_THREADS: '2'
+  MKL_NUM_THREADS: '2'
+  VECLIB_MAXIMUM_THREADS: '2'
+
+jobs:
+  build-source:
+    name: Build submission source with R release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: Matrix@1.7-6
+          needs: check
+      - name: Build and identify the source archive
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/rsvd-source"
+          cd "$RUNNER_TEMP/rsvd-source"
+          R CMD build "$GITHUB_WORKSPACE" 2>&1 | tee build.log
+          sha256sum rsvd_*.tar.gz > SHA256SUMS
+          git -C "$GITHUB_WORKSPACE" rev-parse HEAD > source-commit.txt
+          git -C "$GITHUB_WORKSPACE" rev-parse 'HEAD^{tree}' > source-tree.txt
+          Rscript -e 'writeLines(capture.output(sessionInfo()), "build-session.txt")'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rsvd-CRAN-source
+          path: ${{ runner.temp }}/rsvd-source/
+          if-no-files-found: error
+          retention-days: 90
+
+  check-source:
+    name: Check submission archive with R ${{ matrix.r }}
+    needs: build-source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        r: [release, devel]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r }}
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rcmdcheck
+            Matrix@1.7-6
+          needs: check
+      - uses: r-lib/actions/setup-tinytex@v2
+      - name: Install PDF manual prerequisites
+        shell: bash
+        run: |
+          tlmgr update --self
+          tlmgr install ae inconsolata makeindex upquote
+      - uses: actions/download-artifact@v8
+        with:
+          name: rsvd-CRAN-source
+          path: ${{ runner.temp }}/rsvd-source
+      - name: Check the unchanged archive, including its PDF manual
+        working-directory: ${{ runner.temp }}/rsvd-source
+        shell: bash
+        env:
+          NOT_CRAN: 'false'
+          _R_CHECK_CRAN_INCOMING_: 'true'
+          _R_CHECK_CRAN_INCOMING_REMOTE_: 'true'
+          _R_CHECK_FORCE_SUGGESTS_: 'true'
+          _R_CHECK_SYSTEM_CLOCK_: 'true'
+        run: |
+          sha256sum --check SHA256SUMS
+          Rscript - <<'RSCRIPT'
+          stopifnot(packageVersion("Matrix") == package_version("1.7-6"))
+          archive <- list.files(pattern = "^rsvd_[0-9.]+[.]tar[.]gz$", full.names = TRUE)
+          stopifnot(length(archive) == 1L)
+          check_dir <- file.path(Sys.getenv("RUNNER_TEMP"), "rsvd-check")
+          dir.create(check_dir, showWarnings = FALSE)
+          writeLines(capture.output(sessionInfo()), file.path(check_dir, "check-session.txt"))
+          file.copy(c("SHA256SUMS", "source-commit.txt", "source-tree.txt"), check_dir)
+          check_env <- Sys.getenv(c(
+            "NOT_CRAN", "_R_CHECK_CRAN_INCOMING_", "_R_CHECK_CRAN_INCOMING_REMOTE_",
+            "_R_CHECK_FORCE_SUGGESTS_", "_R_CHECK_SYSTEM_CLOCK_",
+            "OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS",
+            "VECLIB_MAXIMUM_THREADS"
+          ))
+          writeLines(capture.output(print(check_env)), file.path(check_dir, "check-environment.txt"))
+          result <- rcmdcheck::rcmdcheck(
+            path = archive, args = "--as-cran", check_dir = check_dir,
+            error_on = "never", timeout = 1200, env = check_env
+          )
+          # Retain all diagnostics before enforcing the error/warning gate.
+          saveRDS(result, file.path(check_dir, "check-result.rds"))
+          writeLines(capture.output(print(result)), file.path(check_dir, "check-summary.txt"))
+          if (length(result$errors) || length(result$warnings)) {
+            stop("The submission archive has check errors or warnings; see the saved diagnostics.")
+          }
+          RSCRIPT
+          sha256sum --check SHA256SUMS
+      - name: Save check results and manual
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rsvd-CRAN-check-${{ matrix.r }}
+          path: ${{ runner.temp }}/rsvd-check/
+          if-no-files-found: warn
+          retention-days: 90
