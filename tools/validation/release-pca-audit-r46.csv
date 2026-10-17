@@ -1,0 +1,12 @@
+"label","value"
+"maximum sparse forward absolute error",7.34621454612262e-15
+"maximum sparse adjoint absolute error",6.35766285114615e-15
+"maximum sparse inner-product identity absolute error",1.77635683940025e-14
+"maximum sparse processed squared-energy absolute error",2.8421709430404e-14
+"maximum complex PCA eigenvalue absolute error",3.5527136788005e-14
+"maximum complex PCA rank-three reconstruction relative error",1.06091469863299e-15
+"maximum complex PCA prediction absolute error",0
+"maximum deterministic robust-PCA normalized primal-dual gap, 20 fixtures",2.67244213841742e-09
+"maximum deterministic robust-PCA dual infeasibility, 20 fixtures",2.44078735001096e-09
+"maximum deterministic robust-PCA relative reconstruction residual, 20 fixtures",9.87545018583527e-10
+"sparse prediction with zero loadings equals dense including NA masks",1

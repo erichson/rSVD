@@ -1,0 +1,7 @@
+Version: 2.0.0
+Dimensions: 10000 3000
+Nonzeros: 1500000
+Loadings: 3000 20
+Scores omitted: TRUE
+Prediction: 5 20
+All predictions finite: TRUE

@@ -9,7 +9,7 @@ rcur(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TRUE)
 \arguments{
 \item{A}{array_like; \cr
 numeric \eqn{(m, n)} input matrix (or data frame). \cr
-If the data contain \eqn{NA}s na.omit is applied.}
+Rows containing missing values are omitted with a warning.}
 
 \item{k}{integer; \cr
 target rank of the low-rank approximation, i.e., the number of columns/rows
@@ -30,7 +30,7 @@ This is more memory efficient, when dealing with large-scale data.}
 if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
 }
 \value{
-\code{rcur} returns a list with class \eqn{id} containing the following components:
+\code{rcur} returns a list with class \eqn{rcur} containing the following components:
 \describe{
    \item{C}{ array_like; \cr
              column subset \eqn{C = A[,C.idx]}; \eqn{(m, k)} dimensional array.
@@ -54,7 +54,8 @@ if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
       
      
    \item{C.scores}{ array_like; \cr
-                  scores of the selected columns.
+                  scores of the input columns, as returned by \code{\link{rid}}.
+                  Entries without a corresponding QR diagonal are \code{NA}.
    } 
 
    \item{R.scores}{ array_like; \cr
@@ -77,13 +78,18 @@ using actual rows of \eqn{A}, also called the partial row skeleton.
 
 If \eqn{rand=TRUE} a probabilistic strategy is used to compute the decomposition, otherwise a
 deterministic algorithm is used.
+
+Sparse matrices from the \pkg{Matrix} package are supported. The randomized
+algorithm uses sparse matrix products to choose columns, then operates on dense
+selected row and column subsets. The returned factors are dense matrices.
+With \code{rand=FALSE}, the column selection also requires a dense copy of the input.
 }
 \examples{
 \dontrun{
 # Load test image
 data('tiger')
 
-# Compute (column) randomized interpolative decompsition
+# Compute a randomized CUR decomposition
 # Note that the image needs to be transposed for correct plotting
 out <- rcur(tiger, k = 150)
 

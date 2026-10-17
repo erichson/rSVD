@@ -4,7 +4,10 @@
 #
 #' @details
 #' The randomized QB decomposition factors a rectangular \eqn{(m,n)} matrix \eqn{A} as
-#' \eqn{A = Q * B}. \eqn{Q} is an \eqn{(m,k)} matrix with orthogonal columns, and \eqn{B} a \eqn{(k,n)} matrix.
+#' \eqn{A \approx Q * B}. In the randomized case, \eqn{Q} has \eqn{l} orthonormal
+#' columns and \eqn{B} has dimensions \eqn{(l,n)}, where
+#' \eqn{l = \min(k+p,m,n)} for integer \eqn{k} and \eqn{p}. The oversampled
+#' basis is retained. In the deterministic case, \eqn{l = \min(k,m,n)}.
 #' The target rank is assumed to be \eqn{k << min(m,n)}.   
 #'
 #' \eqn{p} is an oversampling parameter to improve the approximation.
@@ -12,9 +15,19 @@
 #'
 #' The parameter \eqn{q} specifies the number of power (subspace) iterations
 #' to reduce the approximation error. This is recommended
-#' if the the singular values decay slowly. In practice 1 or 2 iterations
+#' if the singular values decay slowly. In practice 1 or 2 iterations
 #' achieve good results, however, computing power iterations increases the
 #' computational time. The number of power iterations is set to \eqn{q=2} by default.
+#'
+#' In the randomized case, sparse \pkg{Matrix} inputs are kept sparse during
+#' multiplication. Only the samples, basis and projected matrix are dense.
+#' The deterministic case returns the first \eqn{k} basis vectors of base R's
+#' QR factorization. For real input with a numerically independent leading
+#' block, only those \eqn{k} columns need a dense factorization. Other cases,
+#' including complex input and deficient leading columns, use the full dense
+#' QR fallback. The deterministic basis follows base QR's column ordering and
+#' is not necessarily an optimal rank-\eqn{k} subspace. Both cases return
+#' ordinary R matrices for \code{Q} and \code{B}.
 #'
 #'
 #' @param A       array_like; \cr
@@ -31,7 +44,7 @@
 #'
 #' @param sdist   string \eqn{c( 'unif', 'normal', 'rademacher')}, optional; \cr
 #'                specifies the sampling distribution: \cr
-#'                \eqn{'unif'} :  Uniform `[-1,1]`. \cr
+#'                \eqn{'unif'} :  Uniform `[0,1]`. \cr
 #'                \eqn{'normal}' (default) : Normal `~N(0,1)`. \cr
 #'                \eqn{'rademacher'} : Rademacher random variates. \cr
 #'
@@ -42,11 +55,11 @@
 #'@return \code{rqb} returns a list containing the following components:
 #' \describe{
 #'\item{Q}{  array_like; \cr
-#'           matrix with orthogonal columns; \eqn{(m, k)} dimensional array.
+#'           matrix with orthonormal columns; \eqn{(m, l)} dimensional array.
 #'}
 #'
 #'\item{B}{  array_like; \cr
-#'           smaller matrix; \eqn{(k, n)} dimensional array.
+#'           smaller matrix; \eqn{(l, n)} dimensional array.
 #'}
 #'}
 #'
@@ -77,7 +90,8 @@ rqb <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) UseMethod("rq
 #' @export
 rqb.default <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) {
 
-    A <- as.matrix(A)
+    # Keep Matrix inputs for products with thin dense factors.
+    if(!inherits(A, "Matrix")) A <- as.matrix(A)
 
     # Create rqb object
     rqbObj <- list()
@@ -87,14 +101,14 @@ rqb.default <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) {
     n <- ncol(A)
 
     #Set target rank
-    if(is.null(k)) k = n
-    if(k > n) k <- n
+    if(is.null(k)) k = min(m, n)
+    if(k > min(m, n)) k <- min(m, n)
     if(is.character(k)) stop("Target rank is not valid!")
     if(k < 1) stop("Target rank is not valid!")
 
     #Set oversampling parameter
     l <- round(k) + round(p)
-    if(l > n) l <- n
+    if(l > min(m, n)) l <- min(m, n)
     if(l < 1) stop("Target rank is not valid!")
 
     #Check if array is real or complex
@@ -126,26 +140,47 @@ rqb.default <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) {
         #Build sample matrix Y : Y = A * O
         #Note: Y should approximate the range of A
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        Y <- A %*% O
+        Y <- as.matrix(A %*% O)
         remove(O)
     
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         #Orthogonalize Y using economic QR decomposition: Y=QR
-        #If q > 0 perfrom q subspace iterations
+        #If q > 0 perform q subspace iterations
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if( q > 0 ) {
             for( i in 1:q) {
                 Y <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
-                Z <- crossprod_help(A , Y )
+                Z <- as.matrix(crossprod_help(A , Y ))
                 Z <- qr.Q( qr(Z, complete = FALSE) , complete = FALSE )
-                Y <- A %*% Z
+                Y <- as.matrix(A %*% Z)
             }#End for
             remove(Z)
         }#End if
 
         rqbObj$Q <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
     }else{
-        rqbObj$Q <- qr.Q( qr(A, complete = FALSE) , complete = FALSE )
+        # With real input, base QR keeps the column order unless a column is
+        # numerically dependent. If the first k columns have full rank, their
+        # Householder vectors are also the first k vectors of the full QR.
+        # This avoids factoring unused columns while retaining the same basis.
+        qrA <- NULL
+        # Preserve full QR's rejection of non-finite values in later columns.
+        # Summary methods check sparse inputs without a dense logical mask.
+        if(isreal && k < min(m, n) && k == as.integer(k) &&
+           is.finite(min(A)) && is.finite(max(A))) {
+            qrA <- qr(as.matrix(A[, seq_len(k), drop = FALSE]))
+            if(qrA$rank < k) qrA <- NULL
+        }
+        # Complex QR pivots across every column. Dependent real prefixes may
+        # also need later columns, so both cases retain the full factorization.
+        if(is.null(qrA)) {
+            A <- as.matrix(A)
+            qrA <- qr(A)
+        }
+        # Apply Q to only k identity columns instead of forming the full Q.
+        identity <- diag(if(isreal) 1 else 1+0i, nrow = m, ncol = k)
+        rqbObj$Q <- qr.qy(qrA, identity)
+        remove(qrA, identity)
     }
       
     
@@ -153,7 +188,7 @@ rqb.default <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) {
     #Project the data matrix a into a lower dimensional subspace
     #B := Q.T * A
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    rqbObj$B <- crossprod_help(rqbObj$Q , A )
+    rqbObj$B <- as.matrix(crossprod_help(rqbObj$Q , A ))
 
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

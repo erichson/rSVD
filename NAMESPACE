@@ -21,6 +21,8 @@ export(rpca)
 export(rqb)
 export(rrpca)
 export(rsvd)
-importFrom(Matrix,crossprod)
-importFrom(Matrix,t)
-importFrom(Matrix,tcrossprod)
+importFrom(Matrix,
+  crossprod,
+  t,
+  tcrossprod
+)

@@ -31,10 +31,16 @@ tcrossprod_help <- function( A , B ) {
 #Helper function for Moore Penrose pseudoinverse
 pinv <- function(A){
   s <- svd(A)
-  nz <- s$d > s$d[1] * .Machine$double.eps
+  # Roundoff in a rank-deficient rectangular matrix can exceed eps * d[1].
+  # Use a dimension-aware relative cutoff, as in Matrix::rankMatrix, so those
+  # directions do not produce a very large, inaccurate inverse. Keep the
+  # threshold near machine precision to retain small resolved singular values.
+  nz <- s$d > s$d[1] * (max(dim(A)) * .Machine$double.eps)
   if(any(nz)){
-    return(s$v[, nz] %*% (H(s$u[, nz]) / s$d[nz]))
+    return(s$v[, nz, drop = FALSE] %*%
+             (H(s$u[, nz, drop = FALSE]) / s$d[nz]))
   } else {
-    return(A)
+    return(matrix(if(is.complex(A)) 0+0i else 0,
+                  nrow = ncol(A), ncol = nrow(A)))
   }
 }

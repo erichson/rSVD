@@ -1,0 +1,6 @@
+case,m,n,k,repetitions,R_version,Matrix_version,BLAS,baseline_version,candidate_version,baseline_median_s,candidate_median_s,speedup,baseline_total_R_allocation_MiB,candidate_total_R_allocation_MiB,total_R_allocation_reduction_percent,baseline_largest_R_allocation_MiB,candidate_largest_R_allocation_MiB,largest_R_allocation_reduction_percent,baseline_relative_residual,candidate_relative_residual
+qb_sparse_tall,4000,2000,20,3,4.6.1,1.7-6,reference BLAS libblas.so.3.12.0,1.0.6,1.0.7,1.403,0.062,22.629032,95.381844,38.468124,59.669343,61.035202,0.915573,98.499926,3.8709674700627e-15,3.8709674700627e-15
+qb_sparse_wide,2000,4000,20,3,4.6.1,1.7-6,reference BLAS libblas.so.3.12.0,1.0.6,1.0.7,1.286,0.064,20.093750,92.635262,35.721542,61.438504,61.035202,0.915573,98.499926,2.00636922466154e-15,2.00636922466154e-15
+rsvd_dense_tall,2200,1000,20,3,4.6.1,1.7-6,reference BLAS libblas.so.3.12.0,1.0.6,1.0.7,0.328,0.326,1.006135,20.018974,20.018974,0,0.503586,0.503586,0,3.43995091137501e-15,3.43995091137501e-15
+rpca_no_scores,6000,600,40,3,4.6.1,1.7-6,reference BLAS libblas.so.3.12.0,1.0.6,1.0.7,1.197,1.195,1.001674,179.978477,178.131638,1.026145,27.465866,27.465866,0,3.31970435127951e-15,3.31970435127951e-15
+id_full_rank,600,250,250,3,4.6.1,1.7-6,reference BLAS libblas.so.3.12.0,1.0.6,1.0.7,0.085,0.025,3.400000,14.739090,5.928581,59.776477,1.443916,1.144455,20.739524,0,0

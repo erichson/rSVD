@@ -1,14 +1,15 @@
 #' @title  Randomized Singular Value Decomposition (rsvd).
 #
 #' @description The randomized SVD computes the near-optimal low-rank approximation of a rectangular matrix
-#' using a fast probablistic algorithm.
+#' using a fast probabilistic algorithm.
 #
 #' @details
 #' The singular value decomposition (SVD) plays an important role in data analysis, and scientific computing.
 #' Given a rectangular \eqn{(m,n)} matrix \eqn{A}, and a target rank \eqn{k << min(m,n)}, 
 #' the SVD factors the input matrix \eqn{A} as
 #' 
-#' \deqn{ A  =  U_{k} diag(d_{k}) V_{k}^\top }{ A = U diag(d) t(V)}
+#' \deqn{ A \approx U_{k} diag(d_{k}) V_{k}^{*} }{ A ~ U diag(d) Conj(t(V))}
+#' Here \eqn{*} denotes the conjugate transpose.
 #' 
 #' The \eqn{k} left singular vectors are the columns of the
 #' real or complex unitary matrix \eqn{U}. The \eqn{k} right singular vectors are the columns
@@ -26,6 +27,20 @@
 #'
 #' If \eqn{k > (min(n,m)/4)}, a deterministic partial or truncated \code{\link{svd}}
 #' algorithm might be faster.
+#'
+#' Approximation quality depends on the singular-value decay, not just the
+#' algebraic rank. A full-rank matrix with rapidly decaying singular values can
+#' have an accurate low-rank approximation. A flat spectrum generally cannot.
+#' The optimal rank-\eqn{k} Frobenius error is
+#' \eqn{\sqrt{\sum_{j>k} d_j^2}}; compare a randomized residual with this tail
+#' rather than expecting exact recovery of an arbitrary full-rank matrix.
+#'
+#' Sparse matrices from the \pkg{Matrix} package are supported without converting
+#' the entire input to a dense matrix. The random samples, orthonormal basis,
+#' projected matrix and returned singular vectors are generally dense.
+#' Intermediate storage therefore depends on \eqn{k+p} as well as the input size.
+#' Setting \code{k = NULL} requests all singular values and loses the storage
+#' advantage of a small target rank.
 #'
 #'
 #' @param A       array_like; \cr
@@ -48,7 +63,7 @@
 #'
 #' @param sdist   string \eqn{c( 'unif', 'normal', 'rademacher')}, optional; \cr
 #'                specifies the sampling distribution of the random test matrix: \cr
-#'                		\eqn{'unif'} :  Uniform `[-1,1]`. \cr
+#'                		\eqn{'unif'} :  Uniform `[0,1]`. \cr
 #'                		\eqn{'normal}' (default) : Normal `~N(0,1)`. \cr
 #'                		\eqn{'rademacher'} : Rademacher random variates. \cr
 #'
@@ -60,10 +75,12 @@
 #'
 #'\item{u}{  array_like; \cr
 #'           left singular vectors; \eqn{(m, k)} or \eqn{(m, nu)} dimensional array.
+#'           Omitted when \code{nu = 0}.
 #'}
 #'
 #'\item{v}{  array_like; \cr
 #'           right singular vectors; \eqn{(n, k)} or \eqn{(n, nv)} dimensional array. \cr
+#'           Omitted when \code{nv = 0}.
 #'}
 #'}
 #'
@@ -71,6 +88,9 @@
 #' (a constant of modulus one in the complex case). If a left singular vector
 #' has its sign changed, changing the sign of the corresponding right vector
 #' gives an equivalent decomposition.
+#' Use \code{set.seed} for reproducibility within a fixed numerical environment.
+#' Repeated singular values also allow rotations within their singular subspace;
+#' compare residuals or subspaces rather than individual vector entries.
 #'
 #'
 #' @references
@@ -95,7 +115,7 @@
 #'library('rsvd')
 #'
 #'# Create a n x n Hilbert matrix of order n,
-#'# with entries H[i,j] = 1 / (i + j + 1).
+#'# with entries H[i,j] = 1 / (i + j - 1).
 #'hilbert <- function(n) { i <- 1:n; 1 / outer(i - 1, i, "+") }
 #'H <- hilbert(n=50)
 #'
@@ -116,23 +136,48 @@ rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal") UseMeth
 
 #' @export
 rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal") {
+    rsvd_compute(A, k=k, nu=nu, nv=nv, p=p, q=q, sdist=sdist)
+}
+
+# Shared range finder. Internal products let PCA apply centering and scaling
+# implicitly; ordinary rsvd calls retain the original matrix operations.
+rsvd_compute <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2,
+                         sdist="normal", operators=NULL) {
     #*************************************************************************
     #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
     #***                              <2015>                               ***
     #***                       License: BSD 3 clause                       ***
     #*************************************************************************
 
+    # Preserve custom matrix representations; numeric data frames need coercion.
+    if(is.data.frame(A)) A <- as.matrix(A)
+
     #Dim of input matrix
     m <- nrow(A)
     n <- ncol(A)
 
-    #Flipp matrix, if wide
+    #Flip matrix, if wide
     if(m < n){
-      A <- H(A)
-      m <- nrow(A)
-      n <- ncol(A)
+      if(is.null(operators)) {
+        A <- H(A)
+      } else {
+        original_operators <- operators
+        operators <- list(
+          forward = original_operators$adjoint,
+          adjoint = original_operators$forward,
+          project = function(Q) H(original_operators$forward(Q)))
+      }
+      temp <- m
+      m <- n
+      n <- temp
       flipped <- TRUE
     } else flipped <- FALSE
+
+    if(is.null(operators)) {
+      operators <- list(forward = function(X) A %*% X,
+                        adjoint = function(X) crossprod_help(A, X),
+                        project = function(Q) crossprod_help(Q, A))
+    }
 
     #Set target rank
     if(is.null(k)) k = n
@@ -187,19 +232,19 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal")
     #Build sample matrix Y : Y = A * O
     #Note: Y should approximate the range of A
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Y <- A %*% O
+    Y <- operators$forward(O)
     remove(O)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Orthogonalize Y using economic QR decomposition: Y=QR
-    #If q > 0 perfrom q subspace iterations
+    #If q > 0 perform q subspace iterations
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if( q > 0 ) {
         for( i in 1:q) {
             Y <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
-            Z <- crossprod_help(A , Y )
+            Z <- operators$adjoint(Y)
             Z <- qr.Q( qr(Z, complete = FALSE) , complete = FALSE )
-            Y <- A %*% Z
+            Y <- operators$forward(Z)
         }#End for
         remove(Z)
     }#End if
@@ -211,7 +256,7 @@ rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal")
     #Project the data matrix a into a lower dimensional subspace
     #B := Q.T * A
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    B <- crossprod_help(Q , A )
+    B <- operators$project(Q)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Singular Value Decomposition

@@ -1,0 +1,27 @@
+{
+  "matplotlib": "3.10.8",
+  "numpy": "2.3.5",
+  "font": "DejaVu Sans",
+  "svg_text": "editable text",
+  "pdf_fonts": "embedded TrueType",
+  "timing_band": "25th to 75th percentile of the recorded repetitions",
+  "timing_whiskers": "minimum to maximum of all recorded repetitions",
+  "repetition_counts": [
+    5
+  ],
+  "allocation_unit": "GiB (2^30 bytes)",
+  "blas_thread_limit": "4",
+  "figure_layout": "2 by 2: elapsed time, speedup, cumulative allocations, allocation reduction",
+  "axis_scales": {
+    "rows": "logarithmic base 2",
+    "absolute_costs": "logarithmic base 10",
+    "ratios": "linear"
+  },
+  "speedup": "deterministic median elapsed time / method median elapsed time; unrounded source values",
+  "allocation_reduction": "deterministic R allocation bytes / method R allocation bytes; one profile each",
+  "ratio_intervals": "none; timing quantile bands are not propagated into ratios",
+  "ratio_reference": {
+    "svd": "base::svd",
+    "pca": "prcomp(as.matrix(A), ...)"
+  }
+}

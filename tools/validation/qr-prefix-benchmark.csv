@@ -1,0 +1,7 @@
+"case","method","m","n","k","input_class","R_version","Matrix_version","BLAS","median_seconds","min_seconds","max_seconds","repetitions","r_allocation_total_bytes","r_allocation_largest_bytes","relative_frobenius_residual","q_difference_frobenius","b_difference_frobenius"
+"dense_tall","full_base_qr",2500,1000,20,"matrix","4.6.1","1.7.6","libblas.so.3.12.0",2.997,2.987,3.145,3,81824768,20000048,3.0152462181463e-15,0,0
+"dense_tall","partial_base_qr",2500,1000,20,"matrix","4.6.1","1.7.6","libblas.so.3.12.0",0.0520000000000032,0.0510000000000019,0.0790000000000006,3,3771888,400048,3.0152462181463e-15,0,0
+"sparse_tall","full_base_qr",2000,1000,20,"dgCMatrix","4.6.1","1.7.6","libblas.so.3.12.0",2.181,2.126,2.22,3,81505096,16000048,4.80258550986364e-16,0,0
+"sparse_tall","partial_base_qr",2000,1000,20,"dgCMatrix","4.6.1","1.7.6","libblas.so.3.12.0",0.00399999999999778,0.00300000000000011,0.00399999999999778,3,3226544,320048,4.80258550986364e-16,0,0
+"sparse_wide","full_base_qr",1000,2000,20,"dgCMatrix","4.6.1","1.7.6","libblas.so.3.12.0",3.666,3.47000000000001,3.83,3,81089096,16000048,2.78127230676091e-16,0,0
+"sparse_wide","partial_base_qr",1000,2000,20,"dgCMatrix","4.6.1","1.7.6","libblas.so.3.12.0",0.00300000000000011,0.00300000000000011,0.00300000000000011,3,2094544,320048,2.78127230676091e-16,0,0

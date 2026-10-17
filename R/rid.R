@@ -20,12 +20,17 @@
 #' and is well-conditioned. 
 #' 
 #' If \eqn{rand='TRUE'} a probabilistic strategy is used to compute the decomposition, otherwise a
-#' deterministic algorithm is used. 
+#' deterministic algorithm is used.
+#'
+#' Sparse matrices from the \pkg{Matrix} package are supported. The randomized
+#' algorithm uses sparse matrix products to form a dense sketch; the returned
+#' factors are dense matrices. The deterministic algorithm converts the input
+#' to a dense matrix before column-pivoted QR factorization.
 #'
 #'
 #' @param A   array_like; \cr
 #'            numeric \eqn{(m, n)} input matrix (or data frame). \cr
-#'            If the data contain \eqn{NA}s na.omit is applied.
+#'            Rows containing missing values are omitted with a warning.
 #'
 #' @param k   integer, optional; \cr
 #'            number of rows/columns to be selected. 
@@ -73,7 +78,10 @@
 #'    }  
 #'      
 #'    \item{scores}{ array_like; \cr
-#'                  scores of the columns or rows of the input matrix \eqn{A}.
+#'                  absolute diagonal entries of the pivoted QR factor, mapped to
+#'                  the original columns or rows of \eqn{A}. Entries without a
+#'                  corresponding QR diagonal are \code{NA}; this can occur for
+#'                  a rectangular input or a reduced randomized sketch.
 #'    } 
 #'                   
 #'    \item{scores.idx}{ array_like; \cr
@@ -105,7 +113,7 @@
 #' # Load test image
 #' data("tiger")
 #'
-#' # Compute (column) randomized interpolative decompsition
+#' # Compute (column) randomized interpolative decomposition
 #' # Note that the image needs to be transposed for correct plotting
 #' out <- rid(t(tiger), k = 150)
 #'
@@ -133,9 +141,14 @@ rid.default <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Checks
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if(is.data.frame(A)) A <- as.matrix(A)
   if (any(is.na(A))) {
     warning("Missing values are omitted: na.omit(A).")
-    A <- stats::na.omit(A)
+    if(inherits(A, "Matrix")) {
+      A <- A[Matrix::rowSums(is.na(A)) == 0, , drop=FALSE]
+    } else {
+      A <- stats::na.omit(A)
+    }
   }     
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,15 +182,15 @@ rid.default <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = 
 
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Compute interpolative decompositon
+  # Compute interpolative decomposition
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
   # Pivoted QR decomposition
   if(rand == TRUE) { 
     out_rqb <- rqb(A, k = k, p = p, q = q)
-    out <- qr(out_rqb$B, LAPACK=TRUE) 
+    out <- qr(as.matrix(out_rqb$B), LAPACK=TRUE)
   } else { 
-    out <- qr(A, LAPACK=TRUE) 
+    out <- qr(as.matrix(A), LAPACK=TRUE)
   }
     
     
@@ -199,12 +212,13 @@ rid.default <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = 
   
   # Compute Z
   if(k == n) {
-    V = pinv(S[1:k, 1:k])
+    idObj$Z <- diag(k)
   }else{
-    V = pinv(S[1:k, 1:k]) %*% S[1:k, (k+1):n] 
+    V <- pinv(S[1:k, 1:k, drop=FALSE]) %*%
+      S[1:k, (k+1):n, drop=FALSE]
+    idObj$Z <- cbind(diag(k), V)
   }
-  idObj$Z = cbind(diag(k), V) 
-  idObj$Z = matrix(idObj$Z[, ordered.pivot], nrow = k, ncol = n)  
+  idObj$Z = matrix(idObj$Z[, ordered.pivot, drop=FALSE], nrow = k, ncol = n)
 
   if(mode == 'row') {
     idObj$Z = H(idObj$Z)
@@ -214,14 +228,10 @@ rid.default <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = 
   # Create column / row subset
   if(idx_only == FALSE) {
     if(mode == 'column') {
-      idObj$C = matrix(A[, idObj$idx], nrow = m, ncol = k)
-      colnames(idObj$C) <- colnames(A)[idObj$idx]
-      rownames(idObj$C) <- rownames(A)
+      idObj$C = as.matrix(A[, idObj$idx, drop=FALSE])
     }  
     if(mode == 'row')  {
-      idObj$R = H(matrix(A[, idObj$idx], nrow = m, ncol = k))  
-      rownames(idObj$R) <- colnames(A)[idObj$idx]
-      colnames(idObj$R) <- rownames(A)
+      idObj$R = H(as.matrix(A[, idObj$idx, drop=FALSE]))
       
     }
   }
