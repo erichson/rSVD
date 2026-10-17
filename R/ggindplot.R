@@ -19,7 +19,9 @@
 #'                        Alpha transparency for scatter plot.
 #'                                                                                
 #' @param  ellipse        Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                        Draw a 1sd data ellipse for each group, if \eqn{TRUE}.
+#'                        Draw the default 95\% multivariate-t data ellipse from
+#'                        \code{\link[ggplot2]{stat_ellipse}} for each supplied
+#'                        group, if \eqn{TRUE}.
 #'  
 #' @param  alpha.ellipse  Scalar, optional. \cr
 #'                        Alpha transparency for ellipse.
@@ -50,7 +52,7 @@ ggindplot <- function( rpcaObj, pcs = c(1,2), groups = NULL, alpha = 0.6, ellips
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Check if retx is provided
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if(is.null(rpcaObj$x)) stop("ggbiplot requires the rotated variables, i.e., set rpca(..., retx = TRUE).")
+  if(is.null(rpcaObj$x)) stop("ggindplot requires the rotated variables, i.e., set rpca(..., retx = TRUE).")
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Check selected pcs

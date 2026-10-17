@@ -15,7 +15,7 @@ jobs:
       matrix:
         config:
           - {os: ubuntu-24.04, r: 'release', matrix-version: '1.7-6'}
-          - {os: ubuntu-24.04, r: '4.3', matrix-version: '1.6-5'}
+          - {os: ubuntu-24.04, r: '4.4', matrix-version: '1.7-0'}
           - {os: windows-latest, r: 'release', matrix-version: '1.7-6'}
           - {os: macos-latest, r: 'release', matrix-version: '1.7-6'}
     steps:

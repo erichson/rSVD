@@ -1,5 +1,10 @@
 # Initial validation notes for rsvd 1.0.7
 
+For the completed release assessment, see the [release review](release-review.md).
+The notes below are historical and retain their original scope and limitations.
+Current deterministic-reference performance results are in the
+[README benchmark guide](../benchmarks/README.md).
+
 This report records the first candidate, ending at commit
 [`ad8f05a`](https://github.com/erichson/rSVD/commit/ad8f05a).
 The [follow-up review](follow-up-review.md) records the subsequent PCA, QR and

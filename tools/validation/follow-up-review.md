@@ -1,5 +1,11 @@
 # PCA, QR and robust-PCA follow-up review
 
+The [release review](release-review.md) adds the final independent audit,
+downstream checks, current runtime requirements, and plotting regressions. The
+[README benchmark guide](../benchmarks/README.md) contains the new comparisons
+against deterministic references; the draft-to-draft measurements below are
+retained as implementation history.
+
 This review accompanies rsvd 1.0.7 and compares the follow-up changes with
 commit [`ad8f05a`](https://github.com/erichson/rSVD/commit/ad8f05a08491f4a75f12e8d7f14a524ce025d80d),
 the first candidate in draft PR #17. Local validation was completed on

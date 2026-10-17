@@ -151,3 +151,76 @@ power counts, report achieved residuals, and include any required sparse-to-dens
 conversion in the deterministic baseline. `base::svd(A, nu = k, nv = k)` saves
 unrequested singular vectors but still computes the complete singular spectrum;
 describe it accordingly rather than as a specialized partial-SVD algorithm.
+
+## Plotting and PCA summary review
+
+A subsequent read-only review found that the generic plotting wrapper passed
+every additional argument to helpers with different formal arguments and always
+attempted two-component maps. Consequently, otherwise valid calls such as
+`plot(rpca(A, k = 1))`, `plot(rpca(A, retx = FALSE))`, and
+`plot(fit, type = "cum")` could fail after drawing only part of the output.
+
+The focused wrapper correction preserves its public formals and usual plot
+order. It always draws a scree plot, adds the variable map when at least two
+components are retained, and adds the individual map when fitted scores are
+also available. Named arguments are routed only to helpers that accept them;
+unknown, duplicate, and unnamed arguments receive explicit errors. The wrapper
+continues to return the last drawn ggplot invisibly. Explicit component indices
+are checked before drawing, including for a one-component fit, so an invalid
+selection is not silently ignored when two-component maps are unavailable.
+Exact argument names do not remove a working old wrapper call: a nonempty
+option passed to all three disjoint helper signatures previously failed in at
+least one helper. Direct calls to those helpers retain their existing argument
+matching behavior.
+
+Regression tests in
+`test-plotting-regressions.R` exercise actual plot construction and rendering,
+named-argument routing, names, the return convention, and total-variance
+interpretation. On both R 4.6.1 / Matrix 1.7-6 and R 4.3.3 / Matrix 1.6-5, the
+unchanged plotting implementation produced two erroring test blocks on valid
+plotting requests and seven failed error-message expectations. The revised
+implementation passes all 42 assertions in five blocks on both runtimes, with
+zero failures, errors, warnings, or skips. The test device renders the plots;
+it does not substitute mock plotting functions. Only upstream ggplot2
+lifecycle-deprecation notices are filtered, leaving data/rendering warnings
+visible to the tests.
+
+The summary, scree, and map percentages correctly use total processed energy,
+including omitted principal components. A partial fit's percentages should not
+be renormalized to one. The helpers consistently display fitted scores. The
+variable map's coordinates are `V * sqrt(lambda)` when loadings are requested:
+the correlation interpretation requires centered variables with unit sample
+variance. Documentation now distinguishes this from the loading interpretation
+for other preprocessing settings. Biplot documentation also clarifies that its
+loading option changes the arrows without rescaling observation scores.
+
+Ellipse documentation now describes the existing default 95% multivariate-t
+ellipse, rather than claiming a one-standard-deviation ellipse; see
+[ggplot2 stat_ellipse](https://ggplot2.tidyverse.org/reference/stat_ellipse.html).
+No ellipse geometry or loading formula was changed. The individual-plot
+missing-scores error now names the correct function.
+
+Two minor legacy limitations remain: `ggcorplot(top.n = 0)` uses `1:0`
+indexing and therefore highlights one variable, and its current policy
+suppresses small-circle highlights when `top.n >= 50`. These aesthetic policies
+do not affect the decomposition and are left unchanged in this release.
+
+## Independent README benchmark review
+
+The driver and completed results were checked independently of the plotting
+renderer. All 44 method summaries agree with the 220 recorded timing rows for
+medians, extrema, residual maxima, and orthogonality; every pair has five timed
+calls. The raw sparse-PCA rows confirm that method positions rotate. SVD/PCA
+oracle spectra are complete and their tails are checked for finite positive
+energy. The baseline calls request matching retained factors, and required
+sparse conversion and preprocessing remain inside the timed calls.
+
+The largest randomized residual-to-optimal ratios over the plotted size grids
+recompute to `1.0006165832` for SVD and `1.0000911040` for PCA. Both match their
+figure labels after rounding. The rendered figures are readable and unclipped.
+The scaling plot includes the smallest SVD case where randomized allocation is
+higher. The tables emphasize larger matrices and include the image case with
+a modest allocation benefit, and dense ID/CUR cases where
+randomized selection is less accurate. Their scope and cumulative-allocation
+interpretation are stated explicitly; the review found no unsupported current
+performance claim.

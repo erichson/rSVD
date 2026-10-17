@@ -22,8 +22,8 @@ An array with two values indicating the two PCs which should be used for plottin
 By default the first two PCs are used, e.g., \eqn{c(1,2)}.}
 
 \item{loadings}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-If \eqn{TRUE}, the eigenvectors
-are unit scaled by the square root of the eigenvalues \eqn{W = W * diag(sqrt(eigvals))}.}
+If \eqn{TRUE}, each eigenvector is multiplied by the square
+root of its eigenvalue, \eqn{W = W * diag(sqrt(eigvals))}.}
 
 \item{var_labels}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
 Plot variable names, if \eqn{TRUE}.}
@@ -35,11 +35,18 @@ User specific labels for the variables}
 Alpha transparency of the arrows.}
 
 \item{top.n}{Scalar, optional. \cr
-Number of (most influencial) variables to label with small circles.}
+Number of (most influential) variables to label with small circles.}
 }
 \description{
-Creates a pretty plot which is showing the correlation of
-   the original variable with the principal component (PCs).
+Plots retained principal-component directions, optionally
+scaled by the square roots of their eigenvalues.
+}
+\details{
+With \code{loadings = TRUE}, the plotted coordinates are
+\eqn{V_{ji}\sqrt{\lambda_i}}. They have a variable-component correlation
+interpretation when the input variables are centered and have unit sample
+variance. For unscaled or uncentered input they are loadings rather than
+necessarily correlations; the unit circle is then only a visual reference.
 }
 \examples{
 #

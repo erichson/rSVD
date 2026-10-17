@@ -3,8 +3,14 @@
 
 #' @title  Variables factor map for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.
 #
-#' @description Creates a pretty plot which is showing the correlation of
-#'    the original variable with the principal component (PCs).
+#' @description Plots retained principal-component directions, optionally
+#' scaled by the square roots of their eigenvalues.
+#'
+#' @details With \code{loadings = TRUE}, the plotted coordinates are
+#' \eqn{V_{ji}\sqrt{\lambda_i}}. They have a variable-component correlation
+#' interpretation when the input variables are centered and have unit sample
+#' variance. For unscaled or uncentered input they are loadings rather than
+#' necessarily correlations; the unit circle is then only a visual reference.
 #'
 #' @param rpcaObj  Object returned by the \code{\link[rsvd]{rpca}} function.
 #'
@@ -13,8 +19,8 @@
 #'              By default the first two PCs are used, e.g., \eqn{c(1,2)}. 
 #'              
 #' @param loadings   Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                  If \eqn{TRUE}, the eigenvectors
-#'                  are unit scaled by the square root of the eigenvalues \eqn{W = W * diag(sqrt(eigvals))}.
+#'                  If \eqn{TRUE}, each eigenvector is multiplied by the square
+#'                  root of its eigenvalue, \eqn{W = W * diag(sqrt(eigvals))}.
 #'              
 #' @param var_labels  Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
 #'                Plot variable names, if \eqn{TRUE}.
@@ -26,7 +32,7 @@
 #'                Alpha transparency of the arrows. 
 #' 
 #' @param  top.n  Scalar, optional. \cr
-#'                Number of (most influencial) variables to label with small circles.  
+#'                Number of (most influential) variables to label with small circles.
 #' 
 #' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'

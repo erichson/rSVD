@@ -2,6 +2,7 @@
 
 ## Correctness and compatibility
 
+* Require R 4.4 or later and Matrix 1.7-0 or later.
 * Deterministic `rqb()` now honors `k` and constructs only the requested columns
   of the orthogonal factor. Randomized `rqb()` continues to return its oversampled
   basis, with width bounded by both matrix dimensions.
@@ -23,6 +24,9 @@
   reconstruction history; `trace = TRUE` also reports stationarity.
 * Numeric data frames work consistently in `rsvd()`, `rid()` and `rcur()`.
   ID and CUR omit missing rows from sparse Matrix inputs without densification.
+* PCA plotting handles a single retained component and omitted fitted scores,
+  routes named options to the appropriate helpers, and preserves the invisible
+  return of the last drawn plot.
 * The internal pseudoinverse preserves matrix dimensions when one singular
   direction remains and returns the correct shape for rectangular zero matrices.
   Its numerical-rank cutoff now accounts for matrix dimensions, preventing
@@ -56,7 +60,7 @@
 
 * Add the testthat entry point so `R CMD check` executes the test suite.
 * Check Matrix 1.7-6 on current R across Linux, Windows and macOS, plus
-  Matrix 1.6-5 on R 4.3. Verify the actual Matrix version in every CI job.
+  Matrix 1.7-0 on R 4.4. Verify the actual Matrix version in every CI job.
 * Add prescribed-spectrum residual and subspace tests, sparse representation
   coverage, rank-one and vector-count cases, and numerical bug regressions.
 * Compare PCA with `prcomp()` and explicitly processed dense references,
@@ -68,6 +72,11 @@
   from a small reconstruction residual.
 * Verify pseudoinverses against analytic maps and the Moore-Penrose identities,
   and test ID/CUR when the requested rank exceeds the input rank.
+* Check PCA plot rendering, named options, return values, and the distinction
+  between retained and total variance. Clarify the loading/correlation
+  interpretation and the existing 95% multivariate-t ellipse.
+* Cover sparse product storage, rank-one structural zeros, and custom matrix
+  dispatch on the supported Matrix stack.
 * Correct complex orthogonality and PCA reference calculations in the tests,
   preserve the robust-PCA oversampling parameter, and remove checks for
   undeclared transitive dependencies.
@@ -77,3 +86,6 @@
   Clarify that PCA prediction uses training column order, sample variances need
   at least two complete observations, and zero total variance gives undefined
   explained-variance proportions.
+* Replace historical README performance images with reproducible comparisons
+  against deterministic SVD, PCA, ID, and CUR. Include measured residuals,
+  cumulative R allocations, raw timing observations, and vector figures.

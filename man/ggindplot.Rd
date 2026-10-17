@@ -29,7 +29,9 @@ Factor indicating groups.}
 Alpha transparency for scatter plot.}
 
 \item{ellipse}{Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-Draw a 1sd data ellipse for each group, if \eqn{TRUE}.}
+Draw the default 95\% multivariate-t data ellipse from
+\code{\link[ggplot2]{stat_ellipse}} for each supplied
+group, if \eqn{TRUE}.}
 
 \item{alpha.ellipse}{Scalar, optional. \cr
 Alpha transparency for ellipse.}
