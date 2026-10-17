@@ -25,6 +25,9 @@
   ID and CUR omit missing rows from sparse Matrix inputs without densification.
 * The internal pseudoinverse preserves matrix dimensions when one singular
   direction remains and returns the correct shape for rectangular zero matrices.
+  Its numerical-rank cutoff now accounts for matrix dimensions, preventing
+  CUR from amplifying roundoff singular values when `k` exceeds the true rank.
+  Small but resolved singular directions remain supported.
 * Public function arguments, defaults, result classes and component names are
   unchanged. The existing singular-vector count clamping and sampling
   distributions are retained.
@@ -63,9 +66,14 @@
 * Test robust-PCA rank selection, scale behavior and recovery, including
   closed-form low-rank-only and sparse-only optima that distinguish optimality
   from a small reconstruction residual.
+* Verify pseudoinverses against analytic maps and the Moore-Penrose identities,
+  and test ID/CUR when the requested rank exceeds the input rank.
 * Correct complex orthogonality and PCA reference calculations in the tests,
   preserve the robust-PCA oversampling parameter, and remove checks for
   undeclared transitive dependencies.
 * Document approximation error, sparse storage boundaries, QB oversampling,
   missing-value handling, and the existing `unif` sampler's `[0, 1]` support.
   Correct spelling and mathematical notation in the documentation.
+  Clarify that PCA prediction uses training column order, sample variances need
+  at least two complete observations, and zero total variance gives undefined
+  explained-variance proportions.

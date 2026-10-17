@@ -90,6 +90,8 @@ and a correlation plot with \code{\link{ggcorplot}}.
 The predict function can be used to compute the scores of new observations. The data
 will automatically be centered (and scaled if requested), including for complex input.
 Complex variables are scaled using their squared moduli, so their scale factors are real.
+Supply new observations with the same variables in the same column order as the
+training input; prediction uses column positions and does not reorder by names.
 
 With \code{rand = TRUE} and a supplied \code{k}, real sparse matrices from
 \pkg{Matrix} are centered and scaled through implicit matrix products. The
@@ -109,6 +111,9 @@ Total variance is the squared Frobenius norm of the processed matrix divided
 by \eqn{m-1}, including directions omitted from the rank-\eqn{k} approximation.
 For uncentered data this is a total second moment, consistent with the
 eigenvalues from the uncentered SVD.
+Meaningful sample variances require at least two complete observations after
+missing rows are omitted. Variance proportions are undefined when the processed
+data have zero total variance.
 
 Fitted scores retain the projected-SVD convention \eqn{U_k D_k}. Prediction
 multiplies the processed observations by the loadings. For a randomized
