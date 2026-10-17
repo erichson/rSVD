@@ -35,21 +35,50 @@ install.packages("rsvd")
 The development version is **2.0.0**; the CRAN badge shows the published version.
 rsvd requires **R 4.4 or later and Matrix 1.7-0 or later**. Matrix need not be
 attached with `library(Matrix)` for sparse dispatch to work.
+The minimum R version follows the Matrix dependency; newer R releases are
+supported and tested in CI alongside the R 4.4 series.
+
+## What does a low-rank factorization represent?
+
+Think of a matrix as a collection of columns: measurements, images, or
+time series. Its **rank** counts the independent directions those columns
+span. If every column can be assembled from ten underlying patterns, the
+matrix has rank at most ten, however many columns it contains. A factorization
+stores those patterns and the coefficients needed to combine them.
+
+Measured data rarely have exactly low rank. Noise can make a matrix full rank
+while most of its structure still lies in a much smaller subspace. A **low-rank
+approximation** retains that structure and accepts a residual: the difference
+between the original data and their reconstruction. This can make storage,
+visualization, and subsequent calculations more manageable. Whether the
+discarded detail is acceptable depends on the application; low rank alone
+does not distinguish noise from a weak but important signal.
+
+The **singular value decomposition (SVD)** supplies a particularly useful set
+of patterns. Keeping its leading `k` terms gives the approximation
+
+```math
+A \approx U_k D_k V_k^{T}.
+```
+
+The columns of **U** and **V** are orthonormal left and right directions;
+the diagonal of **D** contains their nonnegative weights, called singular
+values, ordered from largest to smallest. Each paired set of directions
+contributes a rank-one pattern. Larger singular values contribute more
+squared energy, so retaining the leading terms captures the strongest
+structure first. The exact truncated SVD is the best rank-`k` approximation
+in Frobenius norm; randomized SVD seeks comparable accuracy with less work.
+
+The equations here use **real matrices**, with superscript **T** denoting
+transpose. A complex SVD uses **H**, the conjugate transpose: transpose the
+matrix and conjugate its entries. The package supports this distinction;
+reconstruction code must respect it too.
 
 ## See what rank means: reconstructing a tiger
 
-The singular value decomposition represents a matrix using paired left and
-right directions, weighted by their singular values. Keeping only $k$ pairs
-gives a rank-$k$ approximation:
-
-```math
-A \approx U_k D_k V_k^{\mathsf{H}}.
-```
-
-The columns of $U_k$ and $V_k$ hold the directions, and the diagonal of $D_k$
-holds their weights. The superscript $\mathsf{H}$ means **conjugate transpose**:
-$V^{\mathsf{H}} = \overline{V}^{\mathsf{T}}$. For real data, this is simply
-the ordinary transpose $V^{\mathsf{T}}$.
+A grayscale image is a matrix of pixel intensities. Its leading SVD terms
+capture broad shapes and repeated patterns; additional terms recover finer
+detail. The bundled tiger image lets us see the approximation directly.
 
 ```r
 library(rsvd)
@@ -74,11 +103,18 @@ Increasing `k` retains more detail and requires more storage. For this
 entries**, with a relative Frobenius error of **15.1%**. Rank 150 uses 21.9%
 of the entries and reduces the error to 10.3%.
 
-The full matrix stores $mn$ numbers; its rank-$k$ factors store
-$k(m+n+1)$. This comparison counts numeric entries in the matrix and
+An `m`-by-`n` matrix stores `m * n` numbers; its rank-`k` SVD factors store
+`k * (m + n + 1)`. This comparison counts numeric entries in the matrix and
 factors; it is not a comparison with JPEG or PNG file compression. Reconstructing
 the image creates a full dense matrix again, so retain the factors when a
 compact representation is the goal.
+
+The factors are also useful without reconstruction. To multiply the
+approximation by a vector, first project the vector onto the columns of V,
+scale the resulting `k` coefficients by the singular values, and combine
+the columns of U. The work then grows with `k * (m + n)` instead of `m * n`.
+This saving applies to each subsequent product after fitting, in addition
+to any benefit from computing the factorization itself.
 
 Image: S. Taheri (2006), edited by Fir0002,
 [CC BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5/),
@@ -88,55 +124,59 @@ reconstructions. [Reproduce this figure](tools/benchmarks/tiger-results/README.m
 
 ## The core idea: find the important directions first
 
-Suppose a tall matrix $A$ has $m$ rows and $n$ columns, but we need only
-$k$ dominant directions. Randomized SVD first seeks a small subspace that
+Suppose a tall matrix A has `m` rows and `n` columns, but we need only
+`k` dominant directions. Randomized SVD first seeks a small subspace that
 captures the dominant structure. Three steps turn that subspace into
 an approximation.
 
-**1. Mix the columns into a small sketch.** Draw a random matrix $\Omega$
-with $n$ rows and $\ell = \min(k+p,m,n)$ columns. The sketch includes up to
-$p$ extra columns for oversampling; the default uses Gaussian entries. Form the sketch and extract
-an orthonormal basis:
+**1. Mix the columns into a small sketch.** Draw a random matrix, denoted
+by the Greek letter omega, with `n` rows and `ell = min(k + p, m, n)` columns.
+The sketch includes up to `p` extra columns for oversampling; the default
+uses Gaussian entries. Form the sketch:
 
 ```math
-Y = A\Omega, \qquad Q = \operatorname{orth}(Y).
+Y = A\Omega.
 ```
 
-Here $\operatorname{orth}$ denotes the orthonormal factor from a thin QR
-factorization. Each column of $Y$ is a random weighted combination of the
-columns of $A$.
-Multiplication by $A$ gives more weight to directions with large singular
+Then compute a thin QR factorization of Y and keep its orthonormal factor Q.
+Each column of Y is a random weighted combination of the columns of A.
+Multiplication by A gives more weight to directions with large singular
 values. When a few directions dominate, their span can be captured by a
 small sketch. Orthonormalization gives that span a well-conditioned basis;
 oversampling helps capture directions near the truncation boundary.
 
 **2. Express the original matrix in that basis.** Project onto the columns
-of $Q$:
+of Q:
 
 ```math
-B = Q^{\mathsf{H}}A, \qquad A \approx QB.
+B = Q^{T}A.
 ```
 
-The matrix $B$ has only $\ell$ rows. This is where the large SVD becomes a
-small one. For a **20,000 × 6,000** matrix with `k = 40` and `p = 10`, $B$
-is **50 × 6,000**: 300,000 entries instead of 120 million. The basis $Q$
-has 20,000 × 50 entries. These are the core compressed arrays; products with
-the input and additional factorization workspace still contribute to cost.
+The product QB now approximates A. The matrix B has only `ell` rows, which
+is where the large SVD becomes a small one. For a **20,000 × 6,000** matrix
+with `k = 40` and `p = 10`, B is **50 × 6,000**: 300,000 entries instead of
+120 million. The basis Q has 20,000 × 50 entries. These are the core
+compressed arrays; products with the input and additional factorization
+workspace still contribute to cost.
 
 **3. Solve the small problem and map back.** Compute the ordinary SVD of
-$B$, retain its leading $k$ terms, and lift its left singular vectors:
+B and retain its leading `k` terms:
 
 ```math
-B \approx \widetilde{U}_k D_k V_k^{\mathsf{H}},
-\qquad U_k = Q\widetilde{U}_k.
+B \approx \widetilde{U}_k D_k V_k^{T}.
 ```
 
-The diagonal entries of $D_k$ are singular values of $B$ and approximate
-those of $A$; `fit$d` stores them as a vector. The result is the approximation
-$A \approx U_kD_kV_k^{\mathsf{H}}$ used in
-the tiger example. Randomness enters the subspace search; the decomposition
-inside that subspace uses conventional numerical linear algebra. The same
-idea applies to wide matrices through the conjugate-transposed problem.
+Map the left singular vectors back to the original space:
+
+```math
+U_k = Q\widetilde{U}_k.
+```
+
+The diagonal entries of D are singular values of B and approximate
+those of A; `fit$d` stores them as a vector. This produces the SVD factors
+used in the tiger example. Randomness enters the subspace search; the
+decomposition inside that subspace uses conventional numerical linear algebra.
+The same idea applies to wide matrices through the conjugate-transposed problem.
 
 When the spectrum decays slowly, power iterations refine the basis before
 projection, sharpening the separation between dominant and trailing directions.
@@ -144,22 +184,47 @@ With `q` iterations, the idealized
 sketch is
 
 ```math
-Y = (AA^{\mathsf{H}})^q A\Omega.
+Y = (AA^{T})^q A\Omega.
 ```
 
-In this sketch, a direction associated with singular value $\sigma_j$ of
-$A$ receives weight $\sigma_j^{2q+1}$. The implementation
-applies successive products with $A$ and $A^{\mathsf{H}}$, orthonormalizing
-after each product; it never needs to build the large matrix power.
+Each singular value is effectively raised to the power `2 * q + 1`,
+emphasizing the larger ones. The implementation applies successive products
+with A and its transpose, orthonormalizing after each product; it never
+needs to build the large matrix power or the matrix of cross-products.
 More iterations can improve accuracy but require more passes over the data.
 The [package paper](https://www.jstatsoft.org/article/view/v089i11) develops
 these ideas with worked examples; the
 [Halko–Martinsson–Tropp survey](https://arxiv.org/abs/0909.4061) gives the
 error analysis.
 
+### Where the speed and memory savings come from
+
+For a dense tall matrix, a full SVD requires work on the scale of `m * n^2`.
+With a fixed number of power iterations, the main randomized products instead
+cost on the scale of `m * n * ell`, followed by thin QR and SVD work on the
+scale of `(m + n) * ell^2`. The advantage is substantial when the sketch
+width is much smaller than the input width. Dense products also make effective
+use of optimized BLAS libraries. Small inputs or ranks close to the full
+dimension leave less room to recover the sketching overhead.
+
+Randomization still requires access to the input. The default `q = 2` uses
+six products with A or its transpose, including the final projection. The
+saving comes from applying them to a small number of vectors together and
+factorizing the compressed problem. More power iterations can improve the
+subspace at the cost of additional products.
+
+The dominant thin arrays grow with `(m + n) * ell`; a dense input still
+occupies `m * n` entries. For sparse input, sketch products can use only the
+stored entries, although the sketches themselves are generally dense.
+Sparsity and low rank describe different properties: many zeros do not
+guarantee a good low-rank approximation. The sparse benchmarks below benefit
+from both compressible structure and avoiding full dense preprocessing.
+Their reported allocation totals include temporary R objects, so those
+numbers measure more than the sizes of the retained factors.
+
 ## PCA: from measurements to a map
 
-PCA applies the same low-rank idea to observations and variables. After
+Low-rank SVD is also the computational workhorse behind PCA. After
 centering, and optionally scaling, the right singular vectors give principal
 loadings; the left singular vectors weighted by singular values give fitted
 scores. A few score columns provide a compact map of the observations.
@@ -187,16 +252,76 @@ species labels are used only for color, not for fitting the PCA.
 The figure adds a legend and separates the variable labels for readability.
 [Reproduce the styled figure and its numerical checks](tools/benchmarks/example-results/README.md).
 
+## ID and CUR: keep actual columns and rows
+
+An SVD direction can combine every variable. That is useful for compression,
+but sometimes the original variables or observations are easier to interpret.
+An **interpolative decomposition (ID)** represents the matrix using a subset
+of its own columns. If the columns are sensors or measured features, the
+selected indices identify which original measurements form the approximation.
+For a column ID,
+
+```math
+A \approx CZ.
+```
+
+C contains `k` selected columns of A, and Z contains the coefficients that
+approximately reconstruct all columns from that subset. At the selected
+column indices, Z contains an identity matrix: those columns reproduce
+themselves. `rid()` returns the subset in `C`, the coefficients in `Z`, and
+the original column indices in `idx`. With `mode = "row"`, it instead returns
+selected rows in `R` and reconstructs as `Z %*% R`.
+
+**CUR** preserves both sides of the data: selected columns in C and selected
+rows in R, connected by a small matrix U:
+
+```math
+A \approx CUR.
+```
+
+For an observations-by-variables matrix, C retains actual variables and R
+retains actual observations. The connector U has size `k`-by-`k`; it is not
+the orthonormal left factor from an SVD. `rcur()` returns `C.idx` and `R.idx`
+alongside these three factors, so selections can be traced back to the data.
+If rows contain missing values, both routines omit those rows with a warning;
+returned row indices then refer to the remaining complete observations.
+
+The tiger makes these definitions concrete: C and R contain selected pixel
+strips from the matrix, and the factors reconstruct the entire image from them.
+
+```r
+set.seed(42)
+id <- rid(tiger, k = 50)
+id$idx[1:6]                     # Original column positions
+tiger_id <- id$C %*% id$Z
+
+set.seed(42)
+cur <- rcur(tiger, k = 50)
+tiger_cur <- cur$C %*% cur$U %*% cur$R
+
+c(ID = norm(tiger - tiger_id, "F") / norm(tiger, "F"),
+  CUR = norm(tiger - tiger_cur, "F") / norm(tiger, "F"))
+```
+
+These subset constraints usually trade some approximation accuracy for
+interpretability. Selected columns need not be orthogonal, and different
+valid selections can give different errors. Selection also depends on the
+units and scaling of the input: ID and CUR do not automatically standardize
+variables. Use their residuals to judge whether the chosen subset is adequate;
+selected indices describe an approximation, not a causal feature ranking.
+The [package paper](https://www.jstatsoft.org/article/view/v089i11) discusses
+the pivoted-QR constructions used by these routines.
+
 ## Available decompositions
 
 | Function | Result and typical use |
 | --- | --- |
-| `rsvd(A, k)` | Singular vectors and values for $A \approx U_k D_k V_k^{\mathsf{H}}$; low-rank compression. |
+| `rsvd(A, k)` | Leading singular vectors and values; low-rank compression. |
 | `rpca(A, k)` | Principal loadings, component variances, and optional scores. |
-| `rqb(A, k)` | $A \approx QB$, with an orthonormal basis for a compressed problem. The randomized basis includes oversampling. |
-| `rid(A, k)` | A column ID, $A \approx CZ$, using actual columns of $A$; row ID is also available. |
-| `rcur(A, k)` | $A \approx CUR$, using actual columns and rows of $A$. |
-| `rrpca(A)` | A low-rank plus entrywise sparse decomposition, $A \approx L + S$. |
+| `rqb(A, k)` | An orthonormal basis Q and a compressed matrix B. The randomized basis includes oversampling. |
+| `rid(A, k)` | Selected columns and interpolation coefficients; row ID is also available. |
+| `rcur(A, k)` | Selected columns, selected rows, and their connector matrix. |
+| `rrpca(A)` | A low-rank component and an entrywise sparse corruption component. |
 
 ID and CUR retain interpretable subsets of the data; their residuals need
 not match a truncated SVD.
@@ -214,17 +339,19 @@ not match a truncated SVD.
   passes over the input. The ID and CUR defaults use `q = 0`.
 
 A full-rank matrix can still have a useful low-rank approximation. What matters
-is the energy left outside the leading directions. If the singular values
-are $\sigma_1 \ge \sigma_2 \ge \cdots$, the best possible rank-$k$
-Frobenius residual is
+is the energy left outside the leading directions. Let A<sub>k</sub> denote
+the exact truncated SVD, and let the singular values of A be ordered from
+largest to smallest. Its Frobenius residual is
 
 ```math
-\min_{\operatorname{rank}(X)\le k}\|A-X\|_F
-= \left(\sum_{j>k}\sigma_j^2\right)^{1/2}.
+\|A-A_k\|_F^2 = \sum_{j>k}\sigma_j^2.
 ```
 
-A rapidly decaying spectrum leaves little energy in that tail. When $k$ is
-much smaller than the matrix dimensions, a flat spectrum leaves a large
+The Frobenius norm is the square root of the sum of squared magnitudes of
+matrix entries. This identity says that the best possible squared reconstruction error is
+exactly the energy in the discarded singular values. A rapidly decaying
+spectrum leaves little energy in that tail. When `k` is much smaller than
+the matrix dimensions, a flat spectrum leaves a large
 relative residual even for the optimal approximation.
 
 Tests and benchmarks therefore compare reconstruction error with the optimal
@@ -261,8 +388,9 @@ workspace, and do not include every allocation made inside native libraries. Fix
 explicit garbage collection, and error calculation are outside the measurement;
 preprocessing and any required sparse-to-dense conversion are inside it.
 
-Relative error means $\|A-\widehat{A}\|_F/\|A\|_F$, or the same quantity for
-the centered/scaled input in PCA. Values below are percentages, not variance
+Relative error is the Frobenius norm of the reconstruction residual divided
+by the Frobenius norm of the input, using the centered/scaled input in PCA.
+Values below are percentages, not variance
 explained. The [benchmark guide](tools/benchmarks/README.md) includes the exact
 fixtures, baseline calls, raw measurements, environment, and rerun commands.
 
@@ -303,7 +431,8 @@ Both methods center and scale columns and return `k = 40` loadings and score
 columns. The reference is
 `prcomp(as.matrix(A), rank. = k, center = TRUE, scale. = TRUE)`. The sparse
 fixtures have 5% nonzero entries in twenty noisy blocks. Randomized PCA uses
-`p = 10, q = 2` and applies centering/scaling through sparse products.
+`p = 10, q = 2`; for sparse inputs, it applies centering/scaling through
+sparse products.
 
 <!-- BEGIN BENCHMARK PCA -->
 
@@ -326,8 +455,9 @@ At the largest size, implicit sparse PCA gives a **56.0× speedup** and a
 **31.5× reduction in cumulative R allocations** relative to `prcomp()`.
 It is also **5.1× faster than randomized PCA after densifying the same input**.
 Preserving sparse storage therefore contributes a substantial part of the
-benefit. The measured speedup peaks at the middle size; runtime variability
-and machine behavior mean it need not rise monotonically with dimensions.
+benefit. The speedup for implicit sparse PCA peaks at the middle size;
+runtime variability and machine behavior mean it need not rise monotonically
+with dimensions.
 
 Here “sparse PCA” means **ordinary PCA computed from sparse input**. The
 principal loadings are generally dense; `rpca()` does not impose sparsity on
@@ -360,12 +490,11 @@ cost, including cases where a randomized selection is less accurate.
 
 Centering a sparse matrix usually turns its structural zeros into nonzero
 values. The useful observation is that a centered matrix can still be
-multiplied without storing that dense result. If $\mu$ contains the column
-means and $\mathbf{1}$ is a column of ones, then for a sketch matrix $W$,
+multiplied without storing that dense result. If the vector mu contains the
+column means and **1** is a column of ones, then for a sketch matrix W,
 
 ```math
-(A-\mathbf{1}\mu^{\mathsf{T}})W
-= AW-\mathbf{1}(\mu^{\mathsf{T}}W).
+(A-\mathbf{1}\mu^{T})W = AW-\mathbf{1}(\mu^{T}W).
 ```
 
 The first term uses the sparse input; the second is a rank-one

@@ -180,7 +180,7 @@ ggbiplot <- function( rpcaObj, pcs = c(1,2), loadings=TRUE, groups = NULL, alpha
   g <- g + ggplot2::geom_segment(data = dfvariables,
                                  ggplot2::aes(x = 0, y = 0, xend = a, yend = b ),
                                  arrow = grid::arrow(length = grid::unit(0.5, 'picas')),
-                                 color = '#de2d26' ,  size = 0.5)  
+                                 color = '#de2d26' ,  lwd = 0.5)
   
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -195,7 +195,7 @@ ggbiplot <- function( rpcaObj, pcs = c(1,2), loadings=TRUE, groups = NULL, alpha
   
   g <- g + ggplot2::ggtitle('Individuals factor map (PCA)')
   g <- g + ggplot2::xlab(PC1) +  ggplot2::ylab(PC2) 
-  g <- g + ggplot2::guides(colour=FALSE)
+  g <- g + ggplot2::guides(colour="none")
   g <- g + ggplot2::geom_vline(xintercept=0, linetype="dashed", color = "black")  
   g <- g + ggplot2::geom_hline(yintercept=0, linetype="dashed", color = "black")    
   g <- g + ggplot2::theme_bw() 

@@ -141,7 +141,7 @@ ggindplot <- function( rpcaObj, pcs = c(1,2), groups = NULL, alpha = 0.6, ellips
   
   g <- g + ggplot2::ggtitle('Individuals factor map (PCA)')
   g <- g + ggplot2::xlab(PC1) +  ggplot2::ylab(PC2) 
-  g <- g + ggplot2::guides(colour=FALSE)
+  g <- g + ggplot2::guides(colour="none")
   g <- g + ggplot2::geom_vline(xintercept=0, linetype="dashed", color = "black")  
   g <- g + ggplot2::geom_hline(yintercept=0, linetype="dashed", color = "black")    
   g <- g + ggplot2::theme_bw() 

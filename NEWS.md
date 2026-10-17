@@ -27,6 +27,8 @@
 * PCA plotting handles a single retained component and omitted fitted scores,
   routes named options to the appropriate helpers, and preserves the invisible
   return of the last drawn plot.
+  Use supported line-width and legend arguments to avoid deprecation warnings
+  with current ggplot2, while retaining the plotted widths and public arguments.
 * The internal pseudoinverse preserves matrix dimensions when one singular
   direction remains and returns the correct shape for rectangular zero matrices.
   Its numerical-rank cutoff now accounts for matrix dimensions, preventing
@@ -75,6 +77,7 @@
 * Check PCA plot rendering, named options, return values, and the distinction
   between retained and total variance. Clarify the loading/correlation
   interpretation and the existing 95% multivariate-t ellipse.
+  Render all four plotting helpers with lifecycle deprecations treated as errors.
 * Cover sparse product storage, rank-one structural zeros, and custom matrix
   dispatch on the supported Matrix stack.
 * Correct complex orthogonality and PCA reference calculations in the tests,
@@ -92,3 +95,10 @@
 * Expand the README benchmarks to matrices starting at 10,000 by 3,000,
   and restore an illustrated tiger example explaining rank, approximation
   error, and storage of the factors.
+* Explain low-rank SVD, sketching costs, and interpretable ID/CUR factors in
+  the README, with short display equations and executable reconstruction
+  examples. Preserve the saved benchmark measurements and speedup figures.
+* Clarify that ID and CUR are approximations, that ID conditioning depends on
+  the selected subset, and that `idx_only = TRUE` still computes and returns
+  interpolation or connector factors. Document row indices after missing-row
+  omission and provide readable plain-text versions of the help equations.

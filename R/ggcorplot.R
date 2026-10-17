@@ -114,7 +114,7 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   # Create ggplot2::ggplot
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
   g <- ggplot2::ggplot( circle , ggplot2::aes( x , y)  ) +
-    ggplot2::geom_path( size=0.5, colour="black" )  
+    ggplot2::geom_path( lwd=0.5, colour="black" )
 
   
   if(is.null(top.n)) top.n <- nrow(df)
@@ -129,7 +129,7 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   g <- g + ggplot2::geom_segment(data = df,
                                  ggplot2::aes(x = 0, y = 0, xend = a, yend = b ),
                                  arrow = grid::arrow(length = grid::unit(0.5, 'picas')),
-                                 color = 'black' ,  size = 0.5, alpha = alpha)
+                                 color = 'black' ,  lwd = 0.5, alpha = alpha)
   
   g <- g + ggplot2::coord_fixed(ratio=1) 
   g <- g + ggplot2::ggtitle('Variables factor map (PCA)')

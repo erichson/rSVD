@@ -3,8 +3,8 @@
 
 #' @title Pretty Screeplot
 #
-#' @description Creates a pretty screeplpot using \code{\link[ggplot2]{ggplot}}. By default the explained variance is plotted
-#' agaings the number of the principal component.
+#' @description Creates a scree plot using \code{\link[ggplot2]{ggplot}}. By default the explained variance is plotted
+#' against the number of the principal component.
 #' Alternatively the explained variance ratio, the cumulative
 #' explained variance ratio, or the eigenvalues can be plotted.
 #'
@@ -41,7 +41,7 @@ ggscreeplot <- function(rpcaObj, type = c('var', 'ratio', 'cum', 'eigenvals')) {
   y.label <- switch(type,
                     var = 'Explained variance',
                     ratio = 'Proportion of variance',
-                    cum = 'Cummulative proportion',
+                    cum = 'Cumulative proportion',
                     eigenvals = 'Eigenvalues',
                     stop("Selected plot option is not supported!")
   )
@@ -53,9 +53,9 @@ ggscreeplot <- function(rpcaObj, type = c('var', 'ratio', 'cum', 'eigenvals')) {
   
   g <- ggplot2::ggplot(data = df, ggplot2::aes(x = x, y = y) ) +
     ggplot2::xlab('Principal components') + ggplot2::ylab( y.label ) +
-    ggplot2::geom_line(size=0.5, color = 'black', linetype="dashed") +
+    ggplot2::geom_line(lwd=0.5, color = 'black', linetype="dashed") +
     ggplot2::geom_point(size=2, color = '#ef3b2c') + 
-    ggplot2::guides(colour=FALSE)
+    ggplot2::guides(colour="none")
   
   g <- g + ggplot2::theme_bw() + 
     ggplot2::theme(panel.grid.major = ggplot2::element_blank(), 

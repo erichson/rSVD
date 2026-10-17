@@ -2,7 +2,7 @@
 % Please edit documentation in R/rid.R
 \name{rid}
 \alias{rid}
-\title{Randomized interpolative decomposition (ID).}
+\title{Randomized interpolative decomposition (ID)}
 \usage{
 rid(A, k = NULL, mode = "column", p = 10, q = 0, idx_only = FALSE, rand = TRUE)
 }
@@ -25,8 +25,9 @@ oversampling parameter (default \eqn{p=10}).}
 number of additional power iterations (default \eqn{q=0}).}
 
 \item{idx_only}{bool, optional; \cr
-if (\eqn{TRUE}), the index set \code{idx} is returned, but not the matrix \code{C} or \code{R}. 
-This is more memory efficient, when dealing with large-scale data.}
+if (\eqn{TRUE}), omit the selected matrix \code{C} or \code{R}
+from the result. The indices and interpolation matrix \code{Z}
+are still computed and returned.}
 
 \item{rand}{bool, optional; \cr
 if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
@@ -43,12 +44,13 @@ if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
    }
    
    \item{Z}{ array_like; \cr
-            well conditioned matrix; Depending on the selected mode, this is an 
+            interpolation coefficients; depending on the selected mode, this is an
             array with dimensions \eqn{(k,n)} or \eqn{(m,k)}.
    }
    
    \item{idx}{ array_like; \cr
               index set of the \eqn{k} selected columns or rows used to form \eqn{C} or \eqn{R}. 
+              Row indices refer to the input after rows with missing values are omitted.
    }   
   
    \item{pivot}{ array_like; \cr
@@ -72,20 +74,22 @@ Randomized interpolative decomposition.
 }
 \details{
 Algorithm for computing the ID of a rectangular \eqn{(m, n)} matrix \eqn{A}, with target rank 
-\eqn{k << min(m,n)}. The input matrix is factored as 
+\eqn{k << min(m,n)}. The input matrix is approximated as
 
-\deqn{A = C * Z} 
+\deqn{A \approx C Z}{A is approximately C \%*\% Z}
 
 using the column pivoted QR decomposition. The factor matrix \eqn{C} is formed as a subset of 
 columns of \eqn{A}, also called the partial column skeleton. 
-If \code{mode='row'}, then the input matrix is factored as 
+If \code{mode='row'}, then the input matrix is approximated as
 
-\deqn{A = Z * R} 
+\deqn{A \approx Z R}{A is approximately Z \%*\% R}
 
 using the row pivoted QR decomposition. The factor matrix \eqn{R} is now formed as
 a subset of rows of \eqn{A}, also called the partial row skeleton. 
-The factor matrix \eqn{Z} contains a \eqn{(k, k)} identity matrix as a submatrix, 
-and is well-conditioned. 
+The factor matrix \eqn{Z} contains a \eqn{(k, k)} identity matrix as a submatrix.
+Its conditioning and the approximation error depend on the input and the
+selected subset; column-pivoted QR does not guarantee the optimal rank-\eqn{k}
+approximation.
 
 If \eqn{rand='TRUE'} a probabilistic strategy is used to compute the decomposition, otherwise a
 deterministic algorithm is used.
@@ -127,7 +131,7 @@ image(tiger.re, col = gray((0:255)/255))
          decompositions" (2009).
          (available at arXiv \url{https://arxiv.org/abs/0909.4061}).
  \item [2] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
-       Randomized Matrix Decompositions Using {R}. 
+       Randomized Matrix Decompositions Using R.
        Journal of Statistical Software, 89(11), 1-48.
         \doi{10.18637/jss.v089.i11}.
 }

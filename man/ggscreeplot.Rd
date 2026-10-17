@@ -12,8 +12,8 @@ ggscreeplot(rpcaObj, type = c("var", "ratio", "cum", "eigenvals"))
 \item{type}{String c('var', 'ratio', 'cum', 'eigenvals'), optional. \cr}
 }
 \description{
-Creates a pretty screeplpot using \code{\link[ggplot2]{ggplot}}. By default the explained variance is plotted
-agaings the number of the principal component.
+Creates a scree plot using \code{\link[ggplot2]{ggplot}}. By default the explained variance is plotted
+against the number of the principal component.
 Alternatively the explained variance ratio, the cumulative
 explained variance ratio, or the eigenvalues can be plotted.
 }

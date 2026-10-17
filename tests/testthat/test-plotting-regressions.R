@@ -13,14 +13,26 @@ plot_test_fixture <- function(k = 3L, retx = TRUE) {
 plot_test_with_device <- function(expr) {
   grDevices::pdf(file = NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  # Older aesthetics remain supported by ggplot2. Keep version-specific
-  # lifecycle notices separate from data/rendering warnings in these tests.
-  withCallingHandlers(force(expr), warning = function(w) {
-    if (inherits(w, "lifecycle_warning_deprecated")) {
-      invokeRestart("muffleWarning")
-    }
-  })
+  # Fail on deprecated plotting calls even if they have already warned in this
+  # session. Ordinary warnings remain available for explicit expect_warning().
+  old_options <- options(lifecycle_verbosity = "error")
+  on.exit(options(old_options), add = TRUE)
+  force(expr)
 }
+
+testthat::test_that("PCA plotting helpers render without deprecated aesthetics", {
+  fit <- plot_test_fixture()
+  plots <- list(
+    function() ggbiplot(fit, ellipse = FALSE, ind_labels = FALSE),
+    function() ggcorplot(fit),
+    function() ggindplot(fit, ellipse = FALSE, ind_labels = FALSE),
+    function() ggscreeplot(fit)
+  )
+  for (make_plot in plots) {
+    grob <- plot_test_with_device(ggplot2::ggplotGrob(make_plot()))
+    testthat::expect_s3_class(grob, "gtable")
+  }
+})
 
 testthat::test_that("PCA summary and scree plots use total processed variance", {
   fit <- plot_test_fixture(k = 2L)
