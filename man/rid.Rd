@@ -9,7 +9,7 @@ rid(A, k = NULL, mode = "column", p = 10, q = 0, idx_only = FALSE, rand = TRUE)
 \arguments{
 \item{A}{array_like; \cr
 numeric \eqn{(m, n)} input matrix (or data frame). \cr
-If the data contain \eqn{NA}s na.omit is applied.}
+Rows containing missing values are omitted with a warning.}
 
 \item{k}{integer, optional; \cr
 number of rows/columns to be selected. 
@@ -56,7 +56,10 @@ if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
    }  
      
    \item{scores}{ array_like; \cr
-                 scores of the columns or rows of the input matrix \eqn{A}.
+                 absolute diagonal entries of the pivoted QR factor, mapped to
+                 the original columns or rows of \eqn{A}. Entries without a
+                 corresponding QR diagonal are \code{NA}; this can occur for
+                 a rectangular input or a reduced randomized sketch.
    } 
                   
    \item{scores.idx}{ array_like; \cr
@@ -86,13 +89,18 @@ and is well-conditioned.
 
 If \eqn{rand='TRUE'} a probabilistic strategy is used to compute the decomposition, otherwise a
 deterministic algorithm is used.
+
+Sparse matrices from the \pkg{Matrix} package are supported. The randomized
+algorithm uses sparse matrix products to form a dense sketch; the returned
+factors are dense matrices. The deterministic algorithm converts the input
+to a dense matrix before column-pivoted QR factorization.
 }
 \examples{
 \dontrun{
 # Load test image
 data("tiger")
 
-# Compute (column) randomized interpolative decompsition
+# Compute (column) randomized interpolative decomposition
 # Note that the image needs to be transposed for correct plotting
 out <- rid(t(tiger), k = 150)
 

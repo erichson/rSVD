@@ -33,8 +33,10 @@ pinv <- function(A){
   s <- svd(A)
   nz <- s$d > s$d[1] * .Machine$double.eps
   if(any(nz)){
-    return(s$v[, nz] %*% (H(s$u[, nz]) / s$d[nz]))
+    return(s$v[, nz, drop = FALSE] %*%
+             (H(s$u[, nz, drop = FALSE]) / s$d[nz]))
   } else {
-    return(A)
+    return(matrix(if(is.complex(A)) 0+0i else 0,
+                  nrow = ncol(A), ncol = nrow(A)))
   }
 }

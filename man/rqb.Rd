@@ -21,7 +21,7 @@ number of power iterations (default \eqn{q=2}).}
 
 \item{sdist}{string \eqn{c( 'unif', 'normal', 'rademacher')}, optional; \cr
 specifies the sampling distribution: \cr
-\eqn{'unif'} :  Uniform `[-1,1]`. \cr
+\eqn{'unif'} :  Uniform `[0,1]`. \cr
 \eqn{'normal}' (default) : Normal `~N(0,1)`. \cr
 \eqn{'rademacher'} : Rademacher random variates. \cr}
 
@@ -32,11 +32,11 @@ If (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
 \code{rqb} returns a list containing the following components:
 \describe{
 \item{Q}{  array_like; \cr
-          matrix with orthogonal columns; \eqn{(m, k)} dimensional array.
+          matrix with orthonormal columns; \eqn{(m, l)} dimensional array.
 }
 
 \item{B}{  array_like; \cr
-          smaller matrix; \eqn{(k, n)} dimensional array.
+          smaller matrix; \eqn{(l, n)} dimensional array.
 }
 }
 }
@@ -45,7 +45,10 @@ Compute the near-optimal QB decomposition of a rectangular matrix.
 }
 \details{
 The randomized QB decomposition factors a rectangular \eqn{(m,n)} matrix \eqn{A} as
-\eqn{A = Q * B}. \eqn{Q} is an \eqn{(m,k)} matrix with orthogonal columns, and \eqn{B} a \eqn{(k,n)} matrix.
+\eqn{A \approx Q * B}. In the randomized case, \eqn{Q} has \eqn{l} orthonormal
+columns and \eqn{B} has dimensions \eqn{(l,n)}, where
+\eqn{l = \min(k+p,m,n)} for integer \eqn{k} and \eqn{p}. The oversampled
+basis is retained. In the deterministic case, \eqn{l = \min(k,m,n)}.
 The target rank is assumed to be \eqn{k << min(m,n)}.   
 
 \eqn{p} is an oversampling parameter to improve the approximation.
@@ -53,9 +56,15 @@ A value between 5 and 10 is recommended, and \eqn{p=10} is set by default.
 
 The parameter \eqn{q} specifies the number of power (subspace) iterations
 to reduce the approximation error. This is recommended
-if the the singular values decay slowly. In practice 1 or 2 iterations
+if the singular values decay slowly. In practice 1 or 2 iterations
 achieve good results, however, computing power iterations increases the
 computational time. The number of power iterations is set to \eqn{q=2} by default.
+
+In the randomized case, sparse \pkg{Matrix} inputs are kept sparse during
+multiplication. Only the samples, basis and projected matrix are dense.
+The deterministic case uses a dense QR decomposition and returns the first
+\eqn{k} basis vectors; it may therefore require storage for a dense copy of
+the input. Both cases return ordinary R matrices for \code{Q} and \code{B}.
 }
 \references{
 \itemize{

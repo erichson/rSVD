@@ -21,7 +21,7 @@ a numeric \eqn{(m, n)} input matrix (or data frame) to be analyzed. \cr
 If the data contain \eqn{NA}s na.omit is applied.}
 
 \item{k}{integer; \cr
-number of dominant principle components to be computed. It is required that \eqn{k} is smaller or equal to
+number of dominant principal components to be computed. It is required that \eqn{k} is smaller or equal to
 \eqn{min(m,n)}, but it is recommended that \eqn{k << min(m,n)}.}
 
 \item{center}{bool, optional; \cr
@@ -40,7 +40,7 @@ should be returned (\eqn{TRUE} by default).}
 oversampling parameter for \eqn{rsvd} (default \eqn{p=10}), see \code{\link{rsvd}}.}
 
 \item{q}{integer, optional; \cr
-number of additional power iterations for \eqn{rsvd} (default \eqn{q=1}), see \code{\link{rsvd}}.}
+number of additional power iterations for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.}
 
 \item{rand}{bool, optional; \cr
 if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.}
@@ -67,7 +67,7 @@ if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.}
 }
 }
 \description{
-Fast computation of the principal components analysis using the randomized singular value decomposition.
+Fast computation of principal component analysis using the randomized singular value decomposition.
 }
 \details{
 Principal component analysis is an important linear dimension reduction technique.
@@ -82,8 +82,11 @@ The individuals factor map can be produced with \code{\link{ggindplot}},
 and a correlation plot with \code{\link{ggcorplot}}.
 
 The predict function can be used to compute the scores of new observations. The data
-will automatically be centered (and scaled if requested). This is not fully supported for
-complex input matrices.
+will automatically be centered (and scaled if requested), including for complex input.
+Complex variables are scaled using their squared moduli, so their scale factors are real.
+
+Input is converted to a dense matrix for centering and scaling. Sparse inputs are
+accepted, but this routine does not preserve sparse storage.
 }
 \note{
 The principal components are not unique and only defined up to sign
@@ -119,7 +122,7 @@ print(iris.rpca) # Prints the rotations
 iris.rpca <- rpca(log.iris)
 summary(iris.rpca) # Summary
 print(iris.rpca) # Prints the rotations
-plot(iris.rpca) # Produce screeplot, variable and individuls factor maps.
+plot(iris.rpca) # Produce screeplot, variable and individuals factor maps.
 
 }
 \references{

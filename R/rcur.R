@@ -13,12 +13,17 @@
 #' using actual rows of \eqn{A}, also called the partial row skeleton.
 #' 
 #' If \eqn{rand=TRUE} a probabilistic strategy is used to compute the decomposition, otherwise a
-#' deterministic algorithm is used. 
+#' deterministic algorithm is used.
+#'
+#' Sparse matrices from the \pkg{Matrix} package are supported. The randomized
+#' algorithm uses sparse matrix products to choose columns, then operates on dense
+#' selected row and column subsets. The returned factors are dense matrices.
+#' With \code{rand=FALSE}, the column selection also requires a dense copy of the input.
 #'
 #'
 #' @param A   array_like; \cr
 #'            numeric \eqn{(m, n)} input matrix (or data frame). \cr
-#'            If the data contain \eqn{NA}s na.omit is applied.
+#'            Rows containing missing values are omitted with a warning.
 #'            
 #' @param k   integer; \cr
 #'            target rank of the low-rank approximation, i.e., the number of columns/rows
@@ -39,7 +44,7 @@
 #'              if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.                
 #'
 #'
-#' @return \code{rcur} returns a list with class \eqn{id} containing the following components:
+#' @return \code{rcur} returns a list with class \eqn{rcur} containing the following components:
 #'\describe{
 #'    \item{C}{ array_like; \cr
 #'              column subset \eqn{C = A[,C.idx]}; \eqn{(m, k)} dimensional array.
@@ -63,7 +68,8 @@
 #'       
 #'      
 #'    \item{C.scores}{ array_like; \cr
-#'                   scores of the selected columns.
+#'                   scores of the input columns, as returned by \code{\link{rid}}.
+#'                   Entries without a corresponding QR diagonal are \code{NA}.
 #'    } 
 #' 
 #'    \item{R.scores}{ array_like; \cr
@@ -97,7 +103,7 @@
 #' # Load test image
 #' data('tiger')
 #'
-#' # Compute (column) randomized interpolative decompsition
+#' # Compute a randomized CUR decomposition
 #' # Note that the image needs to be transposed for correct plotting
 #' out <- rcur(tiger, k = 150)
 #'
@@ -120,9 +126,14 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TR
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Checks
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if(is.data.frame(A)) A <- as.matrix(A)
   if (any(is.na(A))) {
     warning("Missing values are omitted: na.omit(A).")
-    A <- stats::na.omit(A)
+    if(inherits(A, "Matrix")) {
+      A <- A[Matrix::rowSums(is.na(A)) == 0, , drop=FALSE]
+    } else {
+      A <- stats::na.omit(A)
+    }
   }     
 
   m <- nrow(A)
@@ -154,12 +165,13 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TR
   #Compute column ID
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
   out_cid <- rid(A, k = k, p = p, q = q, mode = 'column', idx_only = TRUE, rand = rand)
+
+  # Only the selected columns need to be dense for the subsequent QR.
+  C <- as.matrix(A[, out_cid$idx, drop=FALSE])
   
   # Select column subset
   if(idx_only == FALSE) {
-    rcurObj$C <- matrix(A[, out_cid$idx], nrow = m, ncol = k)    
-    colnames(rcurObj$C) <- colnames(A)[out_cid$idx]
-    rownames(rcurObj$C) <- rownames(A)
+    rcurObj$C <- C
   } 
   
   rcurObj$C.idx <- out_cid$idx
@@ -169,7 +181,7 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TR
   #Compute row ID of C
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   #out_rid <- rid(A[, rcurObj$C.idx], k = k, p = p, q = q, mode = 'row', idx_only = TRUE, rand = FALSE)
-  out <- qr(H(A[, rcurObj$C.idx]), LAPACK=TRUE) 
+  out <- qr(H(C), LAPACK=TRUE)
   
   # Get index set
   rcurObj$R.idx <- out$pivot[1:k] # Get row set
@@ -179,10 +191,9 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TR
   #Q <- qr.Q( out ) 
   
   # Select row subset
+  R <- as.matrix(A[rcurObj$R.idx, , drop=FALSE])
   if(idx_only == FALSE) {
-    rcurObj$R <- matrix(A[rcurObj$R.idx,], nrow = k, ncol = n) 
-    rownames(rcurObj$R) <- rownames(A)[rcurObj$R.idx]
-    colnames(rcurObj$R) <- colnames(A)
+    rcurObj$R <- R
   } 
   
   rcurObj$R.scores <- abs(diag(S))[1:k]
@@ -191,7 +202,7 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TR
   #Compute U
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   #rcurObj$U = Z %*% MASS::ginv(matrix(A[rcurObj$R.idx, ], nrow = k, ncol = n) )    
-  rcurObj$U = out_cid$Z %*% pinv(matrix(A[rcurObj$R.idx, ], nrow = k, ncol = n))
+  rcurObj$U = out_cid$Z %*% pinv(R)
 
   #colinv = matrix(0, 1 , n)
   #colinv[out_cid$pivot] = 1:n

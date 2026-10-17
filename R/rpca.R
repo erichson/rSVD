@@ -1,6 +1,6 @@
 #' @title  Randomized principal component analysis (rpca).
 #
-#' @description Fast computation of the principal components analysis using the randomized singular value decomposition.
+#' @description Fast computation of principal component analysis using the randomized singular value decomposition.
 #
 #' @details
 #' Principal component analysis is an important linear dimension reduction technique.
@@ -15,8 +15,11 @@
 #' and a correlation plot with \code{\link{ggcorplot}}.
 #'
 #' The predict function can be used to compute the scores of new observations. The data
-#' will automatically be centered (and scaled if requested). This is not fully supported for
-#' complex input matrices.
+#' will automatically be centered (and scaled if requested), including for complex input.
+#' Complex variables are scaled using their squared moduli, so their scale factors are real.
+#'
+#' Input is converted to a dense matrix for centering and scaling. Sparse inputs are
+#' accepted, but this routine does not preserve sparse storage.
 #'
 #'
 #' @param A      array_like; \cr
@@ -24,7 +27,7 @@
 #'               If the data contain \eqn{NA}s na.omit is applied.
 #'
 #' @param k      integer; \cr
-#'               number of dominant principle components to be computed. It is required that \eqn{k} is smaller or equal to
+#'               number of dominant principal components to be computed. It is required that \eqn{k} is smaller or equal to
 #'               \eqn{min(m,n)}, but it is recommended that \eqn{k << min(m,n)}.
 #'
 #' @param center  bool, optional; \cr
@@ -43,7 +46,7 @@
 #'                oversampling parameter for \eqn{rsvd} (default \eqn{p=10}), see \code{\link{rsvd}}.
 #'
 #' @param q       integer, optional; \cr
-#'                number of additional power iterations for \eqn{rsvd} (default \eqn{q=1}), see \code{\link{rsvd}}.
+#'                number of additional power iterations for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.
 #'
 #' @param rand   bool, optional; \cr
 #'               if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.
@@ -125,7 +128,7 @@
 #'iris.rpca <- rpca(log.iris)
 #'summary(iris.rpca) # Summary
 #'print(iris.rpca) # Prints the rotations
-#'plot(iris.rpca) # Produce screeplot, variable and individuls factor maps.
+#'plot(iris.rpca) # Produce screeplot, variable and individuals factor maps.
 #'
 
 #' @export
@@ -178,9 +181,10 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=
   } else { rpcaObj$center <- FALSE }
   
   if(scale == TRUE) {
-    rpcaObj$scale <- sqrt(colSums(A**2) / (m-1))
-    if(is.complex(rpcaObj$scale)) { rpcaObj$scale[Re(rpcaObj$scale) < 1e-8 ] <- 1+0i  
-    } else {rpcaObj$scale[rpcaObj$scale < 1e-8] <- 1}
+    squared <- if(is.complex(A)) Mod(A)**2 else A**2
+    rpcaObj$scale <- sqrt(colSums(squared) / (m-1))
+    rm(squared)
+    rpcaObj$scale[rpcaObj$scale < 1e-8] <- 1
     A <- sweep(A, MARGIN = 2, STATS = rpcaObj$scale, FUN = "/", check.margin = TRUE)
     #A <- H(H(A) / rpcaObj$scale)
     #A[is.nan(A)] <- 0
@@ -198,8 +202,9 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=
   }
   
   out <- switch(svdalg,
-                svd = svd(A, nu = k, nv = k),
-                rsvd = rsvd(A, k = k, p = p, q = q),
+                svd = svd(A, nu = if(retx) k else 0, nv = k),
+                rsvd = rsvd(A, k = k, p = p, q = q,
+                            nu = if(retx) k else 0, nv = k),
                 stop("Selected SVD algorithm is not supported!")
   )
   

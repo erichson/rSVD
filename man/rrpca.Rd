@@ -18,7 +18,7 @@ rrpca(
 \arguments{
 \item{A}{array_like; \cr
 a real \eqn{(m, n)} input matrix (or data frame) to be decomposed. \cr
-na.omit is applied, if the data contain \eqn{NA}s.}
+Rows containing missing values are omitted with a warning.}
 
 \item{lambda}{scalar, optional; \cr
 tuning parameter (default \eqn{lambda = max(m,n)^-0.5}).}
@@ -50,20 +50,25 @@ if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.}
    \item{S}{  array_like \cr
               sparse component; \eqn{(m, n)} dimensional array.
    }
+   \item{err}{ numeric vector; \cr
+              relative Frobenius residual at each iteration, or zero for a zero input.
+   }
 }
 }
 \description{
 Robust principal components analysis separates a matrix into a low-rank plus sparse component.
 }
 \details{
-Robust principal component analysis (RPCA) is a method for the robust seperation of a
+Robust principal component analysis (RPCA) is a method for the robust separation of
 a rectangular \eqn{(m,n)} matrix \eqn{A} into a low-rank component \eqn{L} and a
-sparse comonent \eqn{S}: 
+sparse component \eqn{S}:
 
 \deqn{A = L + S}
 
 To decompose the matrix, we use the inexact augmented Lagrange multiplier
 method (IALM). The algorithm can be used in combination with either the randomized or deterministic SVD.
+Input and working arrays are dense, including when a sparse \pkg{Matrix} input
+is supplied. A zero input returns zero components and zero residual immediately.
 }
 \examples{
 library('rsvd')
@@ -85,12 +90,12 @@ for(i in 1:90) {
 # Foreground/Background separation
 out <- rrpca(toyVideo, trace=TRUE)
 
-# Display results of the seperation for the 10th frame
+# Display results of the separation for the 10th frame
 par(mfrow=c(1,4))
 image(matrix(bg, ncol=100, nrow=100)) #true background
 image(matrix(toyVideo[,10], ncol=100, nrow=100)) # frame
-image(matrix(out$L[,10], ncol=100, nrow=100)) # seperated background
-image(matrix(out$S[,10], ncol=100, nrow=100)) #seperated foreground
+image(matrix(out$L[,10], ncol=100, nrow=100)) # separated background
+image(matrix(out$S[,10], ncol=100, nrow=100)) # separated foreground
 }
 \references{
 \itemize{

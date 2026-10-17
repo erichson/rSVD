@@ -3,19 +3,21 @@
 #' @description Robust principal components analysis separates a matrix into a low-rank plus sparse component.
 #
 #' @details
-#' Robust principal component analysis (RPCA) is a method for the robust seperation of a
+#' Robust principal component analysis (RPCA) is a method for the robust separation of
 #' a rectangular \eqn{(m,n)} matrix \eqn{A} into a low-rank component \eqn{L} and a
-#' sparse comonent \eqn{S}: 
+#' sparse component \eqn{S}:
 #'
 #' \deqn{A = L + S}
 #'
 #' To decompose the matrix, we use the inexact augmented Lagrange multiplier
-#' method (IALM). The algorithm can be used in combination with either the randomized or deterministic SVD. 
+#' method (IALM). The algorithm can be used in combination with either the randomized or deterministic SVD.
+#' Input and working arrays are dense, including when a sparse \pkg{Matrix} input
+#' is supplied. A zero input returns zero components and zero residual immediately.
 #'
 #'
 #' @param A       array_like; \cr
 #'                a real \eqn{(m, n)} input matrix (or data frame) to be decomposed. \cr
-#'                na.omit is applied, if the data contain \eqn{NA}s.
+#'                Rows containing missing values are omitted with a warning.
 #'
 #' @param lambda  scalar, optional; \cr
 #'                tuning parameter (default \eqn{lambda = max(m,n)^-0.5}).
@@ -46,6 +48,9 @@
 #'    }
 #'    \item{S}{  array_like \cr
 #'               sparse component; \eqn{(m, n)} dimensional array.
+#'    }
+#'    \item{err}{ numeric vector; \cr
+#'               relative Frobenius residual at each iteration, or zero for a zero input.
 #'    }
 #'}
 #'
@@ -85,12 +90,12 @@
 #' # Foreground/Background separation
 #' out <- rrpca(toyVideo, trace=TRUE)
 #'
-#' # Display results of the seperation for the 10th frame
+#' # Display results of the separation for the 10th frame
 #' par(mfrow=c(1,4))
 #' image(matrix(bg, ncol=100, nrow=100)) #true background
 #' image(matrix(toyVideo[,10], ncol=100, nrow=100)) # frame
-#' image(matrix(out$L[,10], ncol=100, nrow=100)) # seperated background
-#' image(matrix(out$S[,10], ncol=100, nrow=100)) #seperated foreground
+#' image(matrix(out$L[,10], ncol=100, nrow=100)) # separated background
+#' image(matrix(out$S[,10], ncol=100, nrow=100)) # separated foreground
 
 #' @export
 rrpca <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, trace=FALSE, rand=TRUE) UseMethod("rrpca")
@@ -103,21 +108,33 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
   #***                       License: BSD 3 clause                       ***
   #*************************************************************************
   A <- as.matrix(A)
+  if(any(is.na(A))) {
+    warning("Missing values are omitted: na.omit(A).")
+    A <- stats::na.omit(A)
+  }
   m <- nrow(A)
   n <- ncol(A)
+  if(m < 1L || n < 1L) {
+    stop("Input matrix must have positive dimensions after omitting missing values.")
+  }
 
   rrpcaObj = list(L = NULL,
                   S = NULL,
                   err = NULL)
 
+  froNorm <- norm(A, "F")
+  if(froNorm == 0) {
+    rrpcaObj$L <- matrix(0, nrow = m, ncol = n)
+    rrpcaObj$S <- matrix(0, nrow = m, ncol = n)
+    rrpcaObj$err <- 0
+    class(rrpcaObj) <- "rrpca"
+    return(rrpcaObj)
+  }
 
   # Set target rank
   k <- 1
   if(k > min(m,n)) rrpcaObj$k <- min(m,n)
 
-  # Deal with missing values
-  is.na(A) <- 0
-  
   # Set lambda, gamma, rho
   if(is.null(lambda)) lambda <- max(m,n)**-0.5
   gamma <- 1.25
@@ -138,9 +155,8 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
 
   infNorm <- norm( A , "I") / lambda
   dualNorm <- max( spectralNorm , infNorm)
-  froNorm <- norm( A , "F")
 
-  # Initalize Lagrange multiplier
+  # Initialize Lagrange multiplier
   Z <- A / dualNorm
 
   # Initialize tuning parameter
@@ -200,7 +216,14 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
       # Truncate SVD and update L
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # rrpcaObj$L =  svd_out$u[,1:rrpcaObj$k] %*% diag(svd_out$d[1:rrpcaObj$k] - muinv, nrow=rrpcaObj$k, ncol=rrpcaObj$k)  %*% t(svd_out$v[,1:rrpcaObj$k])
-      L =  t(t(svd_out$u[,1:svp, drop=FALSE]) * (svd_out$d[1:svp] - 1/mu)) %*% t(svd_out$v[,1:svp, drop=FALSE])
+      if(svp > 0L) {
+        keep <- seq_len(svp)
+        L <- sweep(svd_out$u[, keep, drop=FALSE], 2,
+                   svd_out$d[keep] - 1/mu, FUN = "*") %*%
+          t(svd_out$v[, keep, drop=FALSE])
+      } else {
+        L[] <- 0
+      }
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Compute error
