@@ -1,12 +1,13 @@
 #'Tiger
 #'
-#' @description 1600x1200 grayscaled (8 bit [0-255]/255) image.
+#' @description A 1600 by 1200 grayscale image with pixel intensities
+#' normalized from 8-bit values to the interval [0, 1].
 #'
 #' @docType data
 #'
 #' @usage data('tiger')
 #'
-#' @format An object of class \code{\link[rsvd]{rsvd}}.
+#' @format A numeric matrix with 1600 rows and 1200 columns.
 #'
 #' @keywords image
 #'

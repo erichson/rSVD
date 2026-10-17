@@ -1,0 +1,23 @@
+{
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "matplotlib": "3.10.8",
+  "png_pixels": [
+    1296,
+    1092
+  ],
+  "display_limits": [
+    0,
+    1
+  ],
+  "display_origin": "lower",
+  "display_orientation": "transpose of R matrix, equivalent to image(tiger)",
+  "raster_interpolation": "lanczos; same for all panels",
+  "png_dpi": 120,
+  "pdf_dpi": 180,
+  "pdf_fonts": "TrueType",
+  "png_sha256": "36a2bfa7710ca51a184191043afe7bbb23e7f2f1e0cbd439af0762c03cd801be",
+  "source_url": "https://commons.wikimedia.org/wiki/File:Sibirischer_tiger_de_edit02.jpg",
+  "license_url": "https://creativecommons.org/licenses/by-sa/2.5/",
+  "image_credit": "S. Taheri (2006), edited by Fir0002 · CC BY-SA 2.5 · Grayscale and low-rank adaptations"
+}

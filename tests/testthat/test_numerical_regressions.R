@@ -20,10 +20,9 @@ testthat::test_that("complex PCA scales by modulus and matches deterministic sco
   expected_scale <- sqrt(colSums(Mod(centered)^2) / (nrow(A)-1))
   testthat::expect_equal(fit$scale, expected_scale, tolerance = 1e-12)
   testthat::expect_true(is.numeric(fit$scale))
-  testthat::expect_equal(fit$x, predict(fit, A), tolerance = 1e-10,
-                         ignore_attr = TRUE)
-  testthat::expect_equal(crossprod(fit$rotation), diag(2),
-                         tolerance = 1e-10, ignore_attr = TRUE)
+  testthat::expect_equal(unname(fit$x), unname(predict(fit, A)), tolerance = 1e-10)
+  testthat::expect_equal(unname(crossprod(Conj(fit$rotation), fit$rotation)),
+                         diag(2)+0i, tolerance = 1e-10)
 })
 
 testthat::test_that("robust PCA handles the zero matrix without NaN or Inf", {
@@ -37,11 +36,11 @@ testthat::test_that("robust PCA handles the zero matrix without NaN or Inf", {
 })
 
 testthat::test_that("robust PCA handles a zero-rank thresholding step", {
-  # Every singular value can be below the current threshold.
-  A <- matrix(0, 8, 6)
-  fit <- rrpca(A, rand = FALSE, maxiter = 3)
+  # A nonzero input reaches a shrinkage step with no retained singular values.
+  A <- matrix(c(1, 0, 0, 0), 2, 2)
+  fit <- rrpca(A, rand = FALSE, maxiter = 1)
   testthat::expect_identical(dim(fit$L), dim(A))
-  testthat::expect_equal(fit$L, A, tolerance = 1e-12)
+  testthat::expect_equal(fit$L, matrix(0, 2, 2), tolerance = 1e-12)
 })
 
 testthat::test_that("full-rank interpolative decomposition is an interpolation identity", {
@@ -68,4 +67,33 @@ testthat::test_that("randomized SVD returns orthonormal vectors and a competitiv
   testthat::expect_equal(crossprod(fit$v), diag(k), tolerance = 1e-8)
   testthat::expect_gte(residual + 1e-9, best)
   testthat::expect_lt(residual, 1.3 * best)
+})
+
+testthat::test_that("pseudoinverse preserves rectangular and rank-one dimensions", {
+  inputs <- list(matrix(0, 3, 5), matrix(0+0i, 5, 3),
+                 matrix(1:4, 4, 1), matrix(1:4, 1, 4),
+                 outer(c(1+2i, 3-1i, -2+1i), c(2-1i, 1+3i)))
+  for (A in inputs) {
+    inverse <- rsvd:::pinv(A)
+    testthat::expect_identical(dim(inverse), rev(dim(A)))
+    testthat::expect_equal(A %*% inverse %*% A, A, tolerance = 1e-10)
+    testthat::expect_equal(inverse %*% A %*% inverse, inverse, tolerance = 1e-10)
+    testthat::expect_equal(A %*% inverse, Conj(t(A %*% inverse)), tolerance = 1e-10)
+    testthat::expect_equal(inverse %*% A, Conj(t(inverse %*% A)), tolerance = 1e-10)
+  }
+})
+
+testthat::test_that("CUR handles rectangular zero inputs", {
+  inputs <- list(matrix(0, 9, 6),
+                 Matrix::sparseMatrix(i = integer(), j = integer(),
+                                      x = numeric(), dims = c(9, 6)))
+  for (A in inputs) {
+    for (randomized in c(FALSE, TRUE)) {
+      fit <- rcur(A, k = 2, rand = randomized)
+      testthat::expect_identical(dim(fit$U), c(2L, 2L))
+      testthat::expect_equal(fit$C %*% fit$U %*% fit$R, as.matrix(A),
+                             tolerance = 1e-12)
+      testthat::expect_true(all(is.finite(fit$U)))
+    }
+  }
 })

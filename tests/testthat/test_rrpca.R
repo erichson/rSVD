@@ -19,7 +19,7 @@ atol_float64 <- 1e-8
 
 
 #*************************************************************************************
-# Test : Low-rank matrix with randomly currpted entries
+# Test: Low-rank matrix with randomly corrupted entries
 #*************************************************************************************
 #Create real random test matrix of dimension m x n with target rank k
 m = 50
@@ -29,8 +29,8 @@ L1 = matrix(rnorm(m*k), nrow = m, ncol = k)
 L2 = matrix(rnorm(n*k), nrow = k, ncol = n) 
 L = L1 %*% L2
 S = matrix(runif(m*n, -500, 500), nrow = m, ncol = n)
-p = 0.1 # Percentage of sparse errors
-S = S * matrix(rbinom(m*n, size=1, prob=p), nrow = m, ncol = n)
+corruption_probability = 0.1
+S = S * matrix(rbinom(m*n, size=1, prob=corruption_probability), nrow = m, ncol = n)
 testMat = L + S
 
 
@@ -59,7 +59,7 @@ testthat::test_that("Test 2: Randomized RPCA", {
 })
 
 #*************************************************************************************
-# Test: Low-rank matrix with 0 patch
+# Test: Low-rank matrix without sparse corruption
 #*************************************************************************************
 m = 50
 n = 40
@@ -68,11 +68,10 @@ L <- matrix(runif(m*k), m, k)
 L <- L %*% t(L)
 L <- L[,1:n]
 S = matrix(0, nrow = m, ncol = n)
-S[10:15,10:15] = 0
 testMat = L + S
 
 #*************************************************************************************
-# Test 3: deterministtic SVD
+# Test 3: deterministic SVD
 #*************************************************************************************
 out <- rrpca(testMat, maxiter=100, tol=1e-08, trace=FALSE, rand=FALSE)
 rerror <- norm(L - out$L, 'F') / norm(L, 'F')

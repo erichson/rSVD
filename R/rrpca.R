@@ -3,40 +3,66 @@
 #' @description Robust principal components analysis separates a matrix into a low-rank plus sparse component.
 #
 #' @details
-#' Robust principal component analysis (RPCA) is a method for the robust seperation of a
+#' Robust principal component analysis (RPCA) is a method for the robust separation of
 #' a rectangular \eqn{(m,n)} matrix \eqn{A} into a low-rank component \eqn{L} and a
-#' sparse comonent \eqn{S}: 
+#' sparse component \eqn{S}:
 #'
 #' \deqn{A = L + S}
 #'
 #' To decompose the matrix, we use the inexact augmented Lagrange multiplier
-#' method (IALM). The algorithm can be used in combination with either the randomized or deterministic SVD. 
+#' method (IALM). The algorithm can be used in combination with either the randomized or deterministic SVD.
+#' Input and working arrays are dense, including when a sparse \pkg{Matrix} input
+#' is supplied. A zero input returns zero components and zero residual immediately.
+#'
+#' The stopping test requires both the relative reconstruction residual and a
+#' stationarity diagnostic to be at most \code{tol}, unless \code{maxiter} is
+#' reached first. With the sparse component
+#' updated first, the latter is
+#' \eqn{\mu\|L_{new}-L_{old}\|_F / \max(1,\|Z\|_F)}, where \eqn{Z} is the
+#' Lagrange multiplier. The penalty \eqn{\mu} increases only after this diagnostic
+#' is sufficiently small. This prevents stopping on reconstruction feasibility alone
+#' and makes the stopping tests invariant to rescaling the input.
+#'
+#' Randomized singular-value thresholding increases its target rank if all
+#' returned singular values exceed the shrinkage threshold. If convergence
+#' stalls, a bounded heuristic increases the power iterations by two, at most
+#' twice, before switching to the deterministic SVD. These refinements can
+#' increase runtime. The stopping diagnostics and randomized approximations
+#' are not a general certificate of optimality. The iteration limit may be
+#' reached before both diagnostics satisfy \code{tol}; \code{trace=TRUE} displays
+#' both, whereas the returned \code{err} contains reconstruction residuals only.
 #'
 #'
 #' @param A       array_like; \cr
 #'                a real \eqn{(m, n)} input matrix (or data frame) to be decomposed. \cr
-#'                na.omit is applied, if the data contain \eqn{NA}s.
+#'                Rows containing missing values are omitted with a warning.
 #'
 #' @param lambda  scalar, optional; \cr
 #'                tuning parameter (default \eqn{lambda = max(m,n)^-0.5}).
 #'
 #' @param maxiter integer, optional; \cr
-#'                maximum number of iterations (default \eqn{maxiter = 50}).
+#'                maximum number of iterations (default \eqn{maxiter = 50});
+#'                reaching this limit does not imply convergence.
 #'
 #' @param tol     scalar, optional; \cr
-#'                precision parameter (default \eqn{tol = 1.0e-5}).
+#'                tolerance for the relative reconstruction residual and
+#'                stationarity diagnostic (default \eqn{tol = 1.0e-5}).
 #'
 #' @param p       integer, optional; \cr
 #'                oversampling parameter for \eqn{rsvd} (default \eqn{p=10}), see \code{\link{rsvd}}.
 #'
 #' @param q       integer, optional; \cr
-#'                number of additional power iterations for \eqn{rsvd} (default \eqn{q=2}), see \code{\link{rsvd}}.
+#'                initial number of additional power iterations for \eqn{rsvd}
+#'                (default \eqn{q=2}); increased adaptively if convergence stalls.
+#'                See \code{\link{rsvd}}.
 #'
 #' @param trace   bool, optional; \cr
-#'                print progress.
+#'                print progress, including both convergence diagnostics.
 #'                
 #' @param rand    bool, optional; \cr
-#'                if (\eqn{TRUE}), the \eqn{rsvd} routine is used, otherwise \eqn{svd} is used.
+#'                if (\eqn{TRUE}), start with \eqn{rsvd}, with deterministic SVD
+#'                fallback for a large target rank or stalled accuracy;
+#'                otherwise use \eqn{svd} throughout.
 #'
 #'
 #' @return \code{rrpca} returns a list containing the following components:
@@ -46,6 +72,9 @@
 #'    }
 #'    \item{S}{  array_like \cr
 #'               sparse component; \eqn{(m, n)} dimensional array.
+#'    }
+#'    \item{err}{ numeric vector; \cr
+#'               relative Frobenius residual at each iteration, or zero for a zero input.
 #'    }
 #'}
 #'
@@ -60,9 +89,14 @@
 #'         \doi{10.18637/jss.v089.i11}.
 #' 
 #'   \item  [2] Lin, Zhouchen, Minming Chen, and Yi Ma.
-#'          "The augmented lagrange multiplier method for exact
+#'          "The augmented Lagrange multiplier method for exact
 #'          recovery of corrupted low-rank matrices." (2010).
 #'          (available at arXiv \url{https://arxiv.org/abs/1009.5055}).
+#'
+#'   \item [3] S. Boyd, N. Parikh, E. Chu, B. Peleato and J. Eckstein. 2011.
+#'         Distributed Optimization and Statistical Learning via the Alternating
+#'         Direction Method of Multipliers. Foundations and Trends in Machine
+#'         Learning, 3(1), 1-122. \doi{10.1561/2200000016}.
 #' }
 #'
 #' @examples
@@ -85,12 +119,12 @@
 #' # Foreground/Background separation
 #' out <- rrpca(toyVideo, trace=TRUE)
 #'
-#' # Display results of the seperation for the 10th frame
+#' # Display results of the separation for the 10th frame
 #' par(mfrow=c(1,4))
 #' image(matrix(bg, ncol=100, nrow=100)) #true background
 #' image(matrix(toyVideo[,10], ncol=100, nrow=100)) # frame
-#' image(matrix(out$L[,10], ncol=100, nrow=100)) # seperated background
-#' image(matrix(out$S[,10], ncol=100, nrow=100)) #seperated foreground
+#' image(matrix(out$L[,10], ncol=100, nrow=100)) # separated background
+#' image(matrix(out$S[,10], ncol=100, nrow=100)) # separated foreground
 
 #' @export
 rrpca <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, trace=FALSE, rand=TRUE) UseMethod("rrpca")
@@ -103,21 +137,33 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
   #***                       License: BSD 3 clause                       ***
   #*************************************************************************
   A <- as.matrix(A)
+  if(any(is.na(A))) {
+    warning("Missing values are omitted: na.omit(A).")
+    A <- stats::na.omit(A)
+  }
   m <- nrow(A)
   n <- ncol(A)
+  if(m < 1L || n < 1L) {
+    stop("Input matrix must have positive dimensions after omitting missing values.")
+  }
 
   rrpcaObj = list(L = NULL,
                   S = NULL,
                   err = NULL)
 
+  froNorm <- norm(A, "F")
+  if(froNorm == 0) {
+    rrpcaObj$L <- matrix(0, nrow = m, ncol = n)
+    rrpcaObj$S <- matrix(0, nrow = m, ncol = n)
+    rrpcaObj$err <- 0
+    class(rrpcaObj) <- "rrpca"
+    return(rrpcaObj)
+  }
 
   # Set target rank
-  k <- 1
-  if(k > min(m,n)) rrpcaObj$k <- min(m,n)
+  k <- 1L
+  max_rank <- min(m, n)
 
-  # Deal with missing values
-  is.na(A) <- 0
-  
   # Set lambda, gamma, rho
   if(is.null(lambda)) lambda <- max(m,n)**-0.5
   gamma <- 1.25
@@ -136,18 +182,18 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
                     stop("Selected SVD algorithm is not supported!")
   )
 
-  infNorm <- norm( A , "I") / lambda
+  # The dual of the entrywise l1 norm is the largest absolute entry,
+  # rather than the matrix infinity norm (maximum absolute row sum).
+  infNorm <- norm(A, "M") / lambda
   dualNorm <- max( spectralNorm , infNorm)
-  froNorm <- norm( A , "F")
 
-  # Initalize Lagrange multiplier
+  # Initialize Lagrange multiplier
   Z <- A / dualNorm
 
   # Initialize tuning parameter
   mu <- gamma / spectralNorm
   mubar <- mu * 1e7
   mu <- min( mu * rho , mubar )
-  muinv <- 1 / mu
 
   # Init low-rank and sparse matrix
   L = matrix(0, nrow = m, ncol = n)
@@ -155,7 +201,13 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
   
   niter <- 1
   err <- 1
-  while(err > tol && niter <= maxiter) {
+  dualErr <- 1
+  power_iterations <- q
+  refinement <- 0L
+  stagnation <- 0L
+  best_error <- Inf
+  use_exact <- FALSE
+  while((err > tol || dualErr > tol) && niter <= maxiter) {
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Update S using soft-threshold
@@ -169,21 +221,38 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
       idxH <- which(temp_S > epsi)
       S[idxL] <- temp_S[idxL] + epsi
       S[idxH] <- temp_S[idxH] - epsi
-
+      remove(temp_S, idxL, idxH)
       
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       #Singular Value Decomposition
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       R <- A - S + Z / mu
 
+      randomized_step <- FALSE
       if(svdalg == 'svd') svd_out <- svd(R)
       if(svdalg == 'rsvd') {
-        if(k > min(m,n)/5 ) auto_svd = 'svd' else auto_svd = 'rsvd' 
-      
-        svd_out <- switch(auto_svd,
-                          svd = svd(R),
-                          rsvd = rsvd(R, k=k+10, p=p, q=q)) 
-      }  
+        if(use_exact || k > max_rank / 5) {
+          svd_out <- svd(R)
+        } else {
+          target <- min(k + 10L, max_rank)
+          repeat {
+            svd_out <- rsvd(R, k = target, p = p, q = power_iterations)
+            randomized_step <- TRUE
+            # A saturated truncation can omit singular values that survive
+            # shrinkage. Increase its rank before accepting this update.
+            # This is a coverage safeguard, not an error certificate for
+            # the randomized singular values themselves.
+            if(target == max_rank || svd_out$d[target] <= 1 / mu) break
+            target <- min(2L * target, max_rank)
+            if(target > max_rank / 5) {
+              svd_out <- svd(R)
+              randomized_step <- FALSE
+              break
+            }
+          }
+        }
+      }
+      remove(R)
       
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Predict optimal rank and update
@@ -191,16 +260,23 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
       svp = sum(svd_out$d > 1/mu)
       
       if(svp <= k){
-        k = min(svp + 1, n)
+        k = min(svp + 1, max_rank)
       } else {
-        k = min(svp + round(0.05 * n), n)
+        k = min(svp + round(0.05 * max_rank), max_rank)
       }
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Truncate SVD and update L
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # rrpcaObj$L =  svd_out$u[,1:rrpcaObj$k] %*% diag(svd_out$d[1:rrpcaObj$k] - muinv, nrow=rrpcaObj$k, ncol=rrpcaObj$k)  %*% t(svd_out$v[,1:rrpcaObj$k])
-      L =  t(t(svd_out$u[,1:svp, drop=FALSE]) * (svd_out$d[1:svp] - 1/mu)) %*% t(svd_out$v[,1:svp, drop=FALSE])
+      previous_L <- L
+      if(svp > 0L) {
+        keep <- seq_len(svp)
+        L <- sweep(svd_out$u[, keep, drop=FALSE], 2,
+                   svd_out$d[keep] - 1/mu, FUN = "*") %*%
+          t(svd_out$v[, keep, drop=FALSE])
+      } else {
+        L[] <- 0
+      }
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Compute error
@@ -209,17 +285,47 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
       Z = Z + Astar * mu
 
       err = norm( Astar , 'F') / froNorm
+      # With exact SVD and the S-then-L order, the two proximal subgradients
+      # differ by mu * (L - previous_L). Feasibility alone can be exact at
+      # a nonoptimal decomposition, so also require this change to be small.
+      # Normalize by the dual variable to preserve input-scale invariance.
+      dualErr <- mu * norm(L - previous_L, "F") / max(1, norm(Z, "F"))
+      remove(previous_L)
+
+      # A fixed sketch accuracy can stall the stationarity test. Increase
+      # the power iterations after three steps without a 10% improvement.
+      # Try two refinements before using exact SVD for the remaining steps.
+      if(randomized_step) {
+        current_error <- max(err, dualErr)
+        if(current_error < 0.9 * best_error) {
+          best_error <- current_error
+          stagnation <- 0L
+        } else {
+          stagnation <- stagnation + 1L
+        }
+        if(stagnation >= 3L) {
+          if(refinement < 2L) {
+            power_iterations <- power_iterations + 2L
+            refinement <- refinement + 1L
+          } else {
+            use_exact <- TRUE
+          }
+          best_error <- Inf
+          stagnation <- 0L
+        }
+      }
       rrpcaObj$err <- c(rrpcaObj$err, err)
 
       if(trace==TRUE){
-        cat('\n', paste0('Iteration: ', niter ), paste0(' predicted rank = ', svp ), paste0(' target rank k = ', k ),  paste0(' Fro. error = ', rrpcaObj$err[niter] ))
+        cat('\n', paste0('Iteration: ', niter ), paste0(' predicted rank = ', svp ), paste0(' target rank k = ', k ),  paste0(' Fro. error = ', rrpcaObj$err[niter] ), paste0(' stationarity error = ', dualErr))
         }
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Update mu
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      mu = min(mu * rho, mubar);
-      muinv = 1 / mu
+      # Increasing mu before the proximal steps agree can make a feasible
+      # but incorrect split stagnate. Keep the penalty fixed until they do.
+      if(dualErr <= tol) mu <- min(mu * rho, mubar)
 
       niter =  niter + 1
 

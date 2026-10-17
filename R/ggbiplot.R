@@ -3,8 +3,12 @@
 
 #' Biplot for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.
 #'
-#' @description Creates a pretty biplot which is showing the individual factor map overlayed by the
-#' variables factor map, i.e, plotting both the principal component scores and directions.
+#' @description Overlays the individual and variable factor maps, showing
+#' fitted principal-component scores and directions.
+#'
+#' @details The plotted observations are the fitted scores. The
+#' \code{loadings} argument controls the arrow scale only; it does not rescale
+#' the observation scores.
 #'    
 #' @param  rpcaObj        Object returned by the \code{\link[rsvd]{rpca}} function.
 #'                          
@@ -13,8 +17,8 @@
 #'                        By default the first two PCs are used, e.g., \eqn{c(1,2)}. 
 #'
 #' @param loadings   Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                  If \eqn{TRUE}, the eigenvectors
-#'                  are unit scaled by the square root of the eigenvalues \eqn{W = W * diag(sqrt(eigvals))}.                       
+#'                  If \eqn{TRUE}, each eigenvector is multiplied by the square
+#'                  root of its eigenvalue, \eqn{W = W * diag(sqrt(eigvals))}.
 #'                                                                              
 #' @param  groups         Factor, optional. \cr
 #'                        Factor indicating groups.
@@ -23,7 +27,9 @@
 #'                        Alpha transparency for scatter plot.
 #'                                                                                
 #' @param  ellipse        Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                        Draw a 1sd data ellipse for each group, if \eqn{TRUE}.
+#'                        Draw the default 95\% multivariate-t data ellipse from
+#'                        \code{\link[ggplot2]{stat_ellipse}} for each supplied
+#'                        group, if \eqn{TRUE}.
 #'  
 #' @param  alpha.ellipse  Scalar, optional. \cr
 #'                        Alpha transparency for ellipse.
@@ -174,7 +180,7 @@ ggbiplot <- function( rpcaObj, pcs = c(1,2), loadings=TRUE, groups = NULL, alpha
   g <- g + ggplot2::geom_segment(data = dfvariables,
                                  ggplot2::aes(x = 0, y = 0, xend = a, yend = b ),
                                  arrow = grid::arrow(length = grid::unit(0.5, 'picas')),
-                                 color = '#de2d26' ,  size = 0.5)  
+                                 color = '#de2d26' ,  lwd = 0.5)
   
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -189,7 +195,7 @@ ggbiplot <- function( rpcaObj, pcs = c(1,2), loadings=TRUE, groups = NULL, alpha
   
   g <- g + ggplot2::ggtitle('Individuals factor map (PCA)')
   g <- g + ggplot2::xlab(PC1) +  ggplot2::ylab(PC2) 
-  g <- g + ggplot2::guides(colour=FALSE)
+  g <- g + ggplot2::guides(colour="none")
   g <- g + ggplot2::geom_vline(xintercept=0, linetype="dashed", color = "black")  
   g <- g + ggplot2::geom_hline(yintercept=0, linetype="dashed", color = "black")    
   g <- g + ggplot2::theme_bw() 

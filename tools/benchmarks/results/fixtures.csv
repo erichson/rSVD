@@ -1,0 +1,12 @@
+"case","family","storage","m","n","k","p","q","table","scaling","description","input_class","input_nonzeros","density","input_object_bytes"
+"svd_tall_10000","svd","dense",10000,3000,40,10,2,TRUE,TRUE,"Rank-80 geometric signal plus dense Gaussian noise","matrix",3e+07,1,240000216
+"svd_tall_15000","svd","dense",15000,4500,40,10,2,FALSE,TRUE,"Rank-80 geometric signal plus dense Gaussian noise","matrix",67500000,1,540000216
+"svd_tall_20000","svd","dense",20000,6000,40,10,2,TRUE,TRUE,"Rank-80 geometric signal plus dense Gaussian noise","matrix",1.2e+08,1,960000216
+"pca_dense","pca","dense",15000,4500,40,10,2,TRUE,FALSE,"Geometric signal, dense noise, and nonzero column offsets","matrix",67500000,1,540000216
+"pca_sparse_scale_10000","pca","sparse",10000,3000,40,10,2,TRUE,TRUE,"Twenty noisy rank-two blocks; 5 percent density","dgCMatrix",1500000,0.05,18013504
+"pca_sparse_scale_15000","pca","sparse",15000,4500,40,10,2,FALSE,TRUE,"Twenty noisy rank-two blocks; 5 percent density","dgCMatrix",3375000,0.05,40519504
+"pca_sparse_scale_20000","pca","sparse",20000,6000,40,10,2,TRUE,TRUE,"Twenty noisy rank-two blocks; 5 percent density","dgCMatrix",6e+06,0.05,72025504
+"id_dense","id","dense",15000,4500,40,10,0,TRUE,FALSE,"Rank-80 geometric signal plus dense Gaussian noise","matrix",67500000,1,540000216
+"id_sparse","id","sparse",15000,4500,40,10,0,TRUE,FALSE,"Twenty noisy rank-two blocks; 5 percent density","dgCMatrix",3375000,0.05,40519504
+"cur_dense","cur","dense",15000,4500,40,10,0,TRUE,FALSE,"Rank-80 geometric signal plus dense Gaussian noise","matrix",67500000,1,540000216
+"cur_sparse","cur","sparse",15000,4500,40,10,0,TRUE,FALSE,"Twenty noisy rank-two blocks; 5 percent density","dgCMatrix",3375000,0.05,40519504

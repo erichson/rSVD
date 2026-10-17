@@ -1,0 +1,14 @@
+"package","version","md5","source_url","installed"
+"BiocGenerics","0.58.1","6aa4beaff2e84c0ff9d155a346a66eaa","https://bioconductor.org/packages/3.23/bioc/src/contrib/BiocGenerics_0.58.1.tar.gz",TRUE
+"S4Vectors","0.50.3","78e199c653ffa787875688cd5f1cef3f","https://bioconductor.org/packages/3.23/bioc/src/contrib/S4Vectors_0.50.3.tar.gz",TRUE
+"MatrixGenerics","1.24.0","4695a279932ea75cf770fc4e3327e854","https://bioconductor.org/packages/3.23/bioc/src/contrib/MatrixGenerics_1.24.0.tar.gz",TRUE
+"IRanges","2.46.0","19207bce0e7449363d4bd4e1f4c84dd0","https://bioconductor.org/packages/3.23/bioc/src/contrib/IRanges_2.46.0.tar.gz",TRUE
+"S4Arrays","1.12.1","de6c0e780bffc8fdd8d016f368769246","https://bioconductor.org/packages/3.23/bioc/src/contrib/S4Arrays_1.12.1.tar.gz",TRUE
+"XVector","0.52.0","d3f45d565b9d6804c95d4ca1a4ec81d2","https://bioconductor.org/packages/3.23/bioc/src/contrib/XVector_0.52.0.tar.gz",TRUE
+"SparseArray","1.12.3","5fa998d87e368b0afd8b589cd9a421f9","https://bioconductor.org/packages/3.23/bioc/src/contrib/SparseArray_1.12.3.tar.gz",TRUE
+"DelayedArray","0.38.2","01223fbdc2a77a81a05b2683f1bd317f","https://bioconductor.org/packages/3.23/bioc/src/contrib/DelayedArray_0.38.2.tar.gz",TRUE
+"BiocParallel","1.46.0","6b273932d1944fa81ae0e2cf8a2cc471","https://bioconductor.org/packages/3.23/bioc/src/contrib/BiocParallel_1.46.0.tar.gz",TRUE
+"ScaledMatrix","1.20.0","3fbab49713f88d421143f32981fafcc3","https://bioconductor.org/packages/3.23/bioc/src/contrib/ScaledMatrix_1.20.0.tar.gz",TRUE
+"assorthead","1.6.4","3d29d7ace812a2181e89898b0d871c0a","https://bioconductor.org/packages/3.23/bioc/src/contrib/assorthead_1.6.4.tar.gz",TRUE
+"beachmat","2.28.0","95f752d752ee270280043c81e0f2b38c","https://bioconductor.org/packages/3.23/bioc/src/contrib/beachmat_2.28.0.tar.gz",TRUE
+"BiocSingular","1.28.1","e81f52e88e8fceee9a3362c63ecad3f5","https://bioconductor.org/packages/3.23/bioc/src/contrib/BiocSingular_1.28.1.tar.gz",TRUE

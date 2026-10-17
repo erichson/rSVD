@@ -2,18 +2,32 @@
 % Please edit documentation in R/plots.R
 \name{plot.rpca}
 \alias{plot.rpca}
-\title{Screeplot}
+\title{PCA summary plots}
 \usage{
 \method{plot}{rpca}(x, ...)
 }
 \arguments{
 \item{x}{Object returned by the \code{\link[rsvd]{rpca}} function.}
 
-\item{...}{Additional arguments passed to the individual plot functions (see below).}
+\item{...}{Named arguments for \code{\link{ggscreeplot}},
+\code{\link{ggcorplot}}, or \code{\link{ggindplot}}. Each argument is passed
+only to the helpers that accept it; for example, \code{type} selects the
+scree-plot quantity and \code{pcs} selects components for the factor maps.
+Argument names must be exact and unique. Unknown names are rejected.
+An explicit \code{pcs} value must contain two finite numeric component
+indices within the retained range, even when a factor map is unavailable.}
+}
+\value{
+The last plot drawn, returned invisibly.
 }
 \description{
-Creates a screeplot, variables and individual factor maps to
-             summarize the results of the \code{\link[rsvd]{rpca}} function.
+Creates the available scree, variable, and individual factor
+             plots for an object returned by \code{\link[rsvd]{rpca}}.
+}
+\details{
+A scree plot is always drawn. The variable factor map requires at
+least two retained components. The individual factor map additionally
+requires fitted scores, obtained with \code{retx = TRUE}.
 }
 \examples{
 #

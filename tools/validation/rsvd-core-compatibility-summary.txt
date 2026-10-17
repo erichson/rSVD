@@ -1,0 +1,8 @@
+R version 4.6.1 (2026-06-24)
+Matrix 1.7.6
+Comparison cases: 180
+Exactly identical output objects: 180
+Exactly identical final RNG states: 180
+Existing function formals: 25 of 25 identical
+Exports: 10 before; 10 after; identical: TRUE
+Unchanged helper source: TRUE

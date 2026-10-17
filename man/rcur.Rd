@@ -2,14 +2,14 @@
 % Please edit documentation in R/rcur.R
 \name{rcur}
 \alias{rcur}
-\title{Randomized CUR matrix decomposition.}
+\title{Randomized CUR matrix decomposition}
 \usage{
 rcur(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TRUE)
 }
 \arguments{
 \item{A}{array_like; \cr
 numeric \eqn{(m, n)} input matrix (or data frame). \cr
-If the data contain \eqn{NA}s na.omit is applied.}
+Rows containing missing values are omitted with a warning.}
 
 \item{k}{integer; \cr
 target rank of the low-rank approximation, i.e., the number of columns/rows
@@ -22,15 +22,15 @@ oversampling parameter (default \eqn{p=10}).}
 number of additional power iterations (default \eqn{q=0}).}
 
 \item{idx_only}{bool, optional; \cr
-if (\eqn{TRUE}), only the index set \code{C.idx} and \code{R.idx} is returned, but not 
-the matrices \code{C} and \code{R}. 
-This is more memory efficient, when dealing with large-scale data.}
+if (\eqn{TRUE}), omit the selected matrices \code{C} and \code{R}
+from the result. The indices and connector matrix \code{U}
+are still computed and returned.}
 
 \item{rand}{bool, optional; \cr
 if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic algorithm is used.}
 }
 \value{
-\code{rcur} returns a list with class \eqn{id} containing the following components:
+\code{rcur} returns a list with class \eqn{rcur} containing the following components:
 \describe{
    \item{C}{ array_like; \cr
              column subset \eqn{C = A[,C.idx]}; \eqn{(m, k)} dimensional array.
@@ -50,11 +50,13 @@ if (\eqn{TRUE}), a probabilistic strategy is used, otherwise a deterministic alg
 
    \item{R.idx}{ array_like; \cr
                index set of the \eqn{k} selected rows used to form \eqn{R}. 
+               Indices refer to the input after rows with missing values are omitted.
    }   
       
      
    \item{C.scores}{ array_like; \cr
-                  scores of the selected columns.
+                  scores of the input columns, as returned by \code{\link{rid}}.
+                  Entries without a corresponding QR diagonal are \code{NA}.
    } 
 
    \item{R.scores}{ array_like; \cr
@@ -67,9 +69,9 @@ Randomized CUR matrix decomposition.
 }
 \details{
 Algorithm for computing the CUR matrix decomposition of a rectangular \eqn{(m, n)} matrix \eqn{A}, 
-with target rank \eqn{k << min(m,n)}. The input matrix is factored as 
+with target rank \eqn{k << min(m,n)}. The input matrix is approximated as
 
-\deqn{A = C * U * R} 
+\deqn{A \approx C U R}{A is approximately C \%*\% U \%*\% R}
 
 using the \code{\link{rid}} decomposition. The factor matrix \eqn{C} is formed using actual 
 columns of \eqn{A}, also called the partial column skeleton. The factor matrix \eqn{R} is formed 
@@ -77,13 +79,18 @@ using actual rows of \eqn{A}, also called the partial row skeleton.
 
 If \eqn{rand=TRUE} a probabilistic strategy is used to compute the decomposition, otherwise a
 deterministic algorithm is used.
+
+Sparse matrices from the \pkg{Matrix} package are supported. The randomized
+algorithm uses sparse matrix products to choose columns, then operates on dense
+selected row and column subsets. The returned factors are dense matrices.
+With \code{rand=FALSE}, the column selection also requires a dense copy of the input.
 }
 \examples{
 \dontrun{
 # Load test image
 data('tiger')
 
-# Compute (column) randomized interpolative decompsition
+# Compute a randomized CUR decomposition
 # Note that the image needs to be transposed for correct plotting
 out <- rcur(tiger, k = 150)
 
@@ -100,7 +107,7 @@ image(tiger.re, col = gray((0:255)/255))
 \references{
 \itemize{
  \item [1] N. B. Erichson, S. Voronin, S. L. Brunton and J. N. Kutz. 2019.
-       Randomized Matrix Decompositions Using {R}. 
+      Randomized Matrix Decompositions Using R.
        Journal of Statistical Software, 89(11), 1-48.
         \doi{10.18637/jss.v089.i11}.
 

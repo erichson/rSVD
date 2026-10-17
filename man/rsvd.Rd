@@ -27,7 +27,7 @@ number of additional power iterations (by default \eqn{q=2}).}
 
 \item{sdist}{string \eqn{c( 'unif', 'normal', 'rademacher')}, optional; \cr
 specifies the sampling distribution of the random test matrix: \cr
-        \eqn{'unif'} :  Uniform `[-1,1]`. \cr
+        \eqn{'unif'} :  Uniform `[0,1]`. \cr
         \eqn{'normal}' (default) : Normal `~N(0,1)`. \cr
         \eqn{'rademacher'} : Rademacher random variates. \cr}
 }
@@ -40,23 +40,26 @@ specifies the sampling distribution of the random test matrix: \cr
 
 \item{u}{  array_like; \cr
           left singular vectors; \eqn{(m, k)} or \eqn{(m, nu)} dimensional array.
+          Omitted when \code{nu = 0}.
 }
 
 \item{v}{  array_like; \cr
           right singular vectors; \eqn{(n, k)} or \eqn{(n, nv)} dimensional array. \cr
+          Omitted when \code{nv = 0}.
 }
 }
 }
 \description{
 The randomized SVD computes the near-optimal low-rank approximation of a rectangular matrix
-using a fast probablistic algorithm.
+using a fast probabilistic algorithm.
 }
 \details{
 The singular value decomposition (SVD) plays an important role in data analysis, and scientific computing.
 Given a rectangular \eqn{(m,n)} matrix \eqn{A}, and a target rank \eqn{k << min(m,n)}, 
 the SVD factors the input matrix \eqn{A} as
 
-\deqn{ A  =  U_{k} diag(d_{k}) V_{k}^\top }{ A = U diag(d) t(V)}
+\deqn{ A \approx U_{k} diag(d_{k}) V_{k}^{*} }{ A ~ U diag(d) Conj(t(V))}
+Here \eqn{*} denotes the conjugate transpose.
 
 The \eqn{k} left singular vectors are the columns of the
 real or complex unitary matrix \eqn{U}. The \eqn{k} right singular vectors are the columns
@@ -74,18 +77,35 @@ computational costs. The power scheme is set to \eqn{q=2} by default.
 
 If \eqn{k > (min(n,m)/4)}, a deterministic partial or truncated \code{\link{svd}}
 algorithm might be faster.
+
+Approximation quality depends on the singular-value decay, not just the
+algebraic rank. A full-rank matrix with rapidly decaying singular values can
+have an accurate low-rank approximation. A flat spectrum generally cannot.
+The optimal rank-\eqn{k} Frobenius error is
+\eqn{\sqrt{\sum_{j>k} d_j^2}}; compare a randomized residual with this tail
+rather than expecting exact recovery of an arbitrary full-rank matrix.
+
+Sparse matrices from the \pkg{Matrix} package are supported without converting
+the entire input to a dense matrix. The random samples, orthonormal basis,
+projected matrix and returned singular vectors are generally dense.
+Intermediate storage therefore depends on \eqn{k+p} as well as the input size.
+Setting \code{k = NULL} requests all singular values and loses the storage
+advantage of a small target rank.
 }
 \note{
 The singular vectors are not unique and only defined up to sign
 (a constant of modulus one in the complex case). If a left singular vector
 has its sign changed, changing the sign of the corresponding right vector
 gives an equivalent decomposition.
+Use \code{set.seed} for reproducibility within a fixed numerical environment.
+Repeated singular values also allow rotations within their singular subspace;
+compare residuals or subspaces rather than individual vector entries.
 }
 \examples{
 library('rsvd')
 
 # Create a n x n Hilbert matrix of order n,
-# with entries H[i,j] = 1 / (i + j + 1).
+# with entries H[i,j] = 1 / (i + j - 1).
 hilbert <- function(n) { i <- 1:n; 1 / outer(i - 1, i, "+") }
 H <- hilbert(n=50)
 

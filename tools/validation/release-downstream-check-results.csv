@@ -1,0 +1,26 @@
+"package","version","relationship","rsvd_version","r_version","matrix_version","exit_status","errors","warnings","notes","tests","elapsed_seconds","check_status","run","check_completed_utc","connected_test_summary","connected_test_passed","connected_test_failed","connected_test_skipped"
+"TCA","1.2.1","Imports","1.0.5","4.6.1","1.7.6",0,0,0,2,NA,33.0646572113037,"Status: 2 NOTEs","baseline-review","2026-10-17 03:32:14 UTC","",NA,NA,NA
+"multivarious","0.3.2","Suggests","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",62.0329742431641,"Status: OK","candidate-extra-suggests","2026-10-17 03:29:58 UTC","[ FAIL 0 | WARN 0 | SKIP 0 | PASS 381 ]",381,0,0
+"FPCdpca","0.4.0","Imports","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",17.9132969379425,"Status: OK","candidate-imports","2026-10-17 03:23:54 UTC","[ FAIL 0 | WARN 0 | SKIP 0 | PASS 1 ]",1,0,0
+"harf","0.1.0","Imports","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",66.0455729961395,"Status: OK","candidate-imports","2026-10-17 03:25:00 UTC","[ FAIL 0 | WARN 0 | SKIP 0 | PASS 6 ]",6,0,0
+"jackstraw","1.3.21","Imports","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",25.3860428333282,"Status: OK","candidate-imports","2026-10-17 03:25:25 UTC","[ FAIL 0 | WARN 0 | SKIP 0 | PASS 861 ]",861,0,0
+"MUGS","0.1.0","Imports","1.0.7","4.6.1","1.7.6",1,1,0,0,"* checking tests ... ERROR",55.6954143047333,"Status: 1 ERROR","candidate-imports","2026-10-17 03:26:21 UTC","[ FAIL 1 | WARN 0 | SKIP 0 | PASS 48 ]",48,1,0
+"nlpembeds","1.0.0","Imports","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",43.3106422424316,"Status: OK","candidate-imports","2026-10-17 03:27:04 UTC","[ FAIL 0 | WARN 0 | SKIP 0 | PASS 14 ]",14,0,0
+"sparsepca","0.1.2","Imports","1.0.7","4.6.1","1.7.6",0,0,0,0,"",25.958379983902,"Status: OK","candidate-imports","2026-10-17 03:27:30 UTC","",NA,NA,NA
+"SPECK","1.0.1","Imports","1.0.7","4.6.1","1.7.6",0,0,0,0,"",98.5776739120483,"Status: OK","candidate-imports","2026-10-17 03:29:09 UTC","",NA,NA,NA
+"TCA","1.2.1","Imports","1.0.7","4.6.1","1.7.6",0,0,0,2,"",35.6734535694122,"Status: 2 NOTEs","candidate-imports","2026-10-17 03:29:45 UTC","",NA,NA,NA
+"text2map","0.4.0","Imports","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",58.3379621505737,"Status: OK","candidate-imports","2026-10-17 03:30:43 UTC","[ FAIL 0 | WARN 0 | SKIP 24 | PASS 1008 ]",1008,0,24
+"wordvector","0.6.5","Imports","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",87.3958203792572,"Status: OK","candidate-imports","2026-10-17 03:32:10 UTC","[ FAIL 0 | WARN 0 | SKIP 16 | PASS 195 ]",195,0,16
+"Seurat","5.6.0","Suggests","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",313.079432249069,"Status: OK","candidate-large-linker-repair","2026-10-17 03:35:19 UTC","[ FAIL 0 | WARN 0 | SKIP 13 | PASS 623 ]",623,0,13
+"MUGS","0.1.0","Imports","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",56.3051288127899,"Status: OK","candidate-linker-repair","2026-10-17 03:28:07 UTC","[ FAIL 0 | WARN 0 | SKIP 0 | PASS 68 ]",68,0,0
+"eigencore","1.0.3","Suggests","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",61.8678467273712,"Status: OK","candidate-repaired-environment","2026-10-17 03:27:01 UTC","[ FAIL 0 | WARN 0 | SKIP 46 | PASS 3811 ]",3811,0,46
+"flashier","1.0.7","Suggests","1.0.7","4.6.1","1.7.6",0,0,0,0,"",72.7126717567444,"Status: OK","candidate-repaired-environment","2026-10-17 03:28:14 UTC","",NA,NA,NA
+"stm","1.3.8","Suggests","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",94.0292615890503,"Status: OK","candidate-stm-complete","2026-10-17 03:36:24 UTC","[ FAIL 0 | WARN 0 | SKIP 0 | PASS 9 ]",9,0,0
+"stm","1.3.8","Suggests","1.0.7","4.6.1","1.7.6",1,1,0,0,"* checking tests ... OK",91.6428883075714,"Status: 1 ERROR","candidate-stm-extra-suggests","2026-10-17 03:34:23 UTC","[ FAIL 0 | WARN 0 | SKIP 0 | PASS 9 ]",9,0,0
+"stm","1.3.8","Suggests","1.0.7","4.6.1","1.7.6",1,2,0,0,"* checking tests ... ERROR",94.8707883358002,"Status: 2 ERRORs","candidate-stm-linker-repair","2026-10-17 03:32:08 UTC","[ FAIL 1 | WARN 0 | SKIP 1 | PASS 6 ]",6,1,1
+"eigencore","1.0.3","Suggests","1.0.7","4.6.1","1.7.6",1,1,0,0,"",18.6440725326538,"Status: 1 ERROR","candidate-suggests","2026-10-17 03:23:56 UTC","",NA,NA,NA
+"flashier","1.0.7","Suggests","1.0.7","4.6.1","1.7.6",1,1,0,0,"",64.0652763843536,"Status: 1 ERROR","candidate-suggests","2026-10-17 03:25:00 UTC","",NA,NA,NA
+"LSX","1.5.2","Suggests","1.0.7","4.6.1","1.7.6",0,0,0,0,"* checking tests ... OK",117.865989923477,"Status: OK","candidate-suggests","2026-10-17 03:26:58 UTC","[ FAIL 0 | WARN 0 | SKIP 11 | PASS 292 ]",292,0,11
+"multivarious","0.3.2","Suggests","1.0.7","4.6.1","1.7.6",1,2,0,0,"* checking tests ... ERROR",57.9651188850403,"Status: 2 ERRORs","candidate-suggests","2026-10-17 03:27:56 UTC","[ FAIL 18 | WARN 0 | SKIP 0 | PASS 326 ]",326,18,0
+"Seurat","5.6.0","Suggests","1.0.7","4.6.1","1.7.6",1,1,0,0,"",88.5809528827667,"Status: 1 ERROR","candidate-suggests","2026-10-17 03:29:25 UTC","",NA,NA,NA
+"stm","1.3.8","Suggests","1.0.7","4.6.1","1.7.6",1,1,0,0,"",18.5715012550354,"Status: 1 ERROR","candidate-suggests","2026-10-17 03:29:43 UTC","",NA,NA,NA

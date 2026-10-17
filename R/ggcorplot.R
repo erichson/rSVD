@@ -3,8 +3,14 @@
 
 #' @title  Variables factor map for \code{\link[rsvd]{rpca}} using \code{\link[ggplot2]{ggplot}}.
 #
-#' @description Creates a pretty plot which is showing the correlation of
-#'    the original variable with the principal component (PCs).
+#' @description Plots retained principal-component directions, optionally
+#' scaled by the square roots of their eigenvalues.
+#'
+#' @details With \code{loadings = TRUE}, the plotted coordinates are
+#' \eqn{V_{ji}\sqrt{\lambda_i}}. They have a variable-component correlation
+#' interpretation when the input variables are centered and have unit sample
+#' variance. For unscaled or uncentered input they are loadings rather than
+#' necessarily correlations; the unit circle is then only a visual reference.
 #'
 #' @param rpcaObj  Object returned by the \code{\link[rsvd]{rpca}} function.
 #'
@@ -13,8 +19,8 @@
 #'              By default the first two PCs are used, e.g., \eqn{c(1,2)}. 
 #'              
 #' @param loadings   Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
-#'                  If \eqn{TRUE}, the eigenvectors
-#'                  are unit scaled by the square root of the eigenvalues \eqn{W = W * diag(sqrt(eigvals))}.
+#'                  If \eqn{TRUE}, each eigenvector is multiplied by the square
+#'                  root of its eigenvalue, \eqn{W = W * diag(sqrt(eigvals))}.
 #'              
 #' @param var_labels  Bool (\eqn{TRUE}, \eqn{FALSE}), optional. \cr
 #'                Plot variable names, if \eqn{TRUE}.
@@ -26,7 +32,7 @@
 #'                Alpha transparency of the arrows. 
 #' 
 #' @param  top.n  Scalar, optional. \cr
-#'                Number of (most influencial) variables to label with small circles.  
+#'                Number of (most influential) variables to label with small circles.
 #' 
 #' @seealso \code{\link[rsvd]{rpca}}, \code{\link[ggplot2]{ggplot}}
 #'
@@ -108,7 +114,7 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   # Create ggplot2::ggplot
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
   g <- ggplot2::ggplot( circle , ggplot2::aes( x , y)  ) +
-    ggplot2::geom_path( size=0.5, colour="black" )  
+    ggplot2::geom_path( lwd=0.5, colour="black" )
 
   
   if(is.null(top.n)) top.n <- nrow(df)
@@ -123,7 +129,7 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   g <- g + ggplot2::geom_segment(data = df,
                                  ggplot2::aes(x = 0, y = 0, xend = a, yend = b ),
                                  arrow = grid::arrow(length = grid::unit(0.5, 'picas')),
-                                 color = 'black' ,  size = 0.5, alpha = alpha)
+                                 color = 'black' ,  lwd = 0.5, alpha = alpha)
   
   g <- g + ggplot2::coord_fixed(ratio=1) 
   g <- g + ggplot2::ggtitle('Variables factor map (PCA)')

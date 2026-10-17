@@ -9,6 +9,15 @@ library(rsvd)
 #Set seed
 set.seed(1234)
 
+# Base scale() squares complex values. Build the reference with the usual
+# nonnegative complex variance, then use the deterministic PCA decomposition.
+prcomp_modulus_reference <- function(A) {
+  centered <- sweep(A, 2, colMeans(A), "-")
+  scaled <- sweep(centered, 2,
+                  sqrt(colSums(Mod(centered)^2) / (nrow(A) - 1)), "/")
+  prcomp(scaled, center = FALSE, scale. = FALSE)
+}
+
 #Set p, q
   p=5
   q=1
@@ -35,14 +44,14 @@ testMat <- testMat[,1:n]
   rpca_out <- rpca(testMat, k=k)
   testthat::test_that("Test 1: standard", {
     testthat::expect_equal(pca_out$sdev[1:k], rpca_out$sdev[1:k])
-    testthat::expect_equal(sum(diag(1,k,k) - H(rpca_out$rotation)%*%rpca_out$rotation), 0 )
+    testthat::expect_equal(unname(H(rpca_out$rotation)%*%rpca_out$rotation), diag(k), tolerance = 1e-10)
   })
 
 #Randomized PCA
   rpca_out <- rpca(testMat, k=k-5, p=5, q=0)
   testthat::test_that("Test 2: standard 2", {
     testthat::expect_equal(pca_out$sdev[1:(k-5)], rpca_out$sdev[1:(k-5)])
-    testthat::expect_equal(sum(diag(1,k-5,k-5) - H(rpca_out$rotation)%*%rpca_out$rotation), 0 )
+    testthat::expect_equal(unname(H(rpca_out$rotation)%*%rpca_out$rotation), diag(k-5), tolerance = 1e-10)
   })
 
 #Randomized PCA
@@ -59,20 +68,20 @@ testMat <- testMat[,1:n]
 testMat <- matrix(runif(m*k), m, k) + 1i* matrix(runif(m*k), m, k)
 
 #Deterministic PCA
-  pca_out <- prcomp(testMat, center = TRUE, scale. = TRUE)
+  pca_out <- prcomp_modulus_reference(testMat)
 
 #Randomized PCA
   rpca_out <- rpca(testMat, k=k)
   testthat::test_that("Test 4: Complex", {
     testthat::expect_equal(pca_out$sdev[1:k], rpca_out$sdev[1:k])
-    testthat::expect_equal(abs(sum(diag(1,k,k) - H(rpca_out$rotation)%*%rpca_out$rotation)), 0 )
+    testthat::expect_equal(unname(H(rpca_out$rotation)%*%rpca_out$rotation), diag(k) + 0i, tolerance = 1e-10)
   })
 
 #Randomized PCA
   rpca_out <- rpca(testMat, k=k, p=5, q=0)
   testthat::test_that("Test 5: Complex", {
     testthat::expect_equal(pca_out$sdev[1:(k)], rpca_out$sdev[1:(k)])
-    testthat::expect_equal(abs(sum(diag(1,k,k) - H(rpca_out$rotation)%*%rpca_out$rotation)), 0 )
+    testthat::expect_equal(unname(H(rpca_out$rotation)%*%rpca_out$rotation), diag(k) + 0i, tolerance = 1e-10)
   })
 
 #Randomized PCA
@@ -94,14 +103,14 @@ testMat <- matrix(runif(m*k), m, k) + 1i* matrix(runif(m*k), m, k)
   rpca_out <- rpca(testMat, k=k, center = TRUE, scale = FALSE)
   testthat::test_that("Test 7: Complex", {
     testthat::expect_equal(pca_out$sdev[1:k], rpca_out$sdev[1:k])
-    testthat::expect_equal(abs(sum(diag(1,k,k) - H(rpca_out$rotation)%*%rpca_out$rotation)), 0 )
+    testthat::expect_equal(unname(H(rpca_out$rotation)%*%rpca_out$rotation), diag(k) + 0i, tolerance = 1e-10)
   })
 
 #Randomized PCA
   rpca_out <- rpca(testMat, k=k, p=5, q=0, center = TRUE, scale = FALSE)
   testthat::test_that("Test 8: Complex", {
     testthat::expect_equal(pca_out$sdev[1:(k)], rpca_out$sdev[1:(k)])
-    testthat::expect_equal(abs(sum(diag(1,k,k) - H(rpca_out$rotation)%*%rpca_out$rotation)), 0 )
+    testthat::expect_equal(unname(H(rpca_out$rotation)%*%rpca_out$rotation), diag(k) + 0i, tolerance = 1e-10)
   })
 
 #Randomized PCA
@@ -246,7 +255,7 @@ testMat <- matrix(runif(m*k), m, k) + 1i * matrix(runif(m*k), m, k)
 testMat <- H(testMat)
 
 #Deterministic PCA
-  pca_out <- prcomp(testMat, center = TRUE, scale. = TRUE)
+  pca_out <- prcomp_modulus_reference(testMat)
 
 #Randomized PCA
   rpca_out <- rpca(testMat, k=k)
@@ -264,11 +273,11 @@ testMat <- matrix(runif(m*k), m, k) + 1i* matrix(runif(m*k), m, k)
 testMat <- H(testMat)
   
 #Deterministic PCA
-  pca_out <- prcomp(testMat, center = TRUE, scale. = TRUE)
+  pca_out <- prcomp_modulus_reference(testMat)
   
 #Randomized PCA
   rpca_out <- rpca(testMat, k=k)
   testthat::test_that("Test 23: Randomized SVD k=n", {
     testthat::expect_equal(pca_out$sdev[1:k], rpca_out$sdev[1:k])
     testthat::expect_equal(H(pca_out$rotation)%*%pca_out$rotation, H(rpca_out$rotation)%*%rpca_out$rotation)
-  })  
+  })
