@@ -3,7 +3,7 @@
 # Reproducible comparisons for README.md. Requires only rsvd and Matrix.
 # Run numerical jobs serially and set BLAS thread limits BEFORE starting R.
 # Example:
-# OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 Rscript \
+# OPENBLAS_NUM_THREADS=4 OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 Rscript \
 #   tools/benchmarks/benchmark-readme.R --library candidate-library \
 #   --output benchmark-results --suite all --reps 5 --source-ref COMMIT
 #
@@ -67,42 +67,26 @@ readme_cases <- function() {
                stringsAsFactors = FALSE)
   }
   out <- list()
-  for (m in c(500L, 1000L, 2000L, 4000L, 8000L)) {
+  for (m in c(10000L, 15000L, 20000L)) {
     out[[length(out) + 1L]] <- case(
-      paste0("svd_tall_", m), "svd", "dense", m, m / 4L,
-      table = m %in% c(4000L, 8000L), scaling = TRUE,
+      paste0("svd_tall_", m), "svd", "dense", m, 3L * m / 10L,
+      table = m %in% c(10000L, 20000L), scaling = TRUE,
       description = "Rank-80 geometric signal plus dense Gaussian noise")
   }
   out[[length(out) + 1L]] <- case(
-    "svd_wide", "svd", "dense", 1000L, 4000L, table = TRUE,
-    description = "Rank-80 geometric signal plus dense Gaussian noise")
-  out[[length(out) + 1L]] <- case(
-    "svd_square", "svd", "dense", 2000L, 2000L, table = TRUE,
-    description = "Rank-80 geometric signal plus dense Gaussian noise")
-  out[[length(out) + 1L]] <- case(
-    "svd_tiger", "svd", "tiger", NA_integer_, NA_integer_, k = 150L,
-    table = TRUE, description = "Bundled tiger grayscale image")
-  out[[length(out) + 1L]] <- case(
-    "pca_dense", "pca", "dense", 4000L, 1000L, table = TRUE,
+    "pca_dense", "pca", "dense", 15000L, 4500L, table = TRUE,
     description = "Geometric signal, dense noise, and nonzero column offsets")
-  for (shape in c("tall", "wide")) {
+  for (m in c(10000L, 15000L, 20000L)) {
     out[[length(out) + 1L]] <- case(
-      paste0("pca_sparse_", shape), "pca", "sparse",
-      if (shape == "tall") 4000L else 2000L,
-      if (shape == "tall") 2000L else 4000L, table = TRUE,
-      description = "Twenty noisy rank-two blocks; 5 percent density")
-  }
-  for (m in c(800L, 1600L, 3200L, 6400L)) {
-    out[[length(out) + 1L]] <- case(
-      paste0("pca_sparse_scale_", m), "pca", "sparse", m, m / 4L,
-      table = m == 6400L, scaling = TRUE,
+      paste0("pca_sparse_scale_", m), "pca", "sparse", m, 3L * m / 10L,
+      table = m %in% c(10000L, 20000L), scaling = TRUE,
       description = "Twenty noisy rank-two blocks; 5 percent density")
   }
   for (family in c("id", "cur")) {
     for (storage in c("dense", "sparse")) {
       out[[length(out) + 1L]] <- case(
-        paste(family, storage, sep = "_"), family, storage, 4000L,
-        if (storage == "dense") 1000L else 2000L, table = TRUE,
+        paste(family, storage, sep = "_"), family, storage, 15000L, 4500L,
+        table = TRUE,
         description = if (storage == "dense")
           "Rank-80 geometric signal plus dense Gaussian noise" else
           "Twenty noisy rank-two blocks; 5 percent density")
@@ -111,7 +95,8 @@ readme_cases <- function() {
   do.call(rbind, out)
 }
 
-readme_dense_fixture <- function(m, n, seed = 20261016L, offsets = FALSE) {
+readme_dense_fixture <- function(m, n, seed = 20261016L, offsets = FALSE,
+                                 block_columns = 128L) {
   set.seed(seed)
   rank <- min(80L, min(m, n) - 1L)
   left <- qr.Q(qr(matrix(stats::rnorm(m * rank), m, rank)))
@@ -119,8 +104,17 @@ readme_dense_fixture <- function(m, n, seed = 20261016L, offsets = FALSE) {
   values <- 10^seq(0, -2, length.out = rank)
   A <- left %*% (values * t(right))
   # The noise makes the matrix full rank; its expected Frobenius norm is 0.01.
-  A <- A + matrix(stats::rnorm(m * n), m, n) * (0.01 / sqrt(m * n))
-  if (offsets) A <- sweep(A, 2L, 0.2 * cos(seq_len(n) / 11), "+")
+  # Column blocks preserve the full-matrix RNG ordering while avoiding a
+  # second full-size noise matrix and full-size preprocessing temporaries.
+  # Fixture generation is outside all timing and allocation profiles.
+  noise_sd <- 0.01 / sqrt(m * n)
+  for (start in seq.int(1L, n, by = block_columns)) {
+    columns <- seq.int(start, min(n, start + block_columns - 1L))
+    block <- A[, columns, drop = FALSE] +
+      matrix(stats::rnorm(m * length(columns)), m, length(columns)) * noise_sd
+    if (offsets) block <- sweep(block, 2L, 0.2 * cos(columns / 11), "+")
+    A[, columns] <- block
+  }
   A
 }
 
@@ -147,15 +141,20 @@ readme_sparse_fixture <- function(m, n, seed = 20261016L) {
 }
 
 readme_fixture <- function(spec) {
-  if (spec$storage == "tiger") {
-    data_env <- new.env(parent = emptyenv())
-    utils::data("tiger", package = "rsvd", envir = data_env)
-    return(as.matrix(data_env$tiger))
-  }
   if (spec$storage == "sparse") {
     return(readme_sparse_fixture(spec$m, spec$n))
   }
   readme_dense_fixture(spec$m, spec$n, offsets = spec$family == "pca")
+}
+
+readme_nonzeros <- function(A, block_columns = 128L) {
+  if (inherits(A, "sparseMatrix")) return(Matrix::nnzero(A))
+  count <- 0
+  for (start in seq.int(1L, ncol(A), by = block_columns)) {
+    columns <- seq.int(start, min(ncol(A), start + block_columns - 1L))
+    count <- count + sum(A[, columns, drop = FALSE] != 0)
+  }
+  count
 }
 
 readme_methods <- function(spec) {
@@ -317,7 +316,7 @@ readme_main <- function(args = commandArgs(trailingOnly = TRUE)) {
   } else if (options$suite == "scaling") {
     cases <- cases[cases$scaling, , drop = FALSE]
   } else if (options$suite == "smoke") {
-    cases <- cases[match(c("svd_tall_500", "pca_dense", "pca_sparse_tall",
+    cases <- cases[match(c("svd_tall_10000", "pca_dense", "pca_sparse_scale_10000",
                            "id_dense", "cur_sparse"), cases$case), , drop = FALSE]
     cases$m <- 240L
     cases$n <- 120L
@@ -334,6 +333,7 @@ readme_main <- function(args = commandArgs(trailingOnly = TRUE)) {
     methods <- readme_methods(spec)
     oracle <- NULL
     for (method in names(methods)) {
+      gc()
       set.seed(8100L)
       fit <- methods[[method]](A)
       if (method == "base_svd") oracle <- fit$d
@@ -345,9 +345,10 @@ readme_main <- function(args = commandArgs(trailingOnly = TRUE)) {
       stopifnot(length(oracle) == min(dim(A)), all(is.finite(oracle)),
                 is.finite(tail_energy), tail_energy > 0)
     }
+    input_nonzeros <- readme_nonzeros(A)
     fixture <- c(as.list(spec), list(
-      input_class = class(A)[1L], input_nonzeros = Matrix::nnzero(A),
-      density = Matrix::nnzero(A) / (nrow(A) * ncol(A)),
+      input_class = class(A)[1L], input_nonzeros = input_nonzeros,
+      density = input_nonzeros / (nrow(A) * ncol(A)),
       input_object_bytes = as.numeric(object.size(A))))
     fixtures[[length(fixtures) + 1L]] <- as.data.frame(fixture)
     case_times <- list()

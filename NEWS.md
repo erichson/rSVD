@@ -1,4 +1,4 @@
-# rsvd 1.0.7
+# rsvd 2.0.0
 
 ## Correctness and compatibility
 
@@ -89,3 +89,6 @@
 * Replace historical README performance images with reproducible comparisons
   against deterministic SVD, PCA, ID, and CUR. Include measured residuals,
   cumulative R allocations, raw timing observations, and vector figures.
+* Expand the README benchmarks to matrices starting at 10,000 by 3,000,
+  and restore an illustrated tiger example explaining rank, approximation
+  error, and storage of the factors.

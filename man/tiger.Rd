@@ -5,7 +5,7 @@
 \alias{tiger}
 \title{Tiger}
 \format{
-An object of class \code{\link[rsvd]{rsvd}}.
+A numeric matrix with 1600 rows and 1200 columns.
 }
 \source{
 \href{https://en.wikipedia.org/wiki/File:Siberischer_tiger_de_edit02.jpg}{Wikimedia}
@@ -14,7 +14,8 @@ An object of class \code{\link[rsvd]{rsvd}}.
 data('tiger')
 }
 \description{
-1600x1200 grayscaled (8 bit [0-255]/255) image.
+A 1600 by 1200 grayscale image with pixel intensities
+normalized from 8-bit values to the interval [0, 1].
 }
 \examples{
 \dontrun{
