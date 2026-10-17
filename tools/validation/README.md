@@ -58,6 +58,12 @@ generics, which also provide dispatch under older R. The R 4.3.3 / Matrix 1.6-5
 run exercises that compatibility path. The package's declared R >= 4.0.0
 minimum was retained, but R 4.0 itself was not run locally.
 
+CI explicitly selects Matrix 1.7-6 for the current-R jobs and Matrix 1.6-5 for
+R 4.3, then verifies the loaded version before checking the package. Without an
+explicit version, the first hosted run retained the bundled Matrix 1.7-5 even
+with `any::Matrix` in the extra dependencies. The explicit version requirement
+prevents a successful check from silently missing the intended Matrix release.
+
 ## Benchmark method
 
 The reproducible driver is [`../benchmark-lowrank.R`](../benchmark-lowrank.R).

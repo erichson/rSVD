@@ -114,8 +114,9 @@ subsets, but still compute their interpolation or connector factors.
 
 Matrix 1.7.x requires R 4.4 or later. rsvd retains its R 4.0 minimum and supports
 older compatible Matrix releases; its Matrix imports preserve sparse dispatch
-on R versions before 4.4. CI checks both current R/Matrix and R 4.3 with Matrix
-1.6-5.
+on R versions before 4.4. CI checks current R with Matrix 1.7-6 on Linux,
+Windows and macOS, and R 4.3 with Matrix 1.6-5. Each job verifies the loaded
+Matrix version before running the package check.
 
 ## Tests and development
 

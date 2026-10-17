@@ -30,6 +30,8 @@
 ## Tests and documentation
 
 * Add the testthat entry point so `R CMD check` executes the test suite.
+* Check Matrix 1.7-6 on current R across Linux, Windows and macOS, plus
+  Matrix 1.6-5 on R 4.3. Verify the actual Matrix version in every CI job.
 * Add prescribed-spectrum residual and subspace tests, sparse representation
   coverage, rank-one and vector-count cases, and numerical bug regressions.
 * Correct complex orthogonality and PCA reference calculations in the tests,

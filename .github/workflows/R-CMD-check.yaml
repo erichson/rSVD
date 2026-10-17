@@ -8,16 +8,16 @@ on:
 
 jobs:
   R-CMD-check:
-    name: ${{ matrix.config.os }} (R ${{ matrix.config.r }})
+    name: ${{ matrix.config.os }} (R ${{ matrix.config.r }}, Matrix ${{ matrix.config.matrix-version }})
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: ubuntu-24.04, r: 'release', matrix-package: 'any::Matrix'}
-          - {os: ubuntu-24.04, r: '4.3', matrix-package: 'Matrix@1.6-5'}
-          - {os: windows-latest, r: 'release', matrix-package: 'any::Matrix'}
-          - {os: macos-latest, r: 'release', matrix-package: 'any::Matrix'}
+          - {os: ubuntu-24.04, r: 'release', matrix-version: '1.7-6'}
+          - {os: ubuntu-24.04, r: '4.3', matrix-version: '1.6-5'}
+          - {os: windows-latest, r: 'release', matrix-version: '1.7-6'}
+          - {os: macos-latest, r: 'release', matrix-version: '1.7-6'}
     steps:
       - uses: actions/checkout@v6
       - uses: r-lib/actions/setup-r@v2
@@ -28,8 +28,15 @@ jobs:
         with:
           extra-packages: |
             any::rcmdcheck
-            ${{ matrix.config.matrix-package }}
+            Matrix@${{ matrix.config.matrix-version }}
           needs: check
+      - name: Verify Matrix version
+        shell: Rscript {0}
+        run: |
+          cat("Testing R", as.character(getRversion()), "with Matrix",
+              as.character(packageVersion("Matrix")), "\n")
+          stopifnot(packageVersion("Matrix") ==
+                    package_version("${{ matrix.config.matrix-version }}"))
       - uses: r-lib/actions/check-r-package@v2
         with:
           args: 'c("--no-manual", "--as-cran")'
