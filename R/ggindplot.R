@@ -1,9 +1,10 @@
 #' @title PCA observation scores
 #'
-#' @description Plot fitted observation scores for two retained
-#' principal components from \code{\link{rpca}}, with optional group colours,
-#' data ellipses, and observation labels. The optional \pkg{ggplot2} package
-#' is required.
+#' @description Display observations in a plane defined by two retained
+#' principal components from \code{\link{rpca}}. Each point shows an
+#' observation's fitted scores, allowing patterns in the selected components
+#' to be compared across observations or supplied groups. Labels and group
+#' ellipses can be added. The optional \pkg{ggplot2} package is required.
 #'
 #' @param rpcaObj An object returned by \code{\link{rpca}}, with
 #' real-valued scores. Fit with \code{retx = TRUE} so that \code{rpcaObj$x}
@@ -24,9 +25,9 @@
 #' \code{0.6}.
 #'
 #' @param ellipse Logical; draw a filled data ellipse for each supplied group
-#' when \code{TRUE} (the default). Uses the defaults of
-#' \code{\link[ggplot2]{stat_ellipse}}: a multivariate-t ellipse at level
-#' \code{0.95}. See Details for its interpretation.
+#' when \code{TRUE} (the default). The defaults of
+#' \code{\link[ggplot2]{stat_ellipse}} give a multivariate-t ellipse at
+#' level \code{0.95}. See Details for its interpretation.
 #'
 #' @param alpha.ellipse Numeric value between zero and one controlling ellipse
 #' transparency. The default is \code{0.2}; ignored when no ellipse is drawn.
@@ -39,21 +40,23 @@
 #' used, or sequential row numbers when names are absent. Labels are displayed
 #' only when \code{ind_labels = TRUE}.
 #'
-#' @details Coordinates are the selected columns of
-#' \code{rpcaObj$x}, the fitted principal-component scores. Their values
-#' reflect the centering and scaling used in \code{rpca}; the plotting helper
-#' does not standardize or recompute the scores. For randomized fits these
-#' are the stored projected-SVD scores described in \code{\link{rpca}}.
+#' @details The horizontal and vertical coordinates are the columns of
+#' \code{rpcaObj$x} selected by \code{pcs}. These fitted scores retain the
+#' centering and scaling used in \code{rpca}; the plotting function does not
+#' standardize or recompute them. For randomized fits, they are the stored
+#' projected-SVD scores described in \code{\link{rpca}}.
 #'
-#' Axis labels include each selected component's share of
-#' \code{rpcaObj$var}, the total variance of the processed input. These shares
-#' include the contribution of omitted components in the denominator.
+#' Each axis label gives its component's share of \code{rpcaObj$var}, the
+#' total variance of the processed input. Variance in omitted components
+#' remains in the denominator, so a view of two components need not account
+#' for all of the variation.
 #'
-#' The ellipses describe the spread of fitted scores in
-#' each group under the multivariate-t model used by
-#' \code{\link[ggplot2]{stat_ellipse}}. Its multivariate-t computation also
-#' requires the recommended package \pkg{MASS}. They are data ellipses, not confidence
-#' regions for group means or tests of group separation. Small groups or
+#' When groups are supplied, point colours identify group membership and
+#' data ellipses summarize the spread of fitted scores within each group.
+#' The ellipses use the multivariate-t model in
+#' \code{\link[ggplot2]{stat_ellipse}}, whose computation also requires
+#' the recommended package \pkg{MASS}. They do not estimate confidence
+#' regions for group means or test group separation. Small groups or
 #' degenerate score distributions may not support ellipse estimation; use
 #' \code{ellipse = FALSE} in that case.
 #'

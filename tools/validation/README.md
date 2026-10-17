@@ -1,16 +1,18 @@
 # Initial validation notes for rsvd 1.0.7
 
 For the completed release assessment, see the [release review](release-review.md).
-The notes below are historical and retain their original scope and limitations.
-Current deterministic-reference performance results are in the
+The notes below describe an earlier candidate and retain the scope and
+limitations of that historical assessment. Performance comparisons with
+deterministic references are documented in the
 [README benchmark guide](../benchmarks/README.md).
 
-This report records the first candidate, ending at commit
+This report covers the first candidate, ending at commit
 [`ad8f05a`](https://github.com/erichson/rSVD/commit/ad8f05a).
 The [follow-up review](follow-up-review.md) records the subsequent PCA, QR and
 robust-PCA changes, their new reference tests, and measurements against that
 first candidate. Its findings supersede the deferred-work discussion below.
-Keep the two benchmark baselines distinct when comparing the results.
+The two reviews use different benchmark baselines, so their ratios describe
+different comparisons.
 
 These notes record the local numerical validation and performance comparison of
 the 1.0.7 candidate against repository commit
@@ -27,18 +29,20 @@ environments:
 | 4.6.1 | 1.7-6 | 128 | 1,267 | 0 | 0 | 0 |
 | 4.3.3 | 1.6-5 | 128 | 1,267 | 0 | 0 | 0 |
 
-The tests cover exact low-rank reconstruction, decaying-spectrum approximation
-error relative to the optimal rank-k tail, Hermitian orthogonality for complex
-data, and projector comparisons for repeated singular values. They also check
-tall and wide inputs, rank-one and zero cases, oversampling, power iterations,
-singular-vector suppression, data frames, and several sparse representations.
-Timing assertions are kept out of the unit tests.
+The tests checked exact low-rank reconstruction and approximation error
+relative to the optimal rank-k tail for decaying spectra. Hermitian
+orthogonality checked the complex factors, while projector comparisons
+accounted for the freedom to choose bases when singular values repeat.
+The suite also covered tall and wide inputs, rank-one and zero cases,
+oversampling, power iterations, singular-vector suppression, data frames,
+and several sparse representations. Timing assertions were excluded from
+the unit tests.
 
 The API comparison found unchanged formals for all 25 existing functions and
 unchanged names for all 10 exports. This includes argument order and defaults.
-Numerical bug fixes can change previously incorrect results; the validation
-does not require identical singular-vector signs or bases across BLAS and
-Matrix versions.
+Numerical bug fixes can change previously incorrect results. The validation
+allowed equivalent singular-vector signs or bases across BLAS and Matrix
+versions.
 
 ### Package check status
 
@@ -51,10 +55,11 @@ A diagnostic rerun using fresh output and `--install-args=--no-lock` also
 completed with **0 errors, 0 warnings, and 2 NOTEs**. Tests, examples, and
 documentation passed, and the check for non-standard check-directory items
 passed. Its notes concern the inherited maintainer email change and the
-expected non-staged installation caused by `--no-lock`. This diagnostic option
-is not a proposed change to the normal installation workflow. No further local
-reruns are needed to distinguish this environment issue. Hosted CI results for
-ordinary installation are tracked in the draft pull request.
+expected non-staged installation caused by `--no-lock`. That option was used
+only to diagnose the environment issue; the normal installation workflow
+remained unchanged. No further local reruns were needed to distinguish that
+issue. At this stage, hosted CI results for ordinary installation were tracked
+in the draft pull request.
 
 ### Matrix version and dispatch
 
@@ -65,16 +70,17 @@ records that this requirement began with Matrix 1.7-0.
 
 Base R's `crossprod()` and `tcrossprod()` became S3/S4 generics in R 4.4.0; see
 the [R cross-product documentation](https://stat.ethz.ch/R-manual/R-devel/library/base/html/crossprod.html).
-The package retains its imports of Matrix's transpose and cross-product
-generics, which also provide dispatch under older R. The R 4.3.3 / Matrix 1.6-5
-run exercises that compatibility path. The package's declared R >= 4.0.0
-minimum was retained, but R 4.0 itself was not run locally.
+The first candidate retained its imports of Matrix's transpose and
+cross-product generics, which also provide dispatch under older R. The
+R 4.3.3 / Matrix 1.6-5 run exercised that compatibility path. The package's
+declared R >= 4.0.0 minimum was retained, but R 4.0 itself was not run locally.
 
-CI explicitly selects Matrix 1.7-6 for the current-R jobs and Matrix 1.6-5 for
-R 4.3, then verifies the loaded version before checking the package. Without an
-explicit version, the first hosted run retained the bundled Matrix 1.7-5 even
-with `any::Matrix` in the extra dependencies. The explicit version requirement
-prevents a successful check from silently missing the intended Matrix release.
+CI at this stage explicitly selected Matrix 1.7-6 for the current-R jobs and
+Matrix 1.6-5 for R 4.3, then verified the loaded version before checking the
+package. Without an explicit version, the first hosted run retained the
+bundled Matrix 1.7-5 even with `any::Matrix` in the extra dependencies. The
+explicit version requirement ensured that the check exercised the intended
+Matrix release.
 
 ## Benchmark method
 
@@ -120,19 +126,19 @@ Times are the medians of three repetitions. Allocation sizes use MiB
 | PCA without scores | 1.197 s | 1.195 s | 179.978 MiB | 178.132 MiB |
 | Full-column ID | 0.085 s | 0.025 s | 14.739 MiB | 5.929 MiB |
 
-For these sparse fixtures, removing the full-input dense conversion gives
-observed time ratios of 22.6 and 20.1. The largest recorded R allocation falls
-from 64,000,048 to 960,048 bytes, a 98.5% reduction. The baseline profile locates
+For these sparse fixtures, removing the full-input dense conversion gave
+observed time ratios of 22.6 and 20.1. The largest recorded R allocation fell
+from 64,000,048 to 960,048 bytes, a 98.5% reduction. The baseline profile located
 the large allocation in `as.matrix.Matrix`. Cumulative recorded allocations
-fall 59.7% for the tall case and 61.4% for the wide case.
+fell 59.7% for the tall case and 61.4% for the wide case.
 
-The dense SVD control shows the same allocation volume and essentially the same
-elapsed time. No dense SVD speed improvement is claimed. PCA without scores
-saves about 1.846 MiB of cumulative allocation, or 1.0%, while its largest
-allocation remains 27.466 MiB. Its elapsed times are also effectively unchanged;
-no PCA speed improvement is claimed. Removing the discarded full-column ID
-pseudoinverse gives an observed time ratio of 3.4 and a 59.8% reduction in
-cumulative recorded allocation.
+The dense SVD control showed the same allocation volume and essentially the
+same elapsed time, providing no evidence of a speed improvement. PCA without
+scores saved about 1.846 MiB of cumulative allocation, or 1.0%, while its
+largest allocation remained 27.466 MiB. Its elapsed times were also effectively
+unchanged, so the measurements support an allocation saving without a speed
+claim. Removing the discarded full-column ID pseudoinverse gave an observed
+time ratio of 3.4 and a 59.8% reduction in cumulative recorded allocation.
 
 These ratios describe the measured fixtures and runtime. Sparsity pattern,
 density, target rank, spectrum, and BLAS implementation can change the results.
@@ -188,13 +194,13 @@ profiling enabled for `Rprofmem`.
 
 ## Sparse boundaries and deferred work
 
-Randomized SVD and QB preserve sparse inputs during multiplication by thin
-dense factors. Their sketches, orthogonal bases, projected matrices, and
-returned singular vectors still require dense storage. Randomized ID and CUR
-also need dense reduced or selected factors. PCA's preprocessing and robust
-PCA's matrix updates retain dense storage requirements.
+In this first candidate, randomized SVD and QB preserved sparse inputs during
+multiplication by thin dense factors. Their sketches, orthogonal bases, projected matrices, and
+returned singular vectors still required dense storage. Randomized ID and CUR
+also needed dense reduced or selected factors. PCA's preprocessing and robust
+PCA's matrix updates retained dense storage requirements.
 
-Deterministic QB continues to use dense QR while constructing only the
+Deterministic QB continued to use dense QR while constructing only the
 requested columns of Q. Matrix sparse QR has different requirements and
 permutation behavior, including a restriction to matrices with at least as
 many rows as columns and special handling of structural rank deficiency; see
@@ -202,13 +208,15 @@ the [Matrix QR documentation](https://stat.ethz.ch/R-manual/R-devel/library/Matr
 Using sparse input does not remove the dense storage requirement for this
 deterministic branch.
 
-An existing PCA summary inconsistency remains deferred: with `center=FALSE`,
-eigenvalues come from the uncentered matrix, while `var` is calculated from
-column sample variances. Consequently, reported proportions can exceed one
-for data with a substantial mean. Changing that denominator changes established
-summary semantics and needs a separate compatibility decision.
+The initial candidate deferred a correction to the PCA summary. With
+`center=FALSE`, eigenvalues came from the uncentered matrix, while `var` was
+calculated from column sample variances. Consequently, reported proportions
+could exceed one for data with a substantial mean. Changing that denominator
+would change established summary semantics and required a separate
+compatibility decision.
 
-Release validation still needs an actual R 4.0 run, PDF manual generation,
-and checks against downstream reverse dependencies. The local results above
-do not cover Windows, macOS, or alternative BLAS implementations. Hosted CI
-status is tracked separately in the draft pull request.
+At the time of this review, release validation still needed an actual R 4.0
+run, PDF manual generation, and checks against downstream reverse dependencies.
+The local results above do not cover Windows, macOS, or alternative BLAS
+implementations. Hosted CI status was tracked separately in the draft pull
+request.

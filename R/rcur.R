@@ -1,9 +1,11 @@
 #' @title Randomized CUR matrix decomposition
 #'
 #' @description
-#' Approximate a matrix using a subset of its columns, a subset of its rows,
-#' and a small connector matrix. Randomized column selection is useful when
-#' the input has low-rank structure and the requested rank is small.
+#' Approximate a matrix using selected columns and rows of the original data,
+#' joined by a small matrix of coefficients. The selected data retain their
+#' correspondence to measured variables and observations. Randomized column
+#' selection is useful when the input has low-rank structure and the requested
+#' rank is small.
 #'
 #' @param A A real or complex numeric matrix, a numeric data frame, or a matrix
 #' from the \pkg{Matrix} package. Rows containing missing values are omitted
@@ -23,42 +25,56 @@
 #' Row selection from the chosen column matrix is deterministic in both cases.
 #'
 #' @details
-#' For an \eqn{m \times n}{m by n} matrix, CUR has the form
+#' A column interpolative decomposition (ID) represents a matrix using selected
+#' columns and coefficients for combining them. CUR also selects rows, so
+#' both sides of the approximation contain subsets of the original data.
+#' For an \eqn{m \times n}{m by n} matrix, these factors are combined as
 #' \deqn{A \approx C U R.}{A is approximately C \%*\% U \%*\% R.}
 #' The \code{m} by \code{k} matrix \code{C} contains actual columns of the
 #' input, and the \code{k} by \code{n} matrix \code{R} contains actual rows.
-#' These subsets preserve the interpretation of measured variables and
-#' observations. The \code{k} by \code{k} matrix \code{U} connects them;
-#' it is not the orthonormal left singular-vector matrix of an SVD.
+#' These subsets can be examined as measured variables and observations in
+#' their original units. The \code{k} by \code{k} matrix \code{U} contains
+#' the coefficients that connect the two subsets. Its role differs from that
+#' of the orthonormal left singular-vector matrix in a singular value
+#' decomposition (SVD).
 #'
 #' The algorithm first computes a column interpolative decomposition with
-#' \code{\link{rid}}. It chooses rows using column-pivoted QR of the conjugate
-#' transpose of \code{C}, and forms
+#' \code{\link{rid}}. It then chooses rows using column-pivoted QR of the
+#' conjugate transpose of \code{C}. To form the connector, it uses these rows
+#' to approximate the interpolation coefficients from the column ID,
 #' \deqn{U = Z R^{+},}{U = Z times the numerical Moore-Penrose inverse of R,}
 #' where \code{Z} is the interpolation matrix from the column ID.
-#' Numerically negligible singular values are excluded from the pseudoinverse
-#' using a threshold that depends on matrix dimensions and floating-point
-#' precision. The selected subsets can be rank deficient when \code{k}
-#' exceeds the input's numerical rank.
+#' The numerical pseudoinverse excludes negligible singular values using a
+#' threshold that depends on matrix dimensions and floating-point precision.
+#' This allows the calculation to proceed when the selected subsets are rank
+#' deficient, as can happen when \code{k} exceeds the input's numerical rank.
 #'
-#' CUR is an approximation, and column/row selection does not guarantee the
-#' smallest possible rank-\code{k} error. Accuracy depends on the spectrum,
-#' the selected subsets and their conditioning. The input is not centered or
-#' scaled automatically; preprocessing can materially change the selected
-#' variables and observations. The QR scores describe the selection procedure
-#' and should not be treated as statistical importance scores.
+#' Oversampling and power iterations can improve randomized column selection
+#' at the cost of more computation. The supplied settings remain fixed;
+#' the algorithm does not adjust them to satisfy an error tolerance. Row
+#' selection from the chosen column matrix is deterministic in both modes.
+#'
+#' The approximation error depends on the input's spectrum and on which
+#' subsets are selected, including their conditioning. Column and row
+#' selection does not guarantee the smallest possible rank-\code{k} error,
+#' so inspect the reconstruction residual when choosing a rank. The QR scores
+#' describe the selection procedure and have no interpretation as statistical
+#' importance scores.
+#'
+#' Centering or rescaling changes the matrix used for selection and can
+#' therefore change which variables and observations are chosen. The function
+#' uses the supplied data without automatic centering or scaling.
 #'
 #' Sparse \pkg{Matrix} input is supported. Randomized column selection uses
 #' sparse matrix products, but the selected column and row matrices and the
 #' connector are dense. With \code{rand = FALSE}, column selection also
 #' requires a dense input matrix. The option \code{idx_only = TRUE} reduces
-#' the returned object's size; selected data are still used internally to
-#' compute \code{U}. Explicit reconstruction creates a dense matrix.
+#' the returned object's size by omitting the selected data. Those data are
+#' still used internally to compute \code{U}, so this option does not remove
+#' their temporary storage. Explicit reconstruction creates a dense matrix.
 #'
-#' Oversampling and power iterations can improve randomized selection but
-#' increase work; they do not implement an adaptive error tolerance. Set the
-#' random seed before a randomized call for a repeatable result in the same
-#' computational environment.
+#' Set the random seed before a randomized call for a repeatable result in
+#' the same computational environment.
 #'
 #' @return
 #' A list of class \code{"rcur"} with the following components. Dimensions
@@ -78,7 +94,7 @@
 #'   \item{C.scores}{Column QR scores in input column order, as returned by
 #'   \code{\link{rid}}. Entries without a QR diagonal are \code{NA}.}
 #'   \item{R.scores}{The \code{k} selected-row QR scores, in the same order
-#'   as \code{R.idx}; these are not a score for every input row.}
+#'   as \code{R.idx}. Scores for unselected input rows are not returned.}
 #'   \item{rand}{The randomization setting.}
 #' }
 #'

@@ -72,13 +72,14 @@ the training data, with no missing values; see Details.}
 \code{rpca} returns a list of class \code{"rpca"} with these components:
 \describe{
   \item{rotation}{A dense \eqn{n} by \eqn{k} matrix of orthonormal
-    loadings (right singular vectors of the processed data).}
+    loadings (exact or approximate right singular vectors of the processed
+    data).}
   \item{eigvals}{A numeric vector of length \eqn{k} containing the
     retained squared singular values divided by \eqn{m-1}. These estimate
     the leading eigenvalues of the processed cross-product matrix divided
     by \eqn{m-1}, which is the sample covariance matrix for centered data.}
-  \item{sdev}{A numeric vector of length \eqn{k}: the square roots of
-    \code{eigvals}.}
+  \item{sdev}{A numeric vector of length \eqn{k} containing the square
+    roots of \code{eigvals}.}
   \item{var}{The squared Frobenius norm of the processed matrix divided
     by \eqn{m-1}, including directions not returned. For centered data
     this is the total sample variance.}
@@ -99,64 +100,93 @@ standard deviations, eigenvalues, and loadings, and invisibly returns the
 displayed loading matrix.
 }
 \description{
-Compute principal component loadings, scores, and variances from an
-optionally centered and scaled matrix, using a randomized or deterministic
-singular value decomposition (SVD).
+Compute principal components of an optionally centered and scaled
+matrix using a randomized or deterministic singular value decomposition
+(SVD). Loadings describe the components, scores locate observations in
+those coordinates, and variances measure the contribution of each
+component.
 }
 \details{
-The randomized algorithm uses \code{\link{rsvd}} to approximate the
-dominant singular subspace. Its computational advantage is greatest for
-large matrices and a small requested rank. The retained scores and
-loadings describe a low-rank approximation to the processed data. The
-\code{p} and \code{q} arguments trade additional work for approximation
-accuracy; use \code{set.seed} before fitting for reproducible random draws.
+Principal components describe data along orthogonal directions in
+the space of the variables. Each loading vector weights the original
+variables to specify one direction. Retaining \code{k} components gives
+a low-rank approximation to the processed data. For centered data, the
+leading components describe directions of greatest sample variance.
 
-Both centering and scaling are enabled by default. As in
-\code{\link[stats]{prcomp}}, \code{center = FALSE} simply skips centering;
-it supports both already-centered and uncentered data. With
-\code{scale = TRUE}, each column is divided by the square root of its sum
-of squared magnitudes divided by \eqn{m-1}, after any requested centering.
-This is the sample standard deviation for centered data. Scale factors
-below \code{1e-8} are replaced by one for compatibility, so constant and
-nearly constant columns are retained. Complex columns use squared
-magnitudes, giving real scale factors. Unlike the default in
-\code{prcomp}, scaling is enabled by default here.
+With \code{rand = TRUE} and a supplied \code{k}, \code{rpca} uses
+\code{\link{rsvd}} to approximate the dominant singular subspace. Finding
+a small subspace first reduces the size of the subsequent SVD, with the
+greatest savings for large matrices and small requested ranks. Increasing
+\code{p} enlarges the sampled subspace, and increasing \code{q} spends
+more work refining it to improve accuracy. Use \code{set.seed} before
+fitting for reproducible random draws.
 
-Total variance is the squared Frobenius norm of the processed matrix
-divided by \eqn{m-1}, including directions omitted from the approximation.
-For uncentered data it is squared energy divided by \eqn{m-1} and includes
-the contribution of the column means. At least two complete observations
-are needed for meaningful sample variances. Variance
-proportions are undefined when the processed matrix has zero total
-variance. The proportion attributed to a retained component is its
-\code{eigvals} entry divided by \code{var}, rather than divided by the sum
-of the retained eigenvalues.
+\subsection{Centering and scaling}{
+Centering makes the components describe deviations from the training
+column means. Scaling adjusts the relative influence of variables with
+different units or magnitudes. Both operations are enabled by default.
+As in \code{\link[stats]{prcomp}}, \code{center = FALSE} leaves the column
+means unchanged and accepts either already-centered or uncentered data.
+Scaling remains enabled unless \code{scale = FALSE}; \code{prcomp}
+disables scaling by default.
+
+With \code{scale = TRUE}, each column is divided by the square root of
+its sum of squared magnitudes divided by \eqn{m-1}, after any requested
+centering. For centered data this is the sample standard deviation.
+Scale factors below \code{1e-8} are replaced by one for compatibility,
+so constant and nearly constant columns are retained. Complex columns
+use squared magnitudes and therefore have real scale factors.
+}
+
+\subsection{Interpreting variance}{
+The total variance \code{var} includes every direction in the processed
+data, including those omitted from the approximation. It is computed as
+the squared Frobenius norm of the processed matrix divided by
+\eqn{m-1}. For uncentered data this quantity measures squared energy
+divided by \eqn{m-1} and includes the contribution of the column means.
+The proportion attributed to a retained component is its \code{eigvals}
+entry divided by \code{var}, so the denominator stays the same as the
+retained rank changes. At least two complete observations are needed for
+meaningful sample variances;
+variance proportions are undefined when the processed matrix has zero
+total variance.
+}
+
+\subsection{Using a fit}{
+Fitted scores are constructed from the SVD as \eqn{U_k D_k}{U_k D_k}.
+Multiplying them by the conjugate transpose of the loadings reconstructs
+the approximation in processed variable coordinates. Undo any scaling
+and centering to express it in the original input coordinates.
 
 \code{predict(object, newdata)} applies the stored training centering and
-scaling, then multiplies the processed new observations by
-\code{object$rotation}. It does not estimate new means or scale factors,
-reorder columns by name, or omit incomplete new rows automatically.
-Prediction also works when the fit was created with \code{retx = FALSE}.
-Fitted scores retain the projected-SVD convention \eqn{U_k D_k}{U_k D_k}.
-For a randomized approximation, projecting the original training data
-with \code{predict} can differ from \code{object$x} by the range-finder
-residual. To reconstruct observations in the input variable coordinates,
-multiply fitted scores by the conjugate transpose of the loadings
-and then undo any scaling and centering. Scores alone are expressed in
-component coordinates.
-
-With \code{rand = TRUE} and a supplied \code{k}, real sparse inputs are
-centered and scaled through implicit matrix products. The entire centered
-matrix is never formed; storage includes the sparse entries and dense
-working factors of width up to \code{k + p}, capped by the matrix
-dimensions. Loadings, fitted scores, and predicted scores are dense.
-With \code{rand = FALSE} or \code{k = NULL}, a sparse input is converted
-to a dense matrix for the deterministic SVD. This is ordinary PCA of
-sparse input, not a method imposing sparsity on the loadings.
+scaling, then multiplies the processed observations by
+\code{object$rotation}. Reusing the training means and scale factors
+places new observations in the same coordinate system. Supply complete
+rows in the training column order; the method does not reorder columns
+by name or omit incomplete new rows automatically. Prediction also works
+when the fit was created with \code{retx = FALSE}. For a randomized fit,
+projecting the training data with \code{predict} can differ from the
+fitted scores in \code{object$x} because the randomized subspace omits
+part of the data, represented by the range-finder residual.
 
 The \code{print} and \code{summary} methods describe a fit.
 \code{\link{plot.rpca}} draws the available scree and factor plots;
 the individual plotting helpers can also be called directly.
+}
+
+\subsection{Sparse input}{
+Subtracting nonzero column means would fill in many entries of a sparse
+matrix. With \code{rand = TRUE} and a supplied \code{k}, \code{rpca}
+instead incorporates centering and scaling into its matrix products for
+real sparse inputs. This avoids forming the entire centered matrix.
+Storage includes the sparse entries and dense working factors of width
+up to \code{k + p}, capped by the matrix dimensions. Loadings, fitted
+scores, and predicted scores are dense. The computation estimates
+ordinary PCA loadings and imposes no sparsity constraint on them.
+
+With \code{rand = FALSE} or \code{k = NULL}, a sparse input is converted
+to a dense matrix for the deterministic SVD.
+}
 }
 \note{
 Singular vectors are defined only up to sign (or a constant of modulus

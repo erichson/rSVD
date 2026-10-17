@@ -43,9 +43,9 @@ transparency, with zero fully transparent and one opaque. The default is
 \code{0.6}.}
 
 \item{ellipse}{Logical; draw a filled data ellipse for each supplied group
-when \code{TRUE} (the default). Uses the defaults of
-\code{\link[ggplot2]{stat_ellipse}}: a multivariate-t ellipse at level
-\code{0.95}. See Details for its interpretation.}
+when \code{TRUE} (the default). The defaults of
+\code{\link[ggplot2]{stat_ellipse}} give a multivariate-t ellipse at
+level \code{0.95}. See Details for its interpretation.}
 
 \item{alpha.ellipse}{Numeric value between zero and one controlling ellipse
 transparency. The default is \code{0.2}; ignored when no ellipse is drawn.}
@@ -72,35 +72,39 @@ A \pkg{ggplot2} plot object. Print the object to draw the
 plot, or add layers, labels, and themes with \pkg{ggplot2}.
 }
 \description{
-Overlay the fitted observation scores and variable
-directions for two retained principal components from \code{\link{rpca}}.
-The optional \pkg{ggplot2} package is required.
+Display observations in a plane defined by two retained
+principal components from \code{\link{rpca}}, with arrows showing the
+corresponding variable directions. The combined view relates variation
+among the observations to the variables used in the fit. The optional
+\pkg{ggplot2} package is required.
 }
 \details{
-Observation coordinates are taken directly from
-\code{rpcaObj$x}. These are the fitted principal-component scores, with the
-centering and scaling requested in \code{rpca}; no additional normalization
-is applied. The \code{loadings} argument changes only the arrow coordinates.
-Thus, arrows and observations use their respective loading and score
-scales, rather than an automatically matched visual scale.
+Each point represents one observation, with coordinates taken
+directly from \code{rpcaObj$x}. These fitted component scores reflect the
+centering and scaling requested in \code{rpca}. The plotting function
+leaves their normalization unchanged. Axis labels give each selected
+component's share of the total processed variance in \code{rpcaObj$var},
+which includes variance outside the retained components.
+
+Each arrow represents one variable. The \code{loadings} argument changes
+its coordinates by including or omitting the component standard deviations.
+Arrows and observations retain their respective loading and score scales;
+the function does not rescale them to match visually.
 
 For centered variables with unit sample variance and nonzero component
-variance, the default arrow coordinates describe correlations of the
-variables with the fitted component scores. For other preprocessing choices,
-they are scaled directions and need not be correlations. Use
-\code{\link{ggcorplot}} to view the directions separately with a unit circle.
+variance, the default coordinates equal the correlations with fitted scores
+for a deterministic SVD. A randomized fit can introduce approximation error
+in this interpretation. Other preprocessing choices give scaled directions
+that need not be correlations. Use \code{\link{ggcorplot}} to examine the
+directions separately with a unit circle.
 
-Axis labels report the selected components and their shares of the total
-processed variance stored in \code{rpcaObj$var}, including variance outside
-the retained components.
-
-The ellipses describe the spread of fitted scores in
-each group under the multivariate-t model used by
-\code{\link[ggplot2]{stat_ellipse}}. Its multivariate-t computation also
-requires the recommended package \pkg{MASS}. They are data ellipses, not confidence
-regions for group means or tests of group separation. Small groups or
-degenerate score distributions may not support ellipse estimation; use
-\code{ellipse = FALSE} in that case.
+When groups are supplied, data ellipses summarize the spread of fitted
+scores within each group under the multivariate-t model used by
+\code{\link[ggplot2]{stat_ellipse}}. They do not estimate confidence
+regions for group means or test group separation. The multivariate-t
+computation also requires the recommended package \pkg{MASS}. Small
+groups or degenerate score distributions may not support ellipse
+estimation; use \code{ellipse = FALSE} in that case.
 }
 \examples{
 if (requireNamespace("ggplot2", quietly = TRUE)) {

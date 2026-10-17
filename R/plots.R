@@ -1,27 +1,32 @@
 #' @title PCA summary plots
 #'
-#' @description Draw the available scree, variable, and individual factor plots for an
-#' object returned by \code{\link{rpca}}.
+#' @description Summarize an object returned by \code{\link{rpca}} with
+#' plots of retained variance and of variables and observations in a
+#' component plane. A scree plot shows how much variation the fit captures;
+#' factor maps display the corresponding directions and fitted scores.
 #'
-#' @details The plots are drawn in sequence on the active graphics device. A scree
-#' plot is always drawn. The variable factor map requires at least two
-#' retained components; the individual factor map additionally requires
-#' fitted scores, obtained with \code{retx = TRUE}. With one retained
-#' component only the scree plot is drawn. With at least two components and
-#' \code{retx = FALSE}, the scree and variable factor plots are drawn.
+#' @details The function draws the available plots in sequence on the
+#' active graphics device. The scree plot shows the variance captured by
+#' the retained components. With at least two components, a variable factor
+#' map then shows their directions in the selected plane. An individual
+#' factor map follows when fitted observation scores are available from
+#' \code{retx = TRUE}. A fit with one retained component therefore produces
+#' only a scree plot; a fit with at least two components and
+#' \code{retx = FALSE} produces the scree and variable factor plots.
 #'
-#' The \pkg{ggplot2} package must be installed. Factor maps default to
-#' components one and two. Any observation groups or labels must correspond
-#' to the fitted scores, after incomplete training rows have been omitted.
-#' Call the individual plotting helpers directly to retain, customize, or
-#' save a particular plot.
+#' Factor maps use components one and two by default. Supply \code{pcs} to
+#' inspect another pair of retained components. Any observation groups or
+#' labels must correspond to the fitted score rows, after incomplete training
+#' observations have been omitted. The \pkg{ggplot2} package must be
+#' installed. Call the plotting helpers directly when a particular plot is
+#' needed for further customization or saving.
 #'
 #' @param x An object returned by \code{\link{rpca}}. Factor maps are intended
 #' for real-valued loadings and scores.
 #'
 #' @param ... Named arguments for \code{\link{ggscreeplot}},
 #' \code{\link{ggcorplot}}, or \code{\link{ggindplot}}. Each argument is
-#' passed only to helpers that accept it: for example, \code{type} selects
+#' passed only to helpers that accept it. For example, \code{type} selects
 #' the scree-plot quantity, \code{pcs} selects components for both factor
 #' maps, and \code{groups} is used only for the individual factor map.
 #' Names must be exact and unique; unknown or unnamed arguments are

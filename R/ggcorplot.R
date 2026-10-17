@@ -1,9 +1,10 @@
 #' @title PCA variable directions and correlation circle
 #'
-#' @description Plot the variable directions for two retained
-#' principal components, optionally scaled by the component standard
-#' deviations, together with a unit circle. The optional \pkg{ggplot2} package
-#' is required.
+#' @description Display how variables are represented in a plane defined
+#' by two retained principal components. Arrows show their directions,
+#' optionally scaled by the component standard deviations, and a unit
+#' circle provides a reference for interpreting standardized fits. The
+#' optional \pkg{ggplot2} package is required.
 #'
 #' @param rpcaObj An object returned by \code{\link{rpca}}, with
 #' real-valued directions. Scores are not needed, so fits made with
@@ -37,30 +38,37 @@
 #' selects all variables; values larger than the number of variables are
 #' clamped to that number. See Details for the marker display rule.
 #'
-#' @details With \code{loadings = TRUE}, the plotted coordinate of
-#' variable \eqn{j} on component \eqn{i} is
-#' \eqn{V_{ji}\sqrt{\lambda_i}}{V[j, i] * sqrt(lambda[i])}, where \eqn{V} is
-#' \code{rotation} and \eqn{\lambda_i}{lambda[i]} is the corresponding
-#' eigenvalue. For centered variables
-#' with unit sample variance and nonzero component variance, this is the
-#' correlation between the variable and the fitted component score. In that
-#' setting the unit circle helps show how well the selected component plane
-#' represents each variable. With unscaled or uncentered input, the coordinates
-#' need not be correlations and the circle is only a visual reference.
+#' @details The direction coefficients describe how each original variable
+#' enters a component. Multiplying a coefficient by the component standard
+#' deviation also accounts for the variation captured by that component.
+#' With \code{loadings = TRUE}, variable \eqn{j} therefore has coordinate
+#' \eqn{V_{ji}\sqrt{\lambda_i}}{V[j, i] * sqrt(lambda[i])} on component
+#' \eqn{i}, where \eqn{V} is \code{rotation} and
+#' \eqn{\lambda_i}{lambda[i]} is the corresponding eigenvalue. This is
+#' the direction entry multiplied by \code{sdev[i]}. With
+#' \code{loadings = FALSE}, the coordinates are the unscaled direction
+#' coefficients, which changes relative arrow lengths and may change which
+#' variables \code{top.n} selects.
 #'
-#' With \code{loadings = FALSE}, the plotted coordinates are the unscaled
-#' principal-component directions. This changes the relative arrow lengths
-#' and may change which variables \code{top.n} selects.
+#' For centered variables with unit sample variance and nonzero component
+#' variance, the scaled coordinates equal the correlations with fitted scores
+#' for a deterministic SVD. A randomized fit can introduce approximation error
+#' in this interpretation. In this setting, the unit circle helps show how
+#' well the selected component plane represents each variable. With unscaled
+#' or uncentered input, the coordinates
+#' need not be correlations and the circle serves as a visual reference.
+#' Equal horizontal and vertical scales preserve the circle's shape.
 #'
-#' All variable arrows are drawn. The \code{top.n} selection affects endpoint
-#' markers and, if \code{var_labels = TRUE}, text labels. Endpoint markers are
-#' drawn only when the effective number selected is less than 50. A variable's
-#' ranking measures its arrow length in this selected plane, not its overall
-#' importance across all components.
+#' Every variable is shown by an arrow. To make a crowded plot easier to read,
+#' \code{top.n} limits the variables selected for endpoint markers and, when
+#' \code{var_labels = TRUE}, text labels. Selection uses arrow length within
+#' the displayed plane, so the ranking applies only to these two components.
+#' Endpoint markers are drawn only when the effective number selected is
+#' less than 50.
 #'
-#' The plot uses equal horizontal and vertical scales. Axis labels include
-#' the variance shares relative to \code{rpcaObj$var}, the total variance of
-#' the processed input, rather than only the retained variance.
+#' Axis labels give each selected component's share of \code{rpcaObj$var},
+#' the total variance of the processed input. The denominator includes
+#' variance outside the retained components.
 #'
 #' @return A \pkg{ggplot2} plot object. Print the object to draw the
 #' plot, or add layers, labels, and themes with \pkg{ggplot2}.

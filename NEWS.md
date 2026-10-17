@@ -113,3 +113,8 @@
   retained-versus-total variance, and optional ellipse requirements. Remove
   obsolete contact addresses from help pages; the maintainer contact remains
   in `DESCRIPTION`.
+* Expand the package and function descriptions with explanations of the
+  factors, preprocessing, approximation error, and convergence diagnostics.
+  Revise the README and figure captions around the mathematical ideas and
+  measured results, preserving the benchmark data and executable examples.
+  Qualify the variable-arrow correlation interpretation for randomized PCA.
