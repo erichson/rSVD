@@ -8,6 +8,19 @@ pca_test_reconstruction <- function(fit) {
   fit$x %*% nla_test_adjoint(fit$rotation)
 }
 
+# Closed-form PCA for a zero first processed column and a second column given
+# by scores. Extreme-input tests must not use a dense mean as their oracle:
+# dense accumulation can also lose accuracy or overflow on some platforms.
+pca_test_rank_one_reference <- function(scores, center, scale) {
+  variance <- sum(scores^2) / (length(scores) - 1L)
+  structure(list(
+    rotation = matrix(c(0, 1), ncol = 1,
+                       dimnames = list(names(center), "PC1")),
+    eigvals = variance, sdev = sqrt(variance), var = variance,
+    center = center, scale = scale, x = matrix(scores, ncol = 1)
+  ), class = "rpca")
+}
+
 pca_test_expect_equal <- function(actual, expected, input, tolerance = 1e-9) {
   testthat::expect_s3_class(actual, "rpca")
   testthat::expect_identical(names(actual), names(expected))
@@ -462,8 +475,9 @@ testthat::test_that("fully stored constant columns use accurate column means", {
   # its mean by an ulp, creating a spurious centered column of size ~1e184.
   A <- cbind(constant = rep(1e200, 12), varying = seq_len(12L))
   input <- Matrix::Matrix(A, sparse = TRUE)
-  set.seed(8117)
-  expected <- rpca(A, k = 1, center = TRUE, scale = FALSE)
+  expected <- pca_test_rank_one_reference(
+    scores = seq_len(12L) - 6.5,
+    center = c(constant = 1e200, varying = 6.5), scale = FALSE)
   set.seed(8117)
   actual <- rpca(input, k = 1, center = TRUE, scale = FALSE)
   pca_test_expect_equal(actual, expected, input)
@@ -472,8 +486,12 @@ testthat::test_that("fully stored constant columns use accurate column means", {
 testthat::test_that("sparse column means remain finite when stored sums overflow", {
   A <- cbind(large = c(1e308, 1e308, 1e308, 0), ordinary = c(-1, 1, -1, 1))
   input <- Matrix::Matrix(A, sparse = TRUE)
-  set.seed(8118)
-  expected <- rpca(A, k = 1, center = TRUE, scale = TRUE)
+  # The large column has a finite mean but its sum of squared deviations
+  # overflows. Under the established scaling rule its processed column is zero.
+  expected <- pca_test_rank_one_reference(
+    scores = c(-1, 1, -1, 1) / sqrt(4 / 3),
+    center = c(large = (3 / 4) * 1e308, ordinary = 0),
+    scale = c(large = Inf, ordinary = sqrt(4 / 3)))
   set.seed(8118)
   actual <- rpca(input, k = 1, center = TRUE, scale = TRUE)
   testthat::expect_true(all(is.finite(actual$center)))

@@ -130,7 +130,8 @@ fractional-rank behavior also use the fallback. Separate minimum/maximum
 checks preserve full QR's rejection of non-finite values in later columns
 without a full dense logical mask.
 
-The QR regression file has 477 assertions against full base QR. Coverage
+The QR regression file has 529 assertions against full base QR and analytic
+projectors. Coverage
 includes tolerance-boundary prefixes, zero/dependent columns, tall/wide and
 complex data, rank-one/full/oversized/fractional requests, sparse structural
 formats, non-finite trailing columns, orthogonality, names, input immutability
@@ -303,12 +304,15 @@ not be judged by objective alone. See the
 
 ### Final package validation
 
-The complete installed-package test suite passes in both local runtimes:
+The complete installed-package test suite passes in both local runtimes
+with both the system reference BLAS and the hosted Linux runner's OpenBLAS:
 
-| R | Matrix | Test blocks | Passing assertions | Failures | Errors | Warnings | Skips |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 4.6.1 | 1.7-6 | 164 | 3,084 | 0 | 0 | 0 | 0 |
-| 4.3.3 | 1.6-5 | 164 | 3,084 | 0 | 0 | 0 | 0 |
+| R | Matrix | BLAS | Test blocks | Passing assertions | Failures | Errors | Warnings | Skips |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 4.6.1 | 1.7-6 | Reference 3.12.0 | 165 | 3,136 | 0 | 0 | 0 | 0 |
+| 4.3.3 | 1.6-5 | Reference 3.12.0 | 165 | 3,136 | 0 | 0 | 0 | 0 |
+| 4.6.1 | 1.7-6 | OpenBLAS 0.3.26 | 165 | 3,136 | 0 | 0 | 0 | 0 |
+| 4.3.3 | 1.6-5 | OpenBLAS 0.3.26 | 165 | 3,136 | 0 | 0 | 0 | 0 |
 
 The [test summary](full-test-summary.csv) records these totals. The suite
 retains the earlier SVD/QB/ID/CUR, complex, sparse and API regressions as well
@@ -316,9 +320,24 @@ as the new PCA, QR and robust-PCA cases. Exact low-rank fixtures are checked
 for reconstruction. Full-rank inputs with decaying spectra are checked
 against the best rank-k tail error, not an unattainable zero residual.
 
+The first hosted follow-up run exposed numerical defects in three test
+references. On OpenBLAS 0.3.26, full base LINPACK QR of three independent
+indicator columns followed by 21 identical columns repeatedly factors
+roundoff until subnormal scaling produces non-finite entries. This was
+reproduced without Matrix or rsvd. The full-QR comparison now uses a finite
+reference, while a new 52-assertion test retains the original repeated-column
+case and checks its known projector and reconstruction at ranks one, two
+and three. On macOS, dense column means lost accuracy on a constant `1e200`
+column and overflowed on partially stored `1e308` data. Those two sparse-PCA
+tests now use the analytically known processed matrices, eigenvalues and
+loadings. These corrections preserve the edge cases and tolerances and do
+not change production code. The actual loaded BLAS library was verified for
+each local configuration; changing `LD_LIBRARY_PATH` alone is insufficient
+when R's startup library path overrides it.
+
 The source package built successfully. The final local
 `R CMD check --as-cran --no-manual` completed with **0 errors, 0 warnings and
-2 NOTEs**. Installation, examples, documentation, code checks and all 3,084
+2 NOTEs**. Installation, examples, documentation, code checks and all 3,136
 installed-package assertions passed. The notes concern the maintainer email
 change already present in the original repository and an installation-lock
 directory retained by this execution environment. The ordinary staged

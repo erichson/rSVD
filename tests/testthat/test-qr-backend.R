@@ -52,11 +52,16 @@ testthat::test_that("deterministic QB preserves sparse and complex QR semantics"
   dimnames(dense) <- list(paste0("row", seq_len(nrow(dense))),
                          paste0("col", seq_len(ncol(dense))))
   sparse <- Matrix::Matrix(dense, sparse = TRUE)
+  logical <- sparse != 0
+  # Full LINPACK QR can overflow while repeatedly factoring roundoff in many
+  # identical columns on some BLAS libraries. Keep this reference finite; the
+  # repeated logical/pattern case has an analytic reference in the next test.
+  logical[, 4:24] <- FALSE
   inputs <- list(sparse, as(sparse, "RsparseMatrix"),
                  as(sparse, "TsparseMatrix"),
                  Matrix::t(sparse),
                  Matrix::Matrix(cbind(0, dense), sparse = TRUE),
-                 sparse != 0, as(sparse != 0, "nMatrix"),
+                 logical, as(logical, "nMatrix"),
                  Matrix::Diagonal(12, seq_len(12)))
   # Complex base QR uses numerical column pivoting, so columns outside a
   # requested prefix can change its leading basis vectors even at full rank.
@@ -73,6 +78,34 @@ testthat::test_that("deterministic QB preserves sparse and complex QR semantics"
       testthat::expect_equal(actual$B, nla_test_adjoint(expected) %*% dense,
                              tolerance = 1e-12)
       nla_test_expect_qb(A, actual, k)
+    }
+    testthat::expect_identical(A, original)
+  }
+})
+
+testthat::test_that("deterministic QB handles repeated logical columns", {
+  # The three disjoint indicator columns give an exact analytic basis. Many
+  # repeated trailing columns expose a full-QR overflow on OpenBLAS 0.3.26;
+  # compare projectors and reconstructions without using that failing oracle.
+  indicators <- matrix(FALSE, 36, 3)
+  indicators[cbind(seq_len(36), rep(1:3, each = 12))] <- TRUE
+  dense <- cbind(indicators, matrix(TRUE, 36, 21))
+  basis <- indicators / sqrt(12)
+  sparse <- Matrix::Matrix(dense, sparse = TRUE)
+  for (A in list(sparse, as(sparse, "nMatrix"))) {
+    original <- A
+    for (k in 1:3) {
+      expected_projection <- tcrossprod(basis[, seq_len(k), drop = FALSE])
+      actual <- rqb(A, k = k, rand = FALSE)
+      testthat::expect_equal(tcrossprod(actual$Q), expected_projection,
+                             tolerance = 1e-12)
+      testthat::expect_equal(actual$Q %*% actual$B,
+                             expected_projection %*% dense, tolerance = 1e-12)
+      nla_test_expect_qb(A, actual, k)
+      if (k == 3L) {
+        testthat::expect_equal(actual$Q %*% actual$B, 1 * dense,
+                               tolerance = 1e-12)
+      }
     }
     testthat::expect_identical(A, original)
   }
