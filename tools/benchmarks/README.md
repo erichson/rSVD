@@ -106,6 +106,19 @@ The README shows medians. The CSV also contains all five observations,
 interquartile ranges, and extrema. Display precision does not imply that a
 future run will reproduce the final decimal place.
 
+**Speedup** is the deterministic reference's median elapsed time divided by
+the method's median elapsed time. It is calculated from the unrounded saved
+values and displayed to one decimal place. It is a ratio of medians, not the
+median of per-repetition ratios. The SVD reference is `base_svd`; the sparse
+PCA figure uses `prcomp` for both randomized paths. The standalone tables
+state the deterministic/randomized order of paired values.
+
+Elapsed-time panels show the median, an interquartile band, and min–max
+whiskers. Speedup panels show the derived ratio with a 1× reference line.
+They do not attach timing quartiles or confidence bands to that ratio.
+The saved observations include the slower calls, and the sparse PCA speedup
+is allowed to peak at the middle size rather than being forced to increase.
+
 Allocation profiling is a separate, untimed run using `Rprofmem()`.
 The driver sums numeric allocation records and retains their largest value
 and count. It does not count unquantified `new page` markers. This is
@@ -118,6 +131,18 @@ can exceed physical RAM because successive allocations need not be live at
 the same time. See R's [Rprofmem documentation](https://stat.ethz.ch/R-manual/R-devel/library/utils/html/Rprofmem.html).
 Raw profiles are regenerated on every rerun; their compact numeric summaries
 are committed here.
+
+**Allocation reduction** divides the deterministic reference's cumulative
+allocation bytes by the method's cumulative allocation bytes. Its 1× line
+means equal allocation volume; larger values mean less volume for the
+method. Ratios use the single separate profile for each method, so they have
+no sampling-error bands. This is an allocation-volume ratio, not a peak-RAM
+ratio or a comparison of allocation counts.
+
+The speedup columns and ratio panels were added by re-rendering the saved
+2026-10-17 experiment. The timings, allocation totals, accuracy measurements,
+fixtures, seeds, and runtime metadata are unchanged; no benchmark rerun or
+new sampling was needed.
 
 Accuracy is measured from an actual reconstruction in blocks of 128 rows,
 outside timing and profiling. This avoids allocating a full reconstruction
@@ -168,8 +193,12 @@ python tools/benchmarks/render-readme.py \
 
 The renderer reads measurements only; it does not run benchmarks or adjust
 values. It replaces three marked table sections in the README and produces
-two SVG/PDF figures. Curves use both shape and color, logarithmic axes, and
-interquartile timing bands. SVG text is editable; PDF fonts are embedded.
+two SVG/PDF figures. Each uses four panels: elapsed time, speedup, cumulative
+R allocations, and allocation reduction. Curves use both shape and color
+and named deterministic references. Matrix-size axes and absolute-cost axes
+are logarithmic; ratio axes are linear. Only elapsed-time
+panels have interquartile bands and min–max whiskers. SVG text is editable;
+PDF fonts are embedded.
 PNG previews are used for visual inspection. Renderer versions are recorded
 in [figure-environment.json](results/figure-environment.json).
 
