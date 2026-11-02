@@ -170,11 +170,20 @@ rsvd <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal") UseMeth
 
 #' @export
 rsvd.default <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2, sdist="normal") {
+    if(is.data.frame(A)) A <- as.matrix(A)
+    # QR or SVD rejects non-finite products. Avoid a separate full-data scan,
+    # which can cost more than the matrix products for very small target ranks.
+    check_matrix_input(A, finite = FALSE)
+    if(!is.null(k)) check_scalar_number(k, "k", lower = 1)
+    if(!is.null(nu)) check_scalar_number(nu, "nu")
+    if(!is.null(nv)) check_scalar_number(nv, "nv")
+    check_sampling(p, q, sdist)
     rsvd_compute(A, k=k, nu=nu, nv=nv, p=p, q=q, sdist=sdist)
 }
 
 # Shared range finder. Internal products let PCA apply centering and scaling
 # implicitly; ordinary rsvd calls retain the original matrix operations.
+# Callers validate their inputs before entering this private computation.
 rsvd_compute <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2,
                          sdist="normal", operators=NULL) {
     #*************************************************************************
@@ -216,8 +225,6 @@ rsvd_compute <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2,
     #Set target rank
     if(is.null(k)) k = n
     if(k > n) k <- n
-    if(is.character(k)) stop("Target rank is not valid!")
-    if(k < 1) stop("Target rank is not valid!")
 
     #Set oversampling parameter
     l <- round(k) + round(p)
@@ -274,7 +281,7 @@ rsvd_compute <- function(A, k=NULL, nu=NULL, nv=NULL, p=10, q=2,
     #If q > 0 perform q subspace iterations
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if( q > 0 ) {
-        for( i in 1:q) {
+        for( i in seq_len(q)) {
             Y <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
             Z <- operators$adjoint(Y)
             Z <- qr.Q( qr(Z, complete = FALSE) , complete = FALSE )

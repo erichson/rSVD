@@ -13,6 +13,7 @@
 #' @param k A positive integer giving the number of columns and rows to select.
 #' The default, \code{NULL}, uses \code{min(dim(A))} after missing rows are
 #' omitted. Larger requests are capped at this value.
+#' A fractional value of at least one is truncated toward zero.
 #' @param p A non-negative integer oversampling parameter for randomized
 #' column selection. The default is 10. Ignored when \code{rand = FALSE}.
 #' @param q A non-negative integer number of power iterations for randomized
@@ -133,6 +134,13 @@ rcur <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TRUE) UseM
 
 #' @export
 rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TRUE) {
+  check_flag(idx_only, "idx_only")
+  check_flag(rand, "rand")
+  if(!is.null(k)) check_scalar_number(k, "k", lower = 1)
+  if(rand) {
+    check_scalar_number(p, "p", lower = 0, integer = TRUE)
+    check_scalar_number(q, "q", lower = 0, integer = TRUE)
+  }
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Checks
@@ -146,6 +154,8 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TR
       A <- stats::na.omit(A)
     }
   }     
+  # The column ID below validates values; avoid scanning the input twice.
+  check_matrix_input(A, finite = FALSE)
 
   m <- nrow(A)
   n <- ncol(A)  
@@ -168,7 +178,7 @@ rcur.default <- function(A, k = NULL, p = 10, q = 0, idx_only = FALSE, rand = TR
   # Set target rank
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if(is.null(k)) k <- min(n,m)
-  if(k > min(m,n)) k <- min(m,n)
+  k <- floor(min(k, m, n))
   if(k < 1) stop("Target rank is not valid!")
   
   

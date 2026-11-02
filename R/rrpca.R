@@ -80,7 +80,8 @@
 #'
 #' @param A A real numeric matrix or data frame to decompose. A sparse matrix from
 #' \pkg{Matrix} is accepted and converted to a dense matrix. Rows containing
-#' missing values are omitted with a warning. In the dimensions below,
+#' missing values are omitted with a warning; all remaining entries must be
+#' finite. Complex input is not supported. In the dimensions below,
 #' \eqn{m} and \eqn{n} are the numbers of rows and columns after omission;
 #' both must be positive.
 #'
@@ -174,6 +175,19 @@ rrpca <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, trace=FALSE
 
 #' @export
 rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, trace=FALSE, rand=TRUE) {
+  check_flag(trace, "trace")
+  check_flag(rand, "rand")
+  check_scalar_number(maxiter, "maxiter", lower = 1, integer = TRUE)
+  check_scalar_number(tol, "tol", lower = 0)
+  if(tol == 0) stop("tol must be positive.")
+  if(!is.null(lambda)) {
+    check_scalar_number(lambda, "lambda", lower = 0)
+    if(lambda == 0) stop("lambda must be positive.")
+  }
+  if(rand) {
+    check_scalar_number(p, "p", lower = 0, integer = TRUE)
+    check_scalar_number(q, "q", lower = 0, integer = TRUE)
+  }
   #*************************************************************************
   #***        Author: N. Benjamin Erichson <nbe@st-andrews.ac.uk>        ***
   #***                              <2016>                               ***
@@ -189,6 +203,8 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
   if(m < 1L || n < 1L) {
     stop("Input matrix must have positive dimensions after omitting missing values.")
   }
+  check_matrix_input(A)
+  if(is.complex(A)) stop("A must be a real numeric matrix for robust PCA.")
 
   rrpcaObj = list(L = NULL,
                   S = NULL,
@@ -221,7 +237,7 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
   # Compute matrix norms
   spectralNorm <- switch(svdalg,
                     svd = norm(A, "2"),
-                    rsvd = rsvd(A, k=1, p=10, q=1, nu=0, nv=0)$d,
+                    rsvd = rsvd_compute(A, k=1, p=10, q=1, nu=0, nv=0)$d,
                     stop("Selected SVD algorithm is not supported!")
   )
 
@@ -243,8 +259,10 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
   S = matrix(0, nrow = m, ncol = n)  
   
   niter <- 1
-  err <- 1
-  dualErr <- 1
+  # Compute one update before applying the requested tolerance, including
+  # tolerances >= 1, so every nonzero fit has a measured residual.
+  err <- Inf
+  dualErr <- Inf
   power_iterations <- q
   refinement <- 0L
   stagnation <- 0L
@@ -279,7 +297,7 @@ rrpca.default <- function(A, lambda=NULL, maxiter=50, tol=1.0e-5, p=10, q=2, tra
         } else {
           target <- min(k + 10L, max_rank)
           repeat {
-            svd_out <- rsvd(R, k = target, p = p, q = power_iterations)
+            svd_out <- rsvd_compute(R, k = target, p = p, q = power_iterations)
             randomized_step <- TRUE
             # A saturated truncation can omit singular values that survive
             # shrinkage. Increase its rank before accepting this update.

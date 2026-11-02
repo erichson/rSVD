@@ -18,6 +18,7 @@
 #' The default, \code{NULL}, uses \code{min(dim(A))} after missing rows are
 #' omitted. Larger requests are capped at this value. Use a substantially
 #' smaller rank to obtain a compressed approximation.
+#' A fractional value of at least one is truncated toward zero.
 #' @param mode Either \code{"column"} (the default) or \code{"row"}, specifying
 #' which type of subset to select.
 #' @param p A non-negative integer oversampling parameter, used only when
@@ -151,6 +152,17 @@ rid <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = FALSE, r
 
 #' @export
 rid.default <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = FALSE, rand = TRUE) {
+  check_flag(idx_only, "idx_only")
+  check_flag(rand, "rand")
+  if(!is.character(mode) || length(mode) != 1L || is.na(mode) ||
+     !mode %in% c("column", "row")) {
+    stop("mode must be either 'column' or 'row'.")
+  }
+  if(!is.null(k)) check_scalar_number(k, "k", lower = 1)
+  if(rand) {
+    check_scalar_number(p, "p", lower = 0, integer = TRUE)
+    check_scalar_number(q, "q", lower = 0, integer = TRUE)
+  }
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Checks
@@ -164,6 +176,9 @@ rid.default <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = 
       A <- stats::na.omit(A)
     }
   }     
+  # Randomized QB checks the projected factors. Deterministic LAPACK QR can
+  # otherwise return non-finite factors, including for a full-width ID.
+  check_matrix_input(A, finite = !rand)
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Init id object
@@ -190,7 +205,7 @@ rid.default <- function(A, k = NULL, mode = 'column', p = 10, q = 0, idx_only = 
   # Set target rank
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if(is.null(k)) k <- n
-  if(k > min(m,n)) k <- min(m,n)
+  k <- floor(min(k, m, n))
   if(k < 1) stop("Target rank is not valid!")
 
 

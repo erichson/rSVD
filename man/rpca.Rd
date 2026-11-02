@@ -28,10 +28,12 @@ rpca(
 \item{A}{A numeric matrix or data frame with observations in rows and variables
 in columns. Dense real or complex data and real sparse matrices from
 \pkg{Matrix} are supported. Rows containing missing values are omitted
-with a warning. In the dimensions below, \eqn{m} is the number of retained
+with a warning; all remaining values must be finite. At least two rows
+must remain. In the dimensions below, \eqn{m} is the number of retained
 observations and \eqn{n} is the number of variables.}
 
 \item{k}{A positive integer giving the number of principal components to return.
+A fractional value of at least one is truncated toward zero.
 Values greater than \code{min(m, n)} are reduced to that limit. The default,
 \code{NULL}, returns \code{min(m, n)} components using the deterministic
 SVD. The randomized method is most useful when \code{k} is much smaller
@@ -66,7 +68,7 @@ a partial SVD algorithm.}
 
 \item{newdata}{A numeric matrix, data frame, or real sparse \pkg{Matrix} containing
 new observations. Supply the same variables in the same column order as
-the training data, with no missing values; see Details.}
+the training data, preferably with no missing values; see Details.}
 }
 \value{
 \code{rpca} returns a list of class \code{"rpca"} with these components:
@@ -146,8 +148,7 @@ the squared Frobenius norm of the processed matrix divided by
 divided by \eqn{m-1} and includes the contribution of the column means.
 The proportion attributed to a retained component is its \code{eigvals}
 entry divided by \code{var}, so the denominator stays the same as the
-retained rank changes. At least two complete observations are needed for
-meaningful sample variances;
+retained rank changes. At least two complete observations are required;
 variance proportions are undefined when the processed matrix has zero
 total variance.
 }
@@ -163,10 +164,12 @@ scaling, then multiplies the processed observations by
 \code{object$rotation}. Reusing the training means and scale factors
 places new observations in the same coordinate system. Supply complete
 rows in the training column order; the method does not reorder columns
-by name or omit incomplete new rows automatically. Prediction also works
-when the fit was created with \code{retx = FALSE}. For a randomized fit,
-projecting the training data with \code{predict} can differ from the
-fitted scores in \code{object$x} because the randomized subspace omits
+by name or omit incomplete new rows automatically.
+Missing values generally propagate to the scores. For compatibility,
+\code{NaN} entries produced or retained during scaling are replaced by zero.
+Prediction also works when the fit was created with \code{retx = FALSE}.
+For a randomized fit, projecting the training data with \code{predict}
+can differ from the fitted scores in \code{object$x} because the randomized subspace omits
 part of the data, represented by the range-finder residual.
 
 The \code{print} and \code{summary} methods describe a fit.

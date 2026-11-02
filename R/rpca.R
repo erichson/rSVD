@@ -45,8 +45,7 @@
 #' divided by \eqn{m-1} and includes the contribution of the column means.
 #' The proportion attributed to a retained component is its \code{eigvals}
 #' entry divided by \code{var}, so the denominator stays the same as the
-#' retained rank changes. At least two complete observations are needed for
-#' meaningful sample variances;
+#' retained rank changes. At least two complete observations are required;
 #' variance proportions are undefined when the processed matrix has zero
 #' total variance.
 #' }
@@ -62,10 +61,12 @@
 #' \code{object$rotation}. Reusing the training means and scale factors
 #' places new observations in the same coordinate system. Supply complete
 #' rows in the training column order; the method does not reorder columns
-#' by name or omit incomplete new rows automatically. Prediction also works
-#' when the fit was created with \code{retx = FALSE}. For a randomized fit,
-#' projecting the training data with \code{predict} can differ from the
-#' fitted scores in \code{object$x} because the randomized subspace omits
+#' by name or omit incomplete new rows automatically.
+#' Missing values generally propagate to the scores. For compatibility,
+#' \code{NaN} entries produced or retained during scaling are replaced by zero.
+#' Prediction also works when the fit was created with \code{retx = FALSE}.
+#' For a randomized fit, projecting the training data with \code{predict}
+#' can differ from the fitted scores in \code{object$x} because the randomized subspace omits
 #' part of the data, represented by the range-finder residual.
 #'
 #' The \code{print} and \code{summary} methods describe a fit.
@@ -90,10 +91,12 @@
 #' @param A A numeric matrix or data frame with observations in rows and variables
 #' in columns. Dense real or complex data and real sparse matrices from
 #' \pkg{Matrix} are supported. Rows containing missing values are omitted
-#' with a warning. In the dimensions below, \eqn{m} is the number of retained
+#' with a warning; all remaining values must be finite. At least two rows
+#' must remain. In the dimensions below, \eqn{m} is the number of retained
 #' observations and \eqn{n} is the number of variables.
 #'
 #' @param k A positive integer giving the number of principal components to return.
+#' A fractional value of at least one is truncated toward zero.
 #' Values greater than \code{min(m, n)} are reduced to that limit. The default,
 #' \code{NULL}, returns \code{min(m, n)} components using the deterministic
 #' SVD. The randomized method is most useful when \code{k} is much smaller
@@ -125,7 +128,7 @@
 #'
 #' @param newdata A numeric matrix, data frame, or real sparse \pkg{Matrix} containing
 #' new observations. Supply the same variables in the same column order as
-#' the training data, with no missing values; see Details.
+#' the training data, preferably with no missing values; see Details.
 #'
 #' @param ... Additional arguments; currently ignored by the \code{print},
 #' \code{summary}, and \code{predict} methods.
@@ -218,6 +221,15 @@ rpca <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=2, rand 
 
 #' @export
 rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=2, rand = TRUE) {
+  check_flag(center, "center")
+  check_flag(scale, "scale")
+  check_flag(retx, "retx")
+  check_flag(rand, "rand")
+  if(!is.null(k)) check_scalar_number(k, "k", lower = 1)
+  if(rand && !is.null(k)) {
+    check_scalar_number(p, "p", lower = 0, integer = TRUE)
+    check_scalar_number(q, "q", lower = 0, integer = TRUE)
+  }
   
   sparse <- inherits(A, "sparseMatrix") && !is.null(k) && rand == TRUE
   if(!sparse) A <- as.matrix(A)
@@ -231,6 +243,12 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=
       A <- A[Matrix::rowSums(is.na(A)) == 0, , drop=FALSE]
     } else A <- stats::na.omit(A)
   }   
+  # The SVD or projected QR checks non-finite processed data. An additional
+  # input scan costs a substantial fraction of a small-rank decomposition.
+  check_matrix_input(A, finite = FALSE)
+  if(nrow(A) < 2L) {
+    stop("PCA requires at least two complete observations.")
+  }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Init rpca object
@@ -251,7 +269,7 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if(is.null(k)) rand <- FALSE
   if(is.null(k)) k <- min(n,m)
-  if(k > min(n,m)) k <- min(n,m)
+  k <- floor(min(k, n, m))
   if(k<1) stop("Target rank is not valid!")
   
   
@@ -320,8 +338,8 @@ rpca.default <- function(A, k=NULL, center=TRUE, scale=TRUE, retx=TRUE, p=10, q=
                   rsvd_compute(A, k = k, p = p, q = q,
                                nu = if(retx) k else 0, nv = k,
                                operators = operators)
-                } else rsvd(A, k = k, p = p, q = q,
-                             nu = if(retx) k else 0, nv = k),
+                } else rsvd_compute(A, k = k, p = p, q = q,
+                                     nu = if(retx) k else 0, nv = k),
                 stop("Selected SVD algorithm is not supported!")
   )
   
@@ -427,6 +445,12 @@ predict.rpca <- function( object, newdata, ...)
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Predict
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if(is.data.frame(newdata) || !inherits(newdata, "Matrix")) {
+    newdata <- as.matrix(newdata)
+  }
+  if(length(dim(newdata)) != 2L || ncol(newdata) != nrow(object$rotation)) {
+    stop("newdata must have the same number of columns as the training data.")
+  }
   if(inherits(newdata, "sparseMatrix") && !is.complex(object$center) &&
      !is.complex(object$rotation)) {
     operators <- rpca_sparse_products(rpca_sparse_numeric(newdata),

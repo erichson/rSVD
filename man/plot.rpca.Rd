@@ -16,7 +16,7 @@ passed only to helpers that accept it. For example, \code{type} selects
 the scree-plot quantity, \code{pcs} selects components for both factor
 maps, and \code{groups} is used only for the individual factor map.
 Names must be exact and unique; unknown or unnamed arguments are
-rejected. An explicit \code{pcs} value must contain two finite numeric
+rejected. An explicit \code{pcs} value must contain two finite integer
 component indices within the retained range, even when a factor map is
 unavailable.}
 }

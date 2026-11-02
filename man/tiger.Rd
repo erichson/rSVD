@@ -9,7 +9,7 @@ A numeric matrix with 1600 rows and 1200 columns. There are no labels
 or color channels; each entry is a grayscale intensity.
 }
 \source{
-\href{https://en.wikipedia.org/wiki/File:Siberischer_tiger_de_edit02.jpg}{Wikimedia image and attribution}
+\href{https://commons.wikimedia.org/wiki/File:Sibirischer_tiger_de_edit02.jpg}{Wikimedia image and attribution}
 }
 \usage{
 data("tiger")
@@ -41,6 +41,9 @@ image(seq_len(nrow(tiger)), seq_len(ncol(tiger)), tiger,
       axes = FALSE, useRaster = TRUE)
 }
 \references{
-S. Taheri (2006). Panthera tigris altaica. Online photograph.
+S. Taheri (2006), edited by Fir0002. Panthera tigris altaica.
+Online photograph, distributed under
+\href{https://creativecommons.org/licenses/by-sa/2.5/}{Creative Commons
+Attribution-ShareAlike 2.5}. The package supplies a grayscale conversion.
 }
 \keyword{datasets}

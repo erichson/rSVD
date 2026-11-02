@@ -20,12 +20,13 @@ ggbiplot(
 }
 \arguments{
 \item{rpcaObj}{An object returned by \code{\link{rpca}}, with
-real-valued scores and directions. Fit with \code{retx = TRUE} so that
-\code{rpcaObj$x} is available.}
+real-valued scores and directions. Complex factor maps are not supported.
+Fit with \code{retx = TRUE} so that \code{rpcaObj$x} is available.}
 
 \item{pcs}{Integer vector of length two selecting the retained principal
 components to plot, in horizontal and vertical order. The default is
-\code{c(1, 2)}; both selected components must be present in the fit.}
+\code{c(1, 2)}. Both indices must be finite integers within the retained
+component range.}
 
 \item{loadings}{Logical; when \code{TRUE} (the default), multiply each
 selected direction by its component standard deviation, so the coordinates
@@ -33,8 +34,10 @@ are \code{rotation[, pcs]} scaled columnwise by \code{sdev[pcs]}.
 When \code{FALSE}, plot the unscaled entries of \code{rotation[, pcs]}.}
 
 \item{groups}{Optional factor with one entry for each row of \code{rpcaObj$x},
-in the same order. It controls the point colours and, when requested, the
-ellipses. The default, \code{NULL}, uses one colour and draws no ellipse.
+in the same order. The length must match the number of score rows;
+shorter inputs are not recycled. Groups control point colours and, when
+requested, ellipses. The default, \code{NULL}, uses one colour and draws
+no ellipse.
 If \code{rpca} omitted incomplete observations, supply groups for the
 retained rows only.}
 

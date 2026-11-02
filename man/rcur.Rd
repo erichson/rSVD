@@ -13,7 +13,8 @@ with a warning; the remaining entries must be finite.}
 
 \item{k}{A positive integer giving the number of columns and rows to select.
 The default, \code{NULL}, uses \code{min(dim(A))} after missing rows are
-omitted. Larger requests are capped at this value.}
+omitted. Larger requests are capped at this value.
+A fractional value of at least one is truncated toward zero.}
 
 \item{p}{A non-negative integer oversampling parameter for randomized
 column selection. The default is 10. Ignored when \code{rand = FALSE}.}

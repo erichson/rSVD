@@ -29,9 +29,10 @@ with dense PCA, ID, and CUR at 15,000 by 4,500. The same rows are selected by
 | Timed sampling seeds | `8101` through `8105` |
 | Allocation sampling seed | `8101` |
 
-Later edits affect documentation, figures, result files, and a driver comment;
-the measured numerical implementation and executable driver statements are
-unchanged. Exact package/BLAS paths and session details are preserved in
+The measurements apply to the source commit above. Later release-review fixes
+have not been benchmarked in this experiment, so these values should not be
+read as fresh timings of a newer candidate. Exact package/BLAS paths and
+session details are preserved in
 [metadata.csv](results/metadata.csv) and
 [session-info.txt](results/session-info.txt). Absolute paths in those files
 describe the measurement environment; use your own library and output paths

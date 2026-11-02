@@ -158,6 +158,10 @@ rqb.default <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) {
 
     # Keep Matrix inputs for products with thin dense factors.
     if(!inherits(A, "Matrix")) A <- as.matrix(A)
+    check_matrix_input(A, finite = FALSE)
+    if(!is.null(k)) check_scalar_number(k, "k", lower = 1)
+    check_flag(rand, "rand")
+    if(rand) check_sampling(p, q, sdist)
 
     # Create rqb object
     rqbObj <- list()
@@ -169,11 +173,9 @@ rqb.default <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) {
     #Set target rank
     if(is.null(k)) k = min(m, n)
     if(k > min(m, n)) k <- min(m, n)
-    if(is.character(k)) stop("Target rank is not valid!")
-    if(k < 1) stop("Target rank is not valid!")
 
     #Set oversampling parameter
-    l <- round(k) + round(p)
+    l <- if(rand) round(k) + p else k
     if(l > min(m, n)) l <- min(m, n)
     if(l < 1) stop("Target rank is not valid!")
 
@@ -214,7 +216,7 @@ rqb.default <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) {
         #If q > 0 perform q subspace iterations
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if( q > 0 ) {
-            for( i in 1:q) {
+            for( i in seq_len(q)) {
                 Y <- qr.Q( qr(Y, complete = FALSE) , complete = FALSE )
                 Z <- as.matrix(crossprod_help(A , Y ))
                 Z <- qr.Q( qr(Z, complete = FALSE) , complete = FALSE )
@@ -254,7 +256,15 @@ rqb.default <- function(A, k=NULL, p=10, q=2, sdist="normal", rand = TRUE) {
     #Project the data matrix a into a lower dimensional subspace
     #B := Q.T * A
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Complex LAPACK QR can return non-finite factors instead of rejecting
+    # invalid data. Check the thin factors, without scanning the full input.
+    if(!isreal && !all(is.finite(rqbObj$Q))) {
+        stop("Non-finite QB basis (NA/NaN/Inf).", call. = FALSE)
+    }
     rqbObj$B <- as.matrix(crossprod_help(rqbObj$Q , A ))
+    if(!isreal && !all(is.finite(rqbObj$B))) {
+        stop("Non-finite QB projection (NA/NaN/Inf).", call. = FALSE)
+    }
 
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
