@@ -2,22 +2,22 @@ Package: rsvd
 Type: Package
 Title: Randomized Singular Value Decomposition
 Version: 2.0.0
-Date: 2026-10-16
 Authors@R: c(person("N. Benjamin", "Erichson", role = c("aut", "cre"), email = "erichson@icsi.berkeley.edu"))
 Author: N. Benjamin Erichson [aut, cre]
 Maintainer: N. Benjamin Erichson <erichson@icsi.berkeley.edu>
-Description: Computes low-rank matrix approximations for dimension reduction, data
-  analysis, and data compression. Randomized algorithms form a small subspace
-  from random combinations of the input and carry out the main factorization
-  in that subspace. This can reduce computational work when the requested rank
-  is small relative to the matrix dimensions and the input admits an accurate
-  low-rank approximation. Methods include singular value decomposition,
-  principal component analysis, QB factorization, interpolative and CUR
-  decompositions, and robust principal component analysis. Selected methods
-  support sparse matrices, including principal component analysis with
-  implicit centering and scaling. Plotting functions display scores, loadings,
-  and explained variance. The methods and their applications are described
-  by Erichson et al. (2019) <doi:10.18637/jss.v089.i11>.
+Description: Computes low-rank matrix approximations for dimension reduction,
+  data analysis, and compression. Randomized algorithms use random weighted
+  combinations of the input to find a small subspace, then factorize the
+  projected matrix. This can reduce the work when the requested rank is small
+  relative to the matrix dimensions and the input has a useful low-rank
+  approximation. Methods include singular value decomposition, principal
+  component analysis, QB factorization, and interpolative and CUR
+  decompositions. Robust principal component analysis separates a matrix into
+  low-rank and entrywise sparse components. Selected routines support sparse
+  matrices, including principal component analysis with implicit centering
+  and scaling. Plotting functions display scores, loadings, and explained
+  variance. See Erichson et al. (2019) <doi:10.18637/jss.v089.i11> for the
+  algorithms and examples of their use.
 Depends: R (>= 4.4.0)
 Imports:
     Matrix (>= 1.7-0),

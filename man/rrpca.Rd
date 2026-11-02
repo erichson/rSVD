@@ -18,7 +18,8 @@ rrpca(
 \arguments{
 \item{A}{A real numeric matrix or data frame to decompose. A sparse matrix from
 \pkg{Matrix} is accepted and converted to a dense matrix. Rows containing
-missing values are omitted with a warning. In the dimensions below,
+missing values are omitted with a warning; all remaining entries must be
+finite. Complex input is not supported. In the dimensions below,
 \eqn{m} and \eqn{n} are the numbers of rows and columns after omission;
 both must be positive.}
 

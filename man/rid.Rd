@@ -15,7 +15,8 @@ with a warning; the remaining entries must be finite.}
 \item{k}{A positive integer giving the number of columns or rows to select.
 The default, \code{NULL}, uses \code{min(dim(A))} after missing rows are
 omitted. Larger requests are capped at this value. Use a substantially
-smaller rank to obtain a compressed approximation.}
+smaller rank to obtain a compressed approximation.
+A fractional value of at least one is truncated toward zero.}
 
 \item{mode}{Either \code{"column"} (the default) or \code{"row"}, specifying
 which type of subset to select.}

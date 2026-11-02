@@ -16,12 +16,13 @@ ggcorplot(
 }
 \arguments{
 \item{rpcaObj}{An object returned by \code{\link{rpca}}, with
-real-valued directions. Scores are not needed, so fits made with
-\code{retx = FALSE} are supported.}
+real-valued directions. Complex factor maps are not supported. Scores are
+not needed, so fits made with \code{retx = FALSE} are supported.}
 
 \item{pcs}{Integer vector of length two selecting the retained principal
 components to plot, in horizontal and vertical order. The default is
-\code{c(1, 2)}; both selected components must be present in the fit.}
+\code{c(1, 2)}. Both indices must be finite integers within the retained
+component range.}
 
 \item{loadings}{Logical; when \code{TRUE} (the default), multiply each
 selected direction by its component standard deviation, so the coordinates

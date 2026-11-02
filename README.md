@@ -11,7 +11,7 @@ variables often change together. A low-rank approximation represents this
 shared structure through a small set of directions and the weights needed
 to combine them.
 
-**rsvd** computes these approximations for dimension reduction, compression,
+rsvd computes these approximations for dimension reduction, compression,
 and data analysis. It uses random combinations of the input to find a small
 subspace, then performs the main factorization within that subspace. This
 can reduce the work when the requested rank is small relative to the matrix
@@ -20,7 +20,7 @@ dimensions and the singular values decay.
 The package provides several matrix decompositions, principal component
 analysis, and robust principal component analysis, together with plotting
 functions. It accepts ordinary R matrices and supports sparse matrices from
-**Matrix**. Randomized principal component analysis can center and scale
+the Matrix package. Randomized principal component analysis can center and scale
 sparse input implicitly, avoiding a dense copy of the processed data. The
 [package paper](https://www.jstatsoft.org/article/view/v089i11) describes the
 algorithms and their applications.
@@ -35,16 +35,56 @@ install.packages("rsvd")
 # remotes::install_github("erichson/rSVD")
 ```
 
-The development version is **2.0.0**; the CRAN badge shows the published version.
-rsvd requires **R 4.4 or later and Matrix 1.7-0 or later**. The minimum R
+This source is the 2.0.0 release candidate; the CRAN badge shows the published
+version. It requires R 4.4 or later and Matrix 1.7-0 or later. The minimum R
 version follows the Matrix dependency. CI also tests newer R releases
 alongside the R 4.4 series. Sparse dispatch works without attaching Matrix
 with `library(Matrix)`.
 
+## A first approximation
+
+This example makes a matrix from three underlying patterns, then adds small
+measurement noise. Asking for rank three retains the shared patterns while
+leaving a residual. The example is small enough to inspect; the later
+benchmarks show where the randomized calculation saves time.
+
+```r
+library(rsvd)
+set.seed(42)
+patterns <- matrix(rnorm(120 * 3), 120, 3)
+weights <- matrix(rnorm(3 * 80), 3, 80)
+A <- patterns %*% weights + 0.01 * matrix(rnorm(120 * 80), 120, 80)
+
+fit <- rsvd(A, k = 3)
+A_approx <- tcrossprod(sweep(fit$u, 2, fit$d, "*"), fit$v)
+norm(A - A_approx, "F") / norm(A, "F")
+```
+
+The last expression is the relative reconstruction error. It compares the
+size of the residual with the size of the original matrix. Keep `fit` when
+you need a compact representation; `A_approx` allocates a full matrix again.
+Use `rpca()` when columns should be centered or scaled before finding the
+directions. `rsvd()` uses the supplied values as they are.
+
+## Available decompositions
+
+Choose the factors that the analysis needs. An SVD gives orthogonal
+directions, ID and CUR retain actual columns or rows, and robust PCA
+estimates a separate sparse corruption component.
+
+| Function | Result and typical use |
+| --- | --- |
+| `rsvd(A, k)` | Leading singular vectors and values for low-rank compression. |
+| `rpca(A, k)` | Principal loadings, component variances, and optional scores. |
+| `rqb(A, k)` | An orthonormal basis Q and a compressed matrix B. The randomized basis includes oversampling. |
+| `rid(A, k)` | Selected columns and interpolation coefficients; row ID is also available. |
+| `rcur(A, k)` | Selected columns, selected rows, and their connector matrix. |
+| `rrpca(A)` | A low-rank component and an entrywise sparse corruption component. |
+
 ## What a low-rank factorization represents
 
 Consider a matrix whose columns are measurements, images, or time series.
-Its **rank** is the number of independent directions spanned by those
+Its rank is the number of independent directions spanned by those
 columns. If every column can be assembled from ten underlying patterns,
 the matrix has rank at most ten, regardless of how many columns it contains.
 A factorization stores the patterns and the coefficients that reconstruct
@@ -52,23 +92,22 @@ each column from them.
 
 Measured data rarely have exactly low rank. Noise may make a matrix
 full rank even when most of its variation follows a few
-patterns. A **low-rank approximation** retains those patterns and leaves a
+patterns. A low-rank approximation retains those patterns and leaves a
 residual, the difference between the data and their reconstruction. Working
 with the approximation can reduce storage and simplify later calculations
 or visualization. The application determines which residual is acceptable;
 rank alone cannot distinguish noise from a weak but useful signal.
 
-The **singular value decomposition (SVD)** gives orthogonal directions for
+The singular value decomposition (SVD) gives orthogonal directions for
 representing this variation. Keeping the leading `k` terms gives
 
 ```math
 A \approx U_k D_k V_k^{T}.
 ```
 
-The columns of **U** and **V** are orthonormal left and right directions,
-respectively, and **D** is diagonal. Its nonnegative entries are the singular
-values,
-ordered from largest to smallest. Each left direction, right direction,
+The columns of U and V are orthonormal left and right directions,
+respectively, and D is diagonal. Its nonnegative entries are the singular
+values, ordered from largest to smallest. Each left direction, right direction,
 and singular value defines one rank-one pattern. The squared singular
 value measures that pattern's contribution to the squared Frobenius norm,
 so the leading terms retain the strongest variation first. The exact
@@ -76,8 +115,8 @@ truncated SVD minimizes the Frobenius error among rank-`k` approximations.
 Randomized SVD aims to approach this accuracy while reducing the cost of
 finding the directions.
 
-The equations here use real matrices, for which superscript **T** denotes
-transpose. With complex input, reconstruction uses **H**, the conjugate
+The equations here use real matrices, for which superscript T denotes
+transpose. With complex input, reconstruction uses H, the conjugate
 transpose, which also conjugates the matrix entries. rsvd supports complex
 matrices; the reconstruction code must use the corresponding transpose.
 
@@ -316,22 +355,6 @@ reconstructs the data; the indices alone do not establish causal
 importance. The [package paper](https://www.jstatsoft.org/article/view/v089i11)
 describes the pivoted-QR constructions used by these routines.
 
-## Available decompositions
-
-The functions below expose these representations directly. `rqb()`
-returns the basis and projected matrix used in the randomized
-factorization, while `rrpca()` separates low-rank structure from
-entrywise sparse corruption.
-
-| Function | Result and typical use |
-| --- | --- |
-| `rsvd(A, k)` | Leading singular vectors and values for low-rank compression. |
-| `rpca(A, k)` | Principal loadings, component variances, and optional scores. |
-| `rqb(A, k)` | An orthonormal basis Q and a compressed matrix B. The randomized basis includes oversampling. |
-| `rid(A, k)` | Selected columns and interpolation coefficients; row ID is also available. |
-| `rcur(A, k)` | Selected columns, selected rows, and their connector matrix. |
-| `rrpca(A)` | A low-rank component and an entrywise sparse corruption component. |
-
 ## Choosing rank and assessing accuracy
 
 The requested rank determines how much variation the approximation can
@@ -345,6 +368,14 @@ dimensions, to help capture the target subspace. The nonnegative integer
 `q` adds power iterations. Increasing it can improve accuracy for slowly
 decaying spectra, while requiring more passes over the data. ID and CUR
 use `q = 0` by default.
+
+To separate the effect of rank from sampling error, first compare two ranks
+with the same `p` and `q`. Then keep a rank fixed and increase `p` or `q`.
+Increasing `k` permits a richer approximation; increasing `p` or `q` tries
+to find the chosen rank more accurately. A similar residual after refining
+the sample suggests that the retained rank, rather than the range finder,
+is limiting this reconstruction. Use residuals and the needs of the later
+analysis to decide whether the extra work is useful.
 
 A useful reference for accuracy is the energy left outside the leading
 directions. Write A<sub>k</sub> for the exact truncated SVD, and order the
@@ -378,12 +409,16 @@ Base `svd()` is a natural reference for a full deterministic SVD.
 
 ## Measured performance
 
-The benchmarks examine how these savings appear at larger matrix sizes,
+The recorded benchmarks examine how these savings appear at larger matrix sizes,
 while comparing the same requested rank and returned factors. The
 synthetic inputs contain low-rank signal plus noise. Scaling cases run
 from **10,000 × 3,000 to 20,000 × 6,000**, and dense PCA, ID, and CUR use
 **15,000 × 4,500** inputs. Measurements were made on Linux x86_64 with
 R 4.6.1, Matrix 1.7-6, and OpenBLAS 0.3.26 using four BLAS threads.
+They were recorded on October 17, 2026, with source commit
+[`421c803`](https://github.com/erichson/rSVD/commit/421c803e33273a2faee42660b7579afde31120cf).
+These saved measurements describe that implementation; they have not been
+rerun for the later release-review fixes.
 Reported times are medians of five calls after warmup, with method order
 rotated between repetitions.
 
@@ -554,7 +589,7 @@ An explicit `k` and `rand = TRUE` enable this preprocessing for real
 sparse Matrix inputs. `retx = FALSE` omits training scores and avoids
 computing unused left singular vectors. Prediction applies the fitted
 transformation to new observations. Supply their columns in the
-**training order**, since names are not used to reorder them.
+training order, since names are not used to reorder them.
 
 As in `prcomp()`, `center = FALSE` skips centering. It can be used
 with data already centered by the caller or to request an uncentered
@@ -634,7 +669,7 @@ optimality checks used in validation and what they establish.
 
 ```sh
 R CMD build .
-R CMD check rsvd_2.0.0.tar.gz
+R CMD check --as-cran rsvd_2.0.0.tar.gz
 ```
 
 With development dependencies installed, `testthat::test_local()` runs
@@ -646,9 +681,12 @@ PCA. CI verifies the Matrix version before testing on Linux, Windows,
 and macOS, including R 4.4 with Matrix 1.7-0 at the supported minimum.
 
 [NEWS.md](NEWS.md) records the changes in 2.0.0, including compatibility
-and memory behavior. The [release review](tools/validation/release-review.md)
-documents the numerical audit, downstream checks, supported environments,
-and remaining limitations. The [benchmark guide and measurements](tools/benchmarks/README.md)
+and memory behavior. The [November release review](tools/validation/release-2026-11-review.md)
+records the current corrections and validation. The
+[earlier release review](tools/validation/release-review.md)
+records the October numerical audit, downstream checks, tested environments,
+and their limitations. Its results apply to the source revisions named there.
+The [benchmark guide and measurements](tools/benchmarks/README.md)
 provide the scripts and data for reproducing the tables and figures
 or evaluating matrices representative of another workload.
 

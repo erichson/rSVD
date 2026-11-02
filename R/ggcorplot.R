@@ -7,12 +7,13 @@
 #' optional \pkg{ggplot2} package is required.
 #'
 #' @param rpcaObj An object returned by \code{\link{rpca}}, with
-#' real-valued directions. Scores are not needed, so fits made with
-#' \code{retx = FALSE} are supported.
+#' real-valued directions. Complex factor maps are not supported. Scores are
+#' not needed, so fits made with \code{retx = FALSE} are supported.
 #'
 #' @param pcs Integer vector of length two selecting the retained principal
 #' components to plot, in horizontal and vertical order. The default is
-#' \code{c(1, 2)}; both selected components must be present in the fit.
+#' \code{c(1, 2)}. Both indices must be finite integers within the retained
+#' component range.
 #'
 #' @param loadings Logical; when \code{TRUE} (the default), multiply each
 #' selected direction by its component standard deviation, so the coordinates
@@ -103,9 +104,11 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Check selected pcs
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
-  stopifnot(length(pcs) == 2)
-  if(max(pcs) > ncol(rpcaObj$rotation)) stop("Selected PC is not valid.")
-  if(min(pcs) < 1) stop("Selected PC is not valid.")
+  check_plot_pcs(rpcaObj, pcs)
+  check_plot_real(rpcaObj$rotation)
+  check_plot_length(var_labels.names, p, "var_labels.names")
+  if(!is.null(top.n)) check_scalar_number(top.n, "top.n", lower = 1,
+                                        integer = TRUE)
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
   # Select PCs
@@ -164,8 +167,11 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   
   if(is.null(top.n)) top.n <- nrow(df)
   if(top.n>nrow(df)) top.n <- nrow(df)
+  selected <- if(top.n < 50 || var_labels) {
+    order(df$abs, decreasing = TRUE)[seq_len(top.n)]
+  } else integer(0)
   if(top.n < 50) {
-  g <- g + ggplot2::geom_point(data = df[order(df$abs, decreasing=TRUE)[1:top.n], ], 
+  g <- g + ggplot2::geom_point(data = df[selected, , drop = FALSE],
                                size = 4, mapping = ggplot2::aes(x = a, y = b, colour = varName ) ) +
     ggplot2::theme(legend.position = "none")
   }
@@ -188,7 +194,7 @@ ggcorplot <- function(rpcaObj, pcs=c(1,2),  loadings=TRUE, var_labels=FALSE, var
   if(var_labels == TRUE) {
     #df$a <- df$a  *1.1
     #df$b <- df$b  * 1.1
-    g <- g + ggplot2::geom_text(data = df[order(df$abs, decreasing=TRUE)[1:top.n], ], ggplot2::aes(label = varName, x = a, y = b,
+    g <- g + ggplot2::geom_text(data = df[selected, , drop = FALSE], ggplot2::aes(label = varName, x = a, y = b,
                                                         angle = 0, hjust = 0, vjust = 0),
                                 color = 'black', size = 4)
     

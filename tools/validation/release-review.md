@@ -1,5 +1,10 @@
 # Release review for rsvd 2.0.0
 
+This is the earlier October review. Its measurements and check results apply
+to the source revisions named below. The [November release review](release-2026-11-review.md)
+records the subsequent fixes and checks; the historical results here do not
+certify a newer source archive.
+
 This review combines an independent mathematical audit, targeted numerical
 experiments, regression tests, downstream-interface checks, and reproducible
 performance measurements. Passing tests is evidence about the cases tested;

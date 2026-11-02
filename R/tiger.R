@@ -23,8 +23,11 @@
 #' \code{\link{rid}} and \code{\link{rcur}} for decomposition examples.
 #'
 #' @keywords datasets
-#' @references S. Taheri (2006). Panthera tigris altaica. Online photograph.
-#' @source \href{https://en.wikipedia.org/wiki/File:Siberischer_tiger_de_edit02.jpg}{Wikimedia image and attribution}
+#' @references S. Taheri (2006), edited by Fir0002. Panthera tigris altaica.
+#' Online photograph, distributed under
+#' \href{https://creativecommons.org/licenses/by-sa/2.5/}{Creative Commons
+#' Attribution-ShareAlike 2.5}. The package supplies a grayscale conversion.
+#' @source \href{https://commons.wikimedia.org/wiki/File:Sibirischer_tiger_de_edit02.jpg}{Wikimedia image and attribution}
 #' @examples
 #' data("tiger")
 #' dim(tiger)
